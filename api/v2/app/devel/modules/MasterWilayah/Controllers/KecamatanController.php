@@ -1,27 +1,27 @@
 <?php
-namespace App\MasterPonpes\Controllers;
+namespace App\MasterWilayah\Controllers;
 
-use App\MasterPonpes\Models\Jabatan;
+use App\MasterWilayah\Models\Kecamatan;
 
-class JabatanController extends \Micro\Controller {
+class KecamatanController extends \Micro\Controller {
     public function findAction() {
-        return Jabatan::get()->filterable()->sortable()->paginate();
+        return Kecamatan::get()->filterable()->sortable()->paginate();
     }
 
     public function createAction() {
         $post = $this->request->getJson();
-        $data = new Jabatan();
+        $data = new Kecamatan();
         
         if ($data->save($post)) {
-            return Jabatan::get($data->id_jabatan);
+            return Kecamatan::get($data->id_kecamatan);
         }
 
-        return Jabatan::none();
+        return Kecamatan::none();
     }
 
     public function updateAction($id) {
         $post = $this->request->getJson();
-        $item = Jabatan::get($id);
+        $item = Kecamatan::get($id);
 
         if ($item->data) {
             $item->data->save($post);
@@ -31,7 +31,7 @@ class JabatanController extends \Micro\Controller {
     }
 
     public function deleteAction($id) {
-        $data = Jabatan::get($id)->data;
+        $data = Kecamatan::get($id)->data;
         $done = FALSE;
 
         if ($data) {

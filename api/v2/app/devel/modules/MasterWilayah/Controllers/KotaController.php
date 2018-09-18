@@ -1,27 +1,27 @@
 <?php
-namespace App\MasterPonpes\Controllers;
+namespace App\MasterWilayah\Controllers;
 
-use App\MasterPonpes\Models\Jabatan;
+use App\MasterWilayah\Models\Kota;
 
-class JabatanController extends \Micro\Controller {
+class KotaController extends \Micro\Controller {
     public function findAction() {
-        return Jabatan::get()->filterable()->sortable()->paginate();
+        return Kota::get()->filterable()->sortable()->paginate();
     }
 
     public function createAction() {
         $post = $this->request->getJson();
-        $data = new Jabatan();
+        $data = new Kota();
         
         if ($data->save($post)) {
-            return Jabatan::get($data->id_jabatan);
+            return Kota::get($data->id_kota);
         }
 
-        return Jabatan::none();
+        return Kota::none();
     }
 
     public function updateAction($id) {
         $post = $this->request->getJson();
-        $item = Jabatan::get($id);
+        $item = Kota::get($id);
 
         if ($item->data) {
             $item->data->save($post);
@@ -31,7 +31,7 @@ class JabatanController extends \Micro\Controller {
     }
 
     public function deleteAction($id) {
-        $data = Jabatan::get($id)->data;
+        $data = Kota::get($id)->data;
         $done = FALSE;
 
         if ($data) {
