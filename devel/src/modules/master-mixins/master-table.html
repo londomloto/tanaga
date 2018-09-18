@@ -90,7 +90,15 @@
             }
             __onSearchEnter(e) {
                 if (e.key == 'Enter') {
-                    let payload = {};
+                    let params = {};
+                    
+                    if (this.params) {
+                        Object.keys(this.params).forEach(k => {
+                            params[k] = this.params[k];
+                        });
+                    }
+
+                    let payload = Object.assign({}, params);
 
                     if (this.search) {
                         payload.query = this.search;

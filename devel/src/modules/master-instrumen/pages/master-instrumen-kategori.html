@@ -1,0 +1,80 @@
+<link rel="import" href="../../master-mixins/master-table.html">
+<link rel="import" href="../../master-mixins/master-style.html">
+
+<dom-module id="master-instrumen-kategori">
+    <template>
+        <style include="master-style">
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="Referensi" desc="Kategori Instrumen" on-back-tap="__onBackTap">
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <div>&nbsp;</div>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Sunting</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+
+                </div>
+                <div slot="right-toolbar">
+                    <div class="grid-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div>
+            </module-header-block>
+            <div class="flex">
+                <kct-grid 
+                    id="grid" 
+                    url="[[ api ]]" 
+                    columns="[[ columns ]]" 
+                    selection-model="row"
+                    hide-header></kct-grid>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Editor" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input label="Kode Kategori" value="{{ editingRecord.kode_kategori }}"></paper-input>
+                    <paper-input label="Nama Kategori" value="{{ editingRecord.nama_kategori }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+        
+    </template>
+    <script>
+        class MasterInstrumenKategori extends Mixins(KctView).use(Mixins.MasterTable) {
+            static get is() {
+                return 'master-instrumen-kategori';
+            }
+            static get properties() {
+                return {
+                    api: { type: String, value: '/master-instrumen/kategori' },
+                    identity: { type: String, value: 'id_kategori' },
+                    homepage: { type: String, value: '/master-instrumen' },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            { text: 'Kode Kategori', dataIndex: 'kode_kategori' },
+                            { text: 'Nama Kategori', dataIndex: 'nama_kategori' }
+                        ])
+                    }
+                };
+            }
+        }
+        customElements.define(MasterInstrumenKategori.is, MasterInstrumenKategori);
+    </script>
+</dom-module>

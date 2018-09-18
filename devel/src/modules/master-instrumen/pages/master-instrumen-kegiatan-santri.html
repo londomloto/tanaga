@@ -1,0 +1,100 @@
+<link rel="import" href="../../master-mixins/master-table.html">
+<link rel="import" href="../../master-mixins/master-style.html">
+
+<dom-module id="master-instrumen-kegiatan-santri">
+    <template>
+        <style include="master-style">
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="Referensi" desc="Kegiatan Santri" on-back-tap="__onBackTap">
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <div>&nbsp;</div>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Sunting</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+
+                </div>
+                <div slot="right-toolbar">
+                    <div class="grid-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div>
+            </module-header-block>
+            <div class="flex">
+                <kct-grid 
+                    id="grid" 
+                    url="[[ api ]]" 
+                    params="[[ params ]]"
+                    columns="[[ columns ]]" 
+                    selection-model="row"
+                    hide-header></kct-grid>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Editor" width="600" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        id="combo-group" 
+                        url="/master-instrumen/group" 
+                        params="[[ params.params ]]"
+                        label="Group Instrumen" 
+                        value="{{ editingRecord.kode_group }}" 
+                        item-label-path="label_group" 
+                        item-value-path="kode_group"></kct-combobox>
+                    <paper-input label="Kode Instrumen" value="{{ editingRecord.kode_init }}"></paper-input>
+                    <paper-input label="Nama Instrumen" value="{{ editingRecord.nama_init }}"></paper-input>
+                    <paper-input label="Deskripsi" value="{{ editingRecord.deskripsi }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+        
+    </template>
+    <script>
+        class MasterInstrumenKegiatanSantri extends Mixins(KctView).use(Mixins.MasterTable) {
+            static get is() {
+                return 'master-instrumen-kegiatan-santri';
+            }
+            static get properties() {
+                return {
+                    api: { type: String, value: '/master-instrumen/instrumen' }, 
+                    params: {
+                        type: Object,
+                        value: () => ({
+                            params: {
+                                kode_group: ["IN", ["B1","B2","B3","B4","B5","B6"]]    
+                            }
+                        })
+                    },
+                    identity: { type: String, value: 'id_instrumen' },
+                    homepage: { type: String, value: '/master-instrumen' },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            { text: 'Kode', dataIndex: 'kode_init', width: 120 },
+                            { text: 'Group', dataIndex: 'kode_group', width: 120 },
+                            { text: 'Nama', dataIndex: 'nama_init', width: 120 },
+                            { text: 'Deskripsi', dataIndex: 'deskripsi', width: 400 }
+                        ])
+                    }
+                };
+            }
+        }
+        customElements.define(MasterInstrumenKegiatanSantri.is, MasterInstrumenKegiatanSantri);
+    </script>
+</dom-module>
