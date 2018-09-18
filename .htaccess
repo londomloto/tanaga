@@ -7,5 +7,5 @@
     
     RewriteCond %{REQUEST_URI} !\.(html|gif|jpg|jpeg|png|css|js|ttf|woff2?|otf|svg|eot|map|json|ico|kml|kmz)$
     RewriteRule ^([^/]+)/(.*)$ $1/ [L,NC]
-    RewriteRule ^([^/]+)/$ $1/devel [L]
+    RewriteRule ^$ /tanaga/devel [L]
 </IfModule>
