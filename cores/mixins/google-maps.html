@@ -1,0 +1,261 @@
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="mixins.html">
+<script>
+    {
+
+        let gmap = {
+                
+            clients: [],
+            
+            loading: false,
+
+            add: (client) => {
+                gmap.clients.push(client);
+            },  
+
+            run: () => {
+                gmap.clients.forEach(c => {
+                    if ( ! c.apiLoaded) {
+                        c.apiLoaded = true;
+                        c.apiReady();
+                    }
+                });
+            },
+
+            err: () => {
+                gmap.clients.forEach(c => {
+                    c.apiError();
+                });
+            }
+        };
+
+        if (window.gmapLoaded === undefined) {
+            window.gmapLoaded = () => {
+                gmap.loading = false;
+                gmap.run();
+            };
+        }
+
+        Mixins.GoogleMaps = Polymer.dedupingMixin(superclass => {
+
+            return class extends superclass {
+
+                static get properties() {
+                    return {
+                        mapApi: { type: String, value: 'https://maps.googleapis.com/maps/api/js' },
+                        mapKey: { type: String, value: 'AIzaSyAkAPLrhS4JhnMXk0DhbjX1Baco93CpLdM' },
+                        // mapKey: { type: String, value: 'AIzaSyDVS-BtasRrLlxz2ONY8JL1GzxXvVpp7b8' },
+                        mapLibraries: { type: String, value: 'geometry,places,drawing' },
+                        mapZoom: { type: Number, value: 10, notify: true },
+                        mapCenter: { 
+                            type: Object, 
+                            notify: true,
+                            value: () => ({ 
+                                lat: -7.02634521289958, 
+                                lng: 110.45752929687501
+                                // lat: 3.5952,
+                                // lng: 98.6722
+                            }) 
+                        }
+                    };
+                }
+
+                constructor() {
+                    super();
+                    this.apiLoaded = false;
+                    
+                    gmap.add(this);
+
+                    this.markers = [];
+                    this.polylines = [];
+                    this.polygons = [];
+                    this.tooltips = [];
+                    this.defaultMapCenter = null;
+                }
+
+                ready() {
+                    super.ready();
+                    this.loadApi();
+                    this.defaultMapCenter = this.mapCenter;
+                }
+
+                loadApi() {
+                    if (window.google && window.google.maps) {
+                        gmap.run();
+                    } else {
+                        if (gmap.loading) return;
+                        gmap.loading = true;
+
+                        let script = document.querySelector('#gmaps-api');
+
+                        if ( ! script) {
+
+                            // construct url
+                            let url = this.mapApi;
+                            url += '?key=' + this.mapKey;
+
+                            if (this.mapLibraries) {
+                                url += '&libraries=' + this.mapLibraries;
+                            }
+
+                            url += '&callback=gmapLoaded';
+
+                            script = document.createElement('script');
+                            script.id = 'gmaps-api';
+                            script.async = true;
+                            script.defer = true;
+                            script.src = url;
+
+                            script.onerror = () => {
+                                gmap.err();
+                            };
+
+                            document.body.appendChild(script);
+                        }
+                    }
+                }
+                
+                apiReady() {}
+                apiError() {} 
+
+                addMarker(options = {}) {
+                    if (options.map === undefined) {
+                        options.map = this.map;
+                    }
+                    let marker = new google.maps.Marker(options);
+                    this.markers.push(marker);
+                }
+
+                clearMarkers() {
+                    this.markers.forEach(m => {
+                        m.setMap(null);
+                    });
+
+                    this.markers = [];
+                }
+
+                clearPolylines() {
+                    this.polylines.forEach(p => {
+                        p.setMap(null);
+                    });
+                    this.polylines = [];
+                }
+
+                clearTooltips() {
+                    this.tooltips.forEach(t => {
+                        t.setMap(null);
+                    });
+                    this.tooltips = [];
+                }
+
+                fitBounds(bounds) {
+                    this.map.fitBounds(bounds);
+                }
+
+                zoomToCenter(sensor = false, options = {}) {
+
+                    let center = this.defaultMapCenter;
+                    
+                    this.map.setZoom(this.mapZoom);
+                    this.map.panTo(center);
+
+                    if (sensor) {
+                        this.markers.push(new google.maps.Marker({
+                            map: this.map,
+                            icon: options.sensorIcon,
+                            draggable: false,
+                            position: center
+                        }));
+                    }
+                }
+
+                zoomToSensor(options = {}) {
+                    this.clearMarkers();
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            p => {
+                                let pos = {
+                                    lat: p.coords.latitude,
+                                    lng: p.coords.longitude
+                                };
+
+                                this.map.setZoom(this.mapZoom);
+                                this.map.panTo(pos);
+
+                                this.markers.push(new google.maps.Marker({
+                                    map: this.map,
+                                    icon: options.sensorIcon,
+                                    draggable: false,
+                                    position: pos
+                                }));
+
+                            },
+                            () => {
+                                this.zoomToCenter(true, options);
+                            }
+                        );
+                    } else {
+                        this.zoomToCenter(true, options);
+                    }
+                }
+                
+                addZoomControl(options = {}) {
+
+                    let div = document.createElement('div'),
+                        control = new Control(div, this);
+
+                    div.classList.add('zoom-control');
+
+                    this.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(div);
+
+                    function Control(div, scope) {
+                        let map = scope.map;
+
+                        let zoomSensor = document.createElement('div');
+                        zoomSensor.classList.add('zoom-control-item')
+                        zoomSensor.classList.add('sensor');
+                        div.appendChild(zoomSensor);
+
+                        let zoomSensorButton = document.createElement('paper-icon-button');
+                        zoomSensorButton.icon = 'maps:my-location';
+                        zoomSensor.appendChild(zoomSensorButton);
+
+                        let zoomIn = document.createElement('div');
+                        zoomIn.classList.add('zoom-control-item')
+                        zoomIn.classList.add('in');
+                        div.appendChild(zoomIn);
+
+                        let zoomInButton = document.createElement('paper-icon-button');
+                        zoomInButton.icon = 'add';
+                        zoomIn.appendChild(zoomInButton);
+
+                        let zoomOut = document.createElement('div');
+                        zoomOut.classList.add('zoom-control-item');
+                        zoomOut.classList.add('out');
+                        div.appendChild(zoomOut);
+
+                        let zoomOutButton = document.createElement('paper-icon-button');
+                        zoomOutButton.icon = 'remove';
+                        zoomOut.appendChild(zoomOutButton);
+
+                        google.maps.event.addDomListener(zoomSensorButton, 'click', () => {
+                            scope.zoomToSensor(options);
+                        });
+
+                        google.maps.event.addDomListener(zoomInButton, 'click', () => {
+                            map.setZoom(map.getZoom() + 1);
+                        });
+
+                        google.maps.event.addDomListener(zoomOutButton, 'click', () => {
+                            map.setZoom(map.getZoom() - 1);
+                        });
+                    }  
+
+                }
+
+            };
+
+        });
+    }
+</script>

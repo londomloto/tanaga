@@ -1,0 +1,35 @@
+<link rel="import" href="../../vendors/moment/moment.html">
+
+<dom-module id="kct-date-format">
+    <template>
+        <style>
+            :host {
+                display: inline-block;
+            }
+        </style>
+        <span>[[ display ]]</span>
+    </template>
+    <script>
+        class KctDateFormat extends Polymer.Element {
+            static get is() {
+                return 'kct-date-format';
+            }
+            static get properties() {
+                return {
+                    date: { type: String },
+                    format: { type: String, value: 'MMM Do, YYYY' },
+                    display: {
+                        type: String,
+                        computed: '__computeDisplay(date)'
+                    }
+                }
+            }
+            __computeDisplay(date) {
+                if (date) {
+                    return moment(date).format(this.format);
+                }
+            }
+        }
+        customElements.define(KctDateFormat.is, KctDateFormat);
+    </script>
+</dom-module>

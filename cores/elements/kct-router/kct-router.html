@@ -1,0 +1,546 @@
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../mixins/resolver.html">
+
+<dom-module id="kct-router">
+    <template>
+        <app-location id="engine" route="{{ address }}" use-hash-as-path$="[[ hash ]]"></app-location>
+    </template>
+    <script>
+        class KctRouter extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+            static get is() { 
+                return 'kct-router'; 
+            }
+            static get properties() {
+                return {
+                    config: { type: Object },
+                    fallback: { type: String },
+                    address: { type: Object },
+                    hash: { type: Boolean, value: false },
+                    defaults: {
+                        type: Object,
+                        value: () => ({
+                            layout: 'main',
+                            layoutError: 'error',
+                            authentication: true
+                        })
+                    },
+                    routes: { type: Object, value: () => ({}) },
+                    route: {
+                        type: Object,
+                        notify: true,
+                        value: () => ({
+                            path: '',
+                            addr: '',
+                            event: 'init',
+                            cancel: false,
+                            fallback: '',
+                            params: [],
+                            query: {},
+                            data: {}
+                        })
+                    },
+                    state: { type: Object, notify: true, value: () => ({}) },
+                    silent: { type: Boolean, value: false }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__addressChanged(address.*)',
+                    '__configChanged(config.*)',
+                    '__routePathChanged(route.path)',
+                    '__routeAddrChanged(route.addr)',
+                    '__routeQueryChanged(route.query.*)'
+                ];
+            }
+
+            static disable() {
+                if (KctRouter.__instance) {
+                    KctRouter.__instance.disable();
+                }
+            }
+
+            static enable() {
+                if (KctRouter.__instance) {
+                    KctRouter.__instance.enable();
+                }
+            }
+
+            constructor() {
+                super();
+
+                // old route storage
+                this.__route = {
+                    path: ''
+                };
+
+                this.__maxRedir = 1;
+                this.__numRedir = 0;
+                
+                // dependencies resolver
+                this.__configResolver = this._defer();
+                this.__configResolver.done = false;
+
+                if ( ! KctRouter.__instance) {
+                    KctRouter.__instance = this;
+                }
+            }
+
+            ready() {
+                super.ready();
+
+                this._ensureAttribute('hidden', true);
+                this._engine = this.$.engine;
+            }
+
+            start() {
+                this.set('route.event', 'start');
+            }
+
+            finish() {
+                this.set('route.event', 'finish');
+            }
+
+            go(path) {
+                this.set('route.path', path);
+            }
+
+            enable() {
+                if ( ! this.shadowRoot.querySelector('app-location')) {
+                    this.shadowRoot.appendChild(this._engine);
+                }
+            }
+
+            disable() {
+                if (this.shadowRoot.querySelector('app-location')) {
+                    this.shadowRoot.removeChild(this._engine);
+                }
+            }
+
+            __fixpath(base, path) {
+                let regex = new RegExp('^' + base);
+                path = path.replace(regex, '');
+                regex = null;
+                return path;
+            }
+
+            __resolveConfig() {
+                if (this.__configResolver.done) {
+                    return Promise.resolve(this.config);
+                } else {
+                    return this.__configResolver.promise;
+                }
+            }
+
+            __resolveBase() {
+                return this.__resolveConfig().then(() => {
+                    if ( ! this.__baseuri) {
+                        this.__baseuri = this.config.app_base.replace(/\/$/, '');
+                    }
+                    return this.__baseuri;
+                });
+            }
+
+            __resolveCancel() {
+                let d = this._defer();
+
+                this.__canceling = Polymer.Debouncer.debounce(
+                    this.__canceling,
+                    Polymer.Async.timeOut.after(1),
+                    () => {
+                        d.resolve(this.route.cancel);
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__canceling);
+                return d.promise;
+            }
+
+            __compile() {
+                if (this.__compiling) {
+                    return this.__compiling;
+                }
+
+                let d = this._defer();
+
+                this.__resolveConfig().then(() => {
+                    let config = this.config;
+
+                    this._resolve('defaults', 'routes', 'fallback').then((values) => {
+                        let [defaults, routes, fallback] = values;
+                        let base = config.app_base.replace(/\/$/, '');
+
+                        this.set('route.fallback', fallback);
+
+                        if (routes['/not-found'] === undefined) {
+                            routes['/not-found'] = {
+                                layout: defaults.layoutError,
+                                authentication: false,
+                                authorization: false,
+                                data: {
+                                    errors: {
+                                        code: 404,
+                                        name: 'NOT FOUND',
+                                        message: "It's look like the page you requested was not found"
+                                    }
+                                }
+                            };
+                        }
+
+                        if (routes['/net-error'] === undefined) {
+                            routes['/net-error'] = {
+                                layout: defaults.layoutError,
+                                authentication: false,
+                                authorization: false,
+                                data: {
+                                    errors: {
+                                        code: 310,
+                                        name: 'NET ERROR',
+                                        message: "It's look like too many redirect"
+                                    }
+                                }
+                            };
+                        }
+
+                        if (routes['/forbidden'] === undefined) {
+                            routes['/forbidden'] = {
+                                layout: defaults.layoutError,
+                                authentication: false,
+                                authorization: false,
+                                data: {
+                                    errors: {
+                                        code: 403,
+                                        name: 'FORBIDDEN',
+                                        message: "It's look like you don't have privileges to access this page"
+                                    }
+                                }
+                            };
+                        }
+
+                        if (routes['/:module/pages/:page'] === undefined) {
+                            routes['/:module/pages/:page'] = {
+                                partial: true,
+                                module: 1
+                            };    
+                        }
+
+                        if (routes['/:module/:page/:params'] === undefined) {
+                            routes['/:module/:page/:params'] = {
+                                module: 1,
+                                page: 2,
+                                params: 3
+                            };    
+                        }
+
+                        if (routes['/:module/:page'] === undefined) {
+                            routes['/:module/:page'] = {
+                                module: 1,
+                                page: 2
+                            };    
+                        }
+
+                        if (routes['/:module'] === undefined) {
+                            routes['/:module'] = {
+                                module: 1
+                            };    
+                        }
+
+                        this.routes = routes;
+
+                        for (let key in routes) {
+                            let route = routes[key];
+                            let pattern = base + key;
+                            let placeholder = {};
+                            let index = 0;
+
+                            let compiled = pattern.replace(
+                                /:([^/]+)/g,
+                                (match, name) => {
+                                    index++;
+
+                                    if (route[name] !== undefined) {
+                                        if ( ! isNaN(route[name])) {
+                                            placeholder[route[name]] = name;
+                                        }
+                                    } else {
+                                        placeholder[index] = name;
+                                    }
+
+                                    switch(name) {
+                                        case 'module':
+                                        case 'page':
+                                            return '([^/?]+)';
+                                        case 'params':
+                                            return '(.+)';
+                                        default:
+                                            return '([^/?]+)';
+                                    }
+                                }
+                            );
+
+                            route.pattern = pattern;
+                            route.compiled = new RegExp(compiled);
+                            route.placeholder = placeholder;
+                            route.fallback = fallback;
+
+                            if (route.layout === undefined) {
+                                route.layout = defaults.layout;
+                            }
+
+                            if (route.authentication === undefined) {
+                                route.authentication = defaults.authentication;
+                            }
+
+                            if (route.authentication) {
+                                if (route.authorization === undefined) {
+                                    route.authorization = defaults.authentication;
+                                }    
+                            } else {
+                                route.authorization = false;
+                            }
+
+                            route.data = route.data || {};
+                        }
+
+                        d.resolve();
+                    });
+                });
+
+                this.__compiling = d.promise;
+                return this.__compiling;
+            }
+
+            __handle(path) {
+                if (this.__route.path == path) {
+                    return;
+                }
+
+                this.set('__route.path', path);
+                this.start();
+
+                // compile
+                this.__compile().then(() => {
+
+                    // check cancelation
+                    this.__resolveCancel().then((cancel) => {
+
+                        if (cancel) {
+                            this.finish();
+                            this.set('route.cancel', true);
+                            return;
+                        }
+
+                        // dispatch route
+                        this.__resolveBase().then((base) => {
+                            let state, addr;
+
+                            path = path.replace(/\/$/, '');
+                            addr = base + this.__fixpath(base, path) + '/';
+
+                            for (let key in this.routes) {
+                                let route = Object.assign(Object.create(null), this.routes[key]),
+                                    matches = addr.match(route.compiled);
+
+                                if (matches) {
+                                    let params = [];
+                                    
+                                    route.active = true;
+                                    route.params = [];
+                                    route.path = path;
+                                    
+                                    for (let index in route.placeholder) {
+                                        if (matches[index] !== undefined) {
+                                            let name = route.placeholder[index];
+                                            let data = null;
+
+                                            if (name == 'module') {
+                                                data = matches[index];
+                                                route.module = data;
+                                                // Array.prototype.push.apply(params, [data]);
+                                            } else if (name == 'page') {
+                                                data = matches[index];
+                                                if (route.partial) {
+                                                    route.page = route.module + '-page';
+                                                    Array.prototype.push.apply(params, [data]);
+                                                } else {
+                                                    route.page = data + '-page';    
+                                                }
+                                                // Array.prototype.push.apply(params, [data]);
+                                            } else {
+                                                if (name == 'params') {
+                                                    data = matches[index].replace(/\/$/, '').split(/\//);
+                                                    Array.prototype.push.apply(params, data);
+                                                } else {
+                                                    data = matches[index].replace(/\/$/, '');
+                                                    Array.prototype.push.apply(params, [data]);
+                                                    route[name] = data;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    route.params = params;
+
+                                    if ( ! state) {
+                                        state = route;
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            if (state) {
+
+                                let before = this.dispatchEvent(new CustomEvent('before-route', {
+                                    cancelable: true,
+                                    detail: {
+                                        state: state
+                                    }
+                                }));
+
+                                this.__numRedir = 0;
+
+                                if (before) {
+                                    this.set('state', state);
+                                    this.finish();
+                                }
+
+                            } else {
+
+                                if (this.fallback) {
+                                    if (this.__numRedir <= this.__maxRedir) {
+                                        this.__numRedir++;
+                                        this.go(this.fallback);
+                                    } else {
+                                        this.__numRedir = 0;
+                                        this.go('/net-error');
+                                    }
+                                } else {
+                                    this.__numRedir = 0;
+                                    this.go('/not-found');
+                                }
+                            }
+                        });
+                    });
+
+                });
+            }
+
+            __configChanged() {
+                if (this.config && this.config.app_name) {
+                    this.__configResolver.resolve(this.config);
+                    this.__configResolver.done = true;
+                }
+            }
+
+            __addressChanged(changed) {
+                // when browser refresh
+                if (this.route.event == 'init') {
+                    this.set('route.event', 'ready');
+                    
+                    let addr = this.address.path;
+                    addr = addr || '/';
+
+                    this.__resolveBase().then(base => {
+                        let path, query;
+
+                        path = this.__fixpath(base, addr);
+                        query = this.address.__queryParams;
+
+                        this.set('route.path', path);
+                        this.set('route.query', query);
+                    });
+                }
+            }
+
+            __sync() {
+                if (this.route.event != 'init') {
+                    this.__resolveBase().then(base => {
+                        let path, addr;
+
+                        path = this.route.path;
+                        addr = this.hash ? path : (base + path);
+
+                        if (addr != this.address.path) {
+                            this.set('address.path', addr);
+                        }
+
+                        let query = this.route.query;
+                        this.set('address.__queryParams', query);
+                    });    
+                }
+            }
+
+            __routeQueryChanged() {
+                this.__sync();
+            }
+
+            __parse(path) {
+                let queryIndex = path.indexOf('?');
+
+                if (queryIndex !== -1) {
+
+                    let queryString = path.substr((queryIndex + 1)),
+                        queryData = (s) => s.replace(/\+/g, ' '),
+                        regex = /([^&=]+)=?([^&]*)/g,
+                        queryParams = {},
+                        matches;
+
+                    while(matches = regex.exec(queryString)) {
+                        queryParams[queryData(matches[1])] = queryData(matches[2]);
+                    }
+
+                    regex = null;
+                    path = path.substr(0, queryIndex);
+
+                    return {
+                        path: path,
+                        hasQuery: true,
+                        queryParams: queryParams
+                    };
+                } else {
+                    return {
+                        path: path,
+                        hasQuery: false,
+                        queryParams: null
+                    };
+                }
+            }
+
+            __routeAddrChanged(addr) {
+                if (addr) {
+                    this.set('silent', true);
+
+                    let parsed = this.__parse(addr);
+
+                    if (parsed.hasQuery) {
+                        this.set('route.query', parsed.queryParams);
+                    }
+                    
+                    this.set('route.path', parsed.path);
+                    this.set('__route.path', parsed.path);
+
+                    this.__sync();
+                    this.set('silent', false);
+                }
+            }
+
+            __routePathChanged(path) {
+                if (path && ! this.silent) {
+
+                    let parsed = this.__parse(path);
+
+                    if (parsed.hasQuery) {
+                        this.set('route.query', parsed.queryParams);
+                        this.set('route.path', parsed.path);
+                        return;
+                    }
+
+                    this.__sync();
+                    this.__handle(path);
+                }
+            }
+        }
+
+        customElements.define(KctRouter.is, KctRouter)
+    </script>
+</dom-module>

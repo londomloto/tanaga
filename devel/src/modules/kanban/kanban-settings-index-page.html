@@ -1,0 +1,149 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="kanban-settings-index-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+
+            .box .media {
+                text-align: center;
+                background-color: var(--paper-blue-grey-200);
+                color: #fff;
+                height: 150px;
+                line-height: 150px;
+            }
+            .box .media iron-icon {
+                --iron-icon-width: 64px;
+                --iron-icon-height: 64px;
+            }
+            .box .box-tool {
+                top: 3px;
+                right: 3px;
+                color: #fff;
+            }
+            .box .box-foot {
+                padding: 0 15px 15px 15px;
+            }
+            a.link {
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 15px;
+                color: #666;
+            }
+            a.link:hover {
+                text-decoration: underline;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-role id="role"></kct-role>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block text="Settings" desc="Worksheets" icon="view-carousel" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-button on-tap="__onAddTap"  style="margin-left: 5px;"  data-perm="bpm@settings" data-perm-mode="lock"><iron-icon icon="add"></iron-icon>&nbsp;Add Sheet</paper-button>
+            </setting-header-block>
+            <!-- <page-header-block icon="view-carousel" title="Worksheet" description="Manage Worksheet">
+                <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add Sheet</paper-button>
+            </page-header-block> -->
+            <div class="flex scroll-y">
+                <div class="padding">
+                    <kct-column columns="6">
+                        <template is="dom-repeat" items="[[ records ]]">
+                            <div class="box box-shadow">
+                                <div class="media">
+                                    <iron-icon icon="view-carousel"></iron-icon>
+                                </div>
+                                <div class="box-body text-center">
+                                    <h3 class="f-400">[[ item.ks_name ]]</h3>
+                                </div>
+                                <div class="box-foot text-center">
+                                    <div class="line"></div>
+                                    <paper-button on-tap="__onEditTap">DETAIL</paper-button>
+                                    <template is="dom-if" if="[[ __isEditable(item) ]]">                                        
+                                        <paper-button on-tap="__onDeleteTap" class="text-danger">DELETE</paper-button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </kct-column>
+                </div>
+            </div>
+
+        </kct-vbox>
+    </template>
+    <script>
+        class KanbanSettingsIndexPage extends KctView {
+            static get is() {
+                return 'kanban-settings-index-page';
+            }
+            static get setting() {
+                return 'kanban-settings';
+            }
+            static get properties() {
+                return {
+                    records: {type: Array}
+                }
+            }
+
+            handleRouteParams(...params) {
+                let [setting, action] = params;
+                if (setting != 'kanban-settings') return;
+
+                if ( ! action) {
+                    this.__load();
+                    this.$.role.validate();
+                }
+            }
+
+            __load() {
+                let ajax = this.$.ajax;
+                
+                ajax.GET('/kanban/kanban-settings').then((res) => {
+                    this.set('records', res.data);
+                });
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+            __onAddTap() {
+                this.set('route.path', '/settings/kanban-settings/add');
+            }
+            __onEditTap(e) {
+                let record = e.model.item;
+                this.set('route.path', '/settings/kanban-settings/edit/' + record.ks_id);
+            }
+            __onDeleteTap(e) {
+                let record = e.model.item;
+
+                this.confirm('Confirm', 'Are you sure want to delete this kanban-setting?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/kanban/kanban-settings/' + record.ks_id).then(() => {
+                            this.__load();
+                        });
+                    }
+                });
+            }
+
+            __isEditable(item){
+                return item.ks_removable !== undefined ? item.ks_removable : true;
+            }
+        }
+        customElements.define(KanbanSettingsIndexPage.is, KanbanSettingsIndexPage);
+    </script>
+</dom-module>

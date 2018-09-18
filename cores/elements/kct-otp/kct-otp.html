@@ -1,0 +1,297 @@
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../kct-layouts/kct-column.html">
+<link rel="import" href="../kct-layouts/kct-hbox.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="../kct-message/kct-alert.html">
+
+<dom-module id="kct-otp">
+    <template>
+        <style include="theme-helper">
+            :host {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #fff;
+                display: none;
+            }
+            :host([opened]) {
+                display: block;
+            }
+            .container {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 400px;
+                left: 50%;
+                margin-left: -200px;
+                text-align: center;
+                padding: 30px 0;
+                background-color: var(--paper-grey-100);
+            }
+            .input-container {
+                padding: 30px 30px 20px 30px;
+                background-color: var(--paper-grey-200);
+                border-top: 3px solid var(--paper-blue-400);
+            }
+            .input {
+                font-size: 28px;
+                margin-bottom: 0;
+                margin: 0 5px;
+                --paper-input-container-input: {
+                    font-weight: bold;
+                };
+                --paper-input-container-underline: {
+                    border-bottom: 3px solid var(--paper-blue-grey-300);
+                };
+                --paper-input-container-underline-focus: {
+                    border-bottom: 3px solid var(--paper-blue-500);
+                };
+            }
+            .btn-verify {
+                
+            }
+            .masking {
+                
+            }
+            .timer {
+                font-size: 12px;
+                padding: 5px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="container">
+            <h3>We will send one-time password (OTP) to:</h3>
+            <div class="m-t m-b" style="font-weight: bold;">[[ email ]]</div>
+            <div class="m-t">
+                <paper-button disabled$="[[ !expired ]]" on-tap="__onResendTap" class="btn-resend btn-blue">RESEND</paper-button>
+            </div>
+            <div class="line"></div>
+            <div class="m-t">
+                Enter OTP number to verify your account
+            </div>
+            <div class="input-container m-t">
+                <kct-hbox columns="5">
+                    <div class="flex">
+                        <paper-input on-keypress="__onInputKeypress" class="input" maxlength="1" no-label-float></paper-input>
+                    </div>
+                    <div class="flex">
+                        <paper-input on-keypress="__onInputKeypress" class="input" maxlength="1" no-label-float></paper-input>
+                    </div>
+                    <div class="flex">
+                        <paper-input on-keypress="__onInputKeypress" class="input" maxlength="1" no-label-float></paper-input>
+                    </div>
+                    <div class="flex">
+                        <paper-input on-keypress="__onInputKeypress" class="input" maxlength="1" no-label-float></paper-input>
+                    </div>
+                    <div class="flex">
+                        <paper-input on-keypress="__onInputKeypress" class="input" maxlength="1" no-label-float></paper-input>
+                    </div>
+                </kct-hbox>
+            </div>
+            <div class="timer">
+                Code will be expired in [[ timer ]]
+            </div>
+            <div class="m-t" hidden$="[[ busy ]]">
+                <paper-button on-tap="__onVerifyTap" class="btn-verify btn-green">VALIDATE</paper-button> 
+                <span>or <a on-click="__onCancelTap" href="javascript:;">cancel validation</a></span>
+            </div>
+            <div class="m-t masking" hidden$="[[ !busy ]]">
+                <paper-spinner-lite active$="[[ busy ]]"></paper-spinner-lite>
+            </div>
+        </div>
+    </template>
+    <script>
+        class KctOtp extends Polymer.Element {
+            static get is() {
+                return 'kct-otp';
+            }
+            static get properties() {
+                return {
+                    email: { type: String },
+                    code: { type: String },
+                    opened: { type: Boolean, value: false, reflectToAttribute: true },
+                    busy: { type: Boolean, value: false },
+                    timer: { type: String, value: '--:--' },
+                    expired: { type: Boolean, value: false }
+                }
+            }
+            constructor() {
+                super();
+                this.__ticker = null;
+            }
+            ready() {
+                super.ready();
+            }
+            open() {  
+                if (this.parentNode !== document.body) {
+                    document.body.appendChild(this);
+                }
+                
+                this.set('opened', true);
+                this.request();
+                this.__autofocus(1000);
+            }
+            request() {
+                this.$.ajax.POST('/auth/request-otp', {
+                    email: this.email
+                }).then(res => {
+                    if (res.data) {
+                        //this.__autotypes(res.data.code);
+                        this.__countdown(res.data.life);
+                    }
+                });
+            }
+            untick() {
+                this.set('timer', '--:--');
+                if (this.__ticker) {
+                    clearInterval(this.__ticker);
+                    this.__ticker = null;
+                }
+            }
+            close() {
+                this.untick();
+                this.reset();
+                this.set('opened', false);
+            }
+            reset() {
+                this.shadowRoot.querySelectorAll('.input').forEach(elem => {
+                    elem.value = '';
+                });
+                this.set('code', '');
+            }
+            verify() {
+                let inputs = this.__inputs();
+                let values = [];
+                let code;
+                
+                inputs.forEach(elem => {
+                    if (elem.value != '' && elem.value !== undefined) {
+                        values.push(elem.value);
+                    }
+                });
+
+                code = values.join('');
+                this.set('code', code);
+                
+                if (code) {
+                    this.set('busy', true);
+
+                    this.$.ajax.POST('/auth/validate-otp', {
+                        email: this.email,
+                        code: code
+                    }).then(res => {
+                        this.__fire('validate', { valid: res.success });
+                        this.set('busy', false);
+                        
+                        if ( ! res.success) {
+                            this.__alert('Invalid OTP number').then(() => {
+                                this.__autofocus();
+                            });
+                        } else {
+                            this.close();
+                        }
+                    });
+                } else {
+                    this.__fire('validate', { valid: false });
+                    this.__alert('Enter your OTP number').then(() => {
+                        this.__autofocus();
+                    });
+                }
+            }
+            __fire(type, data = {}) {
+                let e = new CustomEvent(type, {
+                    detail: data
+                });
+                this.dispatchEvent(e);
+            }
+            __alert(message) {
+                let m = document.createElement('kct-alert');
+                m.title = 'Warning';
+                m.message = message;
+
+                document.body.appendChild(m);
+                return m.open();
+            }
+            __autofocus(after = 10) {
+                let delay = setTimeout(() => {
+                    clearTimeout(delay);
+                    delay = null;
+                    this.shadowRoot.querySelector('.input').focus();
+                }, after);
+            }
+            __autotypes(v) {
+                let c = (v || '').toString().split('');
+                this.__inputs().forEach((elem, index) => {
+                    if (c[index] !== undefined) {
+                        elem.value = c[index];
+                    }
+                });
+            }
+            __inputs() {
+                let inputs = [];
+                this.shadowRoot.querySelectorAll('.input').forEach(elem => {
+                    inputs.push(elem);
+                });
+                return inputs;
+            }
+            __countdown(duration) {
+                let elapsed = duration;
+                let minutes, seconds;
+
+                this.untick();
+
+                this.__ticker = setInterval(() => {
+                    minutes = parseInt(elapsed / 60, 10);
+                    seconds = parseInt(elapsed % 60, 10);
+
+                    minutes = minutes < 10 ? '0' + minutes : minutes;
+                    seconds = seconds < 10 ? '0' + seconds : seconds;
+
+                    this.set('timer', minutes + ':' + seconds);
+
+                    if (--elapsed < 0) {
+                        this.set('expired', true);
+                        this.untick();
+                    }
+                }, 1000);
+
+            }
+
+            __onInputKeypress(e) {
+                if (e.key != 'Enter') {
+                    let inputs = this.__inputs();
+                    let index = inputs.indexOf(e.target);
+                    let next = index + 1;
+
+                    if (next < inputs.length) {
+                        let d = setTimeout(() => {
+                            inputs[next].focus();
+                            clearTimeout(d);
+                            d = null;
+                        }, 10);
+                        
+                    }    
+                } else {
+                    this.verify();
+                }
+                
+            }
+            __onResendTap() {
+                this.request();
+            }
+            __onVerifyTap() {
+                this.verify();
+            }
+            __onCancelTap() {
+                this.close();
+            }
+        }
+        customElements.define(KctOtp.is, KctOtp);
+    </script>
+</dom-module>

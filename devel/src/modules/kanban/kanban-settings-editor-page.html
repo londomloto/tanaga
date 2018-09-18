@@ -1,0 +1,568 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-kanban/kct-kanban.html">
+<link rel="import" href="../../../../cores/elements/kct-dropdown/kct-dropdown.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="kanban-settings-editor-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .west {
+                width: 250px;
+                background-color: var(--paper-grey-200);
+                z-index: 2;
+            }
+            kct-kanban {
+                width: var(--kanban-width, calc(100vw - 250px));
+            }
+            .panel-content {
+                padding: 5px;
+            }
+            .panel-content .box {
+                border: 1px solid var(--paper-grey-200);
+                margin-bottom: 5px;
+            }
+            .panel-content .box-tool {
+                top: 3px;
+                right: 5px;
+            }
+            .panel-content .box-tool paper-icon-button {
+                color: var(--paper-blue-grey-500);
+            }
+            .panel-action {
+                height: 60px;
+                position: relative;
+            }
+            .panel-action::before {
+                content: '';
+                display: block;
+                position: absolute;
+                left: 50%;
+                bottom: 0;
+                top: 0;
+                width: 1px;
+                border-left: 1px dashed #ccc;
+            }
+            .panel-action > paper-fab {
+                position: absolute;
+                left: 50%;
+                bottom: 0;
+                margin-left: -20px;
+                box-shadow: none;
+            }
+        </style>
+
+        <kct-ajax id="ajax1"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+
+        <kct-role id="role"></kct-role>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block icon="view-carousel" text="Settings" desc="Worksheet Editor" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-icon-button on-tap="__onRefreshTap" icon="refresh"></paper-icon-button>
+                <paper-button  style="margin-left: 5px;"  on-tap="__onAddPanelTap" data-perm="bpm@settings" data-perm-mode="lock"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
+                <paper-button on-tap="__onSaveTap" data-perm="bpm@settings" data-perm-mode="lock"><iron-icon icon="done"></iron-icon>&nbsp;Save</paper-button>
+
+            </setting-header-block>
+            <div class="flex">
+                <kct-hbox fit>
+                    <div class="west">
+                        <div class="p-a">
+                            <paper-input value="{{ record.ks_name }}" label="Kanban Name" required auto-validate error-message="Name is required"></paper-input>
+                            <paper-input value="{{ record.ks_description }}" label="Description"></paper-input>
+                        </div>
+                    </div>
+                    <div class="flex center">
+                        <kct-kanban id="kanban" columns="4" hide-header>
+                            <template is="dom-repeat" items="[[ record.ks_panels ]]" as="panel" on-dom-change="__onPanelChange">
+                                <kct-kanban-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-secondary hide-condensed>
+                                    <paper-input slot="panel-title" no-label-float value="{{ panel.kp_title }}"></paper-input>
+                                    <kct-dropdown slot="primary-toolbar" halign="right" data-perm="bpm@settings">
+                                        <paper-item on-tap="__onColorPanelTap">Header color</paper-item>
+                                        <paper-item on-tap="__onShiftLeftPanelTap">Shift left</paper-item>
+                                        <paper-item on-tap="__onShiftRightPanelTap">Shift right</paper-item>
+                                        <paper-item on-tap="__onDeletePanelTap">Delete panel</paper-item>
+                                    </kct-dropdown>
+                                    <div class="panel-content">
+                                        <template is="dom-repeat" items="[[ panel.kp_statuses ]]" as="status">
+                                            <div class="box">
+                                                <div class="box-tool">
+                                                    <paper-icon-button on-tap="__onDeleteStatusTap" icon="clear"  data-perm="bpm@settings"></paper-icon-button>
+                                                </div>
+                                                <div class="box-body">
+                                                    <div class="f-500 m-b-xs">[[ status.kst_label ]]</div>
+                                                    <div class="text-muted text-sm">[[ status.kst_diagrams_name ]]</div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="panel-action">
+                                            <paper-fab style$="background-color: [[ panel.kp_accent ]]" on-tap="__onAddStatusTap" mini icon="add"  data-perm="bpm@settings"></paper-fab>
+                                        </div>
+                                    </div>
+                                </kct-kanban-panel>
+                            </template>
+                        </kct-kanban>
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+
+        <!-- dialog: palette -->
+
+        <kct-dialog id="palette-dialog" title="Header Color" context-as="xyz">
+            <template preserve-content>
+                <style>
+                    .palette > a {
+                        display: inline-block;
+                        width: 20px;
+                        height: 20px;
+                        margin: 0 10px 10px 0;
+                        cursor: pointer;
+                    }
+                    .palette > a > span {
+                        display: none;
+                    }
+                    .palette > a:active > span,
+                    .palette > a:focus > span {
+                        border: 1px solid #fff;
+                        display: block;
+                        width: 16px;
+                        height: 16px;
+                        position: relative;
+                        top: 1px;
+                        left: 1px;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <p class="m-t-0">Select appropriate accent for this panel</p>
+                    <div class="palette">
+                        <template is="dom-repeat" items="[[ __computePaletteItems() ]]">
+                            <a on-click="__onPaletteItemClick" href="javascript:;" style$="background: [[ item.style ]] ">
+                                <span></span>
+                            </a>
+                        </template>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onPaletteSubmit">OK</paper-button>
+                    <paper-button on-tap="__onPaletteCancel">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <!-- dialog: flow -->
+        <kct-dialog id="status-dialog" title="Statuses" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    vaadin-combo-box {
+                        padding: 0;
+                        --paper-input-container-input: { font-size: 14px;  };
+                        --paper-input-container-label: { font-size: 14px;  };
+                        --paper-input-container-underline: { display: none;  };
+                    }
+                    paper-checkbox {
+                        display: block;
+                        font-size: 14px;
+                        padding: 4px 10px;
+                    }
+                    paper-checkbox + paper-checkbox {
+                        border-top: 1px solid var(--paper-grey-200);
+                    }
+                    .dialog-body-content,
+                    .main {
+                        height: 100%;
+                        padding: 0;
+                    }
+                    .form-group, 
+                    .list-group {
+                        border: 1px solid #dfdfdf;
+                    }
+                    .form-group {
+                        padding: 15px;
+                        margin-bottom: 15px;
+                    }
+                    .list-group {
+                        height: 100%;
+                        box-sizing: border-box;
+                        overflow-x: hidden;
+                        overflow-y: auto;
+                    }
+                    .name {
+                        font-weight: 500;
+                        color: var(--paper-cyan-500);
+                    }
+                    .desc {
+                        font-size: 12px;
+                        
+                    }
+                </style>
+
+                <div class="main" slot="dialog-body">
+                    <kct-vbox>
+                        <div class="head">
+                            <div class="form-group">
+                                <vaadin-combo-box 
+                                    id="comboworker" 
+                                    no-label-float 
+                                    label="Select available workflow..."
+                                    items="[[ workers ]]" 
+                                    item-value-path="name" 
+                                    item-label-path="text"
+                                    on-change="__onComboWorkerChange"></vaadin-combo-box>        
+                            </div>
+                            
+                        </div>
+                        <div class="flex">
+                            <div class="list-group">
+                                <template is="dom-repeat" items="[[ statuses ]]">
+                                    <paper-checkbox on-change="__onStatusItemCheck" checked$="{{ item.checked }}">
+                                        <div class="name">[[ item.text ]]</div>
+                                        <div class="desc">[[ item.source_name ]] &rarr; [[ item.target_name ]]</div>
+                                    </paper-checkbox>
+                                </template>    
+                            </div>
+                        </div>
+                    </kct-vbox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onStatusClose">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class KanbanSettingsEditorPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'kanban-settings-editor-page';
+            }
+            
+            static get setting() {
+                return 'kanban-settings';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object },
+                    panels: { type: Array },
+                    selectedPanel: { type: Object },
+                    workers: { type: Array },
+                    statuses: { type: Array },
+                    invalid: { type: Boolean, value: false }
+                }
+            }
+            static get observers() {
+                return [
+                    '__validationChanged(record.ks_name)'
+                ];
+            }
+            static get colors() {
+                return [
+                    'var(--paper-purple-500)',
+                    'var(--paper-red-500)',
+                    'var(--paper-amber-500)',
+                    'var(--paper-indigo-500)',
+                    'var(--paper-pink-500)',
+                    'var(--paper-blue-500)',
+                    'var(--paper-teal-500)',
+                    'var(--paper-blue-grey-500)',
+                    'var(--paper-green-500)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__dirty = false;
+            }
+
+            activate() {
+                if (this.$.kanban) {
+                    this.$.kanban.resize();
+                }
+                this.__loadWorkers();
+            }
+
+            handleRouteParams(...params) {
+                let [setting, action, id] = params;
+                
+                if (setting != this.constructor.setting) {
+                    return;
+                }
+
+                if (id) {
+                    this.__dirty = false;
+                    this.__loadRecord(id);
+                } else {
+                    this.__dirty = true;
+                    this.set('record', { ks_panels: [] });
+                }
+            }
+            __loadWorkers() {
+                let ajax = this.$.ajax2;
+
+                ajax.GET('/bpmn/workers').then(res => {
+                    this.set('workers', res.data);
+                });
+            }
+            __loadStatuses(worker) {
+                let panel = this.selectedPanel,
+                    exists = (panel.kp_statuses || []).map(s => s.kst_status),
+                    ajax = this.$.ajax2;
+
+                this.set('statuses', []);
+
+                ajax.GET('/bpmn/statuses/' + worker).then(res => {
+                    let statuses = [];
+                    res.data.forEach(s => {
+                        s.text = s.text || s.name || 'No Label';
+                        s.checked = false;
+                        if (exists.indexOf(s.id) > -1) {
+                            s.checked = true;
+                        }
+                        statuses.push(s);
+                    });
+                    this.set('statuses', statuses);
+                });
+            }
+            __loadRecord(id) {
+                let ajax = this.$.ajax1;
+
+                ajax.GET('/kanban/kanban-settings/' + id).then((res) => {
+                    let record = res.data;
+
+                    if (record) {
+                        record.ks_panels.forEach((p) => {
+                            if ( ! p.kp_accent) {
+                                p.kp_accent = this.__computeAccent();
+                            }
+                            p.delete_permit = 'remove_worksheet_status@settings';
+                        });
+                    }
+
+                    this.set('record', record);
+                    this.__dirty = false;
+                });
+            }
+            __validationChanged(name) {
+                let valid = true;
+                valid = valid && name;
+                this.set('invalid', ! valid);
+            }
+            handleResizing(width, height) {
+
+                let styles = {};
+
+                if (width && height) {
+                    styles['--kanban-width'] = (width - 250) + 'px';
+
+                    this.updateStyles(styles);
+
+                    if (this.$.kanban) {
+                        this.$.kanban.resize();    
+                    }
+                }
+            }
+            __computePaletteItems() {
+                return this.constructor.colors.map(c => {
+                    return { color: c, style: c };
+                });
+            }
+            __computeAccent() {
+                let colors = this.constructor.colors;
+                return colors[(Math.floor(Math.random() * colors.length))];
+            }
+            __onAddPanelTap() {
+                if ( ! this.record.ks_panels) {
+                    this.set('record.ks_panels', []);
+                }
+                let panel = {
+                    kp_title: 'Panel',
+                    kp_accent: this.__computeAccent()
+                };
+
+                this.push('record.ks_panels', panel);
+                this.$.kanban.scroll('right');
+            }
+            __onRefreshTap() {
+                if (this.record) {
+                    this.__loadRecord(this.record.ks_id);    
+                }
+            }
+            __onSaveTap() {
+                let data = this.record,
+                    xhr = this.$.ajax1;
+
+                if (data.ks_panels !== undefined) {
+                    data.ks_panels = data.ks_panels.map(p => {
+                        p.kp_accent = this._cssval(p.kp_accent);
+                        return p;
+                    });
+                }
+
+                if (data.ks_id) {
+                    xhr.PUT('/kanban/kanban-settings/' + data.ks_id, data).then(done.bind(this));
+                } else {
+                    xhr.POST('/kanban/kanban-settings', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Kanban settings has been saved');
+                        this.__loadRecord(res.data.ks_id);
+                    }
+                }
+            }
+            __onColorPanelTap(e) {
+                let index = e.model.index,
+                    panel = e.model.panel;
+
+                this.set('selectedPanel', panel);
+                this.linkPaths('selectedPanel', 'record.ks_panels.' + index);
+
+                this.$['palette-dialog'].open();
+            }
+            __onShiftLeftPanelTap(e) {
+                let currIndex = e.model.index,
+                    currPanel = e.model.panel,
+                    prevIndex = currIndex - 1;
+
+                if (this.record.ks_panels[prevIndex]) {
+                    let prevPanel = this.record.ks_panels[prevIndex];
+                    this.splice('record.ks_panels', prevIndex, 1, currPanel);
+                    this.splice('record.ks_panels', currIndex, 1, prevPanel);
+                }
+            }
+            __onShiftRightPanelTap(e) {
+                let currIndex = e.model.index,
+                    currPanel = e.model.panel,
+                    nextIndex = currIndex + 1;
+
+                if (this.record.ks_panels[nextIndex]) {
+                    let nextPanel = this.record.ks_panels[nextIndex];
+                    this.splice('record.ks_panels', nextIndex, 1, currPanel);
+                    this.splice('record.ks_panels', currIndex, 1, nextPanel);
+                }
+            }
+            __onDeletePanelTap(e) {
+                let panel = e.model.panel,
+                    index = e.model.index;
+
+                if (panel.kp_id) {
+                    this.confirm('Deletion', 'Are you sure want to delete this panel?').then((y)=>{
+                        if (y) {
+                            this.$.ajax1.DELETE('/kanban/kanban-panels/' + panel.kp_id).then(() => {
+                                this.__loadRecord(this.record.ks_id);
+                            });
+                        }
+                    });
+                } else {
+                    this.splice('record.ks_panels', index, 1);
+                }
+            }
+            
+            __onAddStatusTap(e) {
+                let panel = e.model.panel,
+                    index = e.model.index;
+
+                if ( ! panel.kp_statuses) {
+                    this.set('record.ks_panels.' + index + '.kp_statuses', []);
+                }
+
+                this.set('statuses', []);
+                this.set('selectedPanel', panel);
+                this.linkPaths('selectedPanel', 'record.ks_panels.' + index);
+
+                this.$.comboworker.value = '';
+                this.$['status-dialog'].open();
+                this.__dirty = true;
+            }
+            __onDeleteStatusTap(e) {
+                let panel = e.model.parentModel.panel,
+                    panelIndex = e.model.parentModel.index,
+                    status = e.model.status,
+                    statusIndex = e.model.index;
+
+                this.splice('record.ks_panels.' + panelIndex + '.kp_statuses', statusIndex, 1);
+                this.set('selectedPanel', panel);
+                this.linkPaths('selectedPanel', 'record.ks_panels.' + panelIndex);
+
+                this.__dirty = true;
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings/kanban-settings');
+            }
+            __onPaletteItemClick(e) {
+                let item = e.model.item;
+                if (this.selectedPanel) {
+                    this.set('selectedPanel.kp_accent', item.color);
+                    this.$['palette-dialog'].close();
+                }
+            }
+            __onPaletteSubmit() {
+                this.$['palette-dialog'].close();
+            }
+            __onPaletteCancel() {
+                this.$['palette-dialog'].close();
+            }
+            __onComboWorkerChange() {
+                let worker = this.$.comboworker.value;
+                this.__loadStatuses(worker);
+            }
+            __onStatusClose() {
+                this.$['status-dialog'].close();
+            }
+            __onStatusItemCheck(e) {
+                let checked = e.target.checked,
+                    status = e.model.item,
+                    panel = this.selectedPanel;
+
+                if (panel) {
+                    let exists = (panel.kp_statuses || []).map(s => s.kst_status);
+                    if (checked) {
+                        if (exists.indexOf(status.id) === -1) {
+                            this.push('selectedPanel.kp_statuses', {
+                                kst_diagrams_id: status.worker_id,
+                                kst_kp_id: panel.kp_id,
+                                kst_status: status.id,
+                                kst_label: status.text,
+                                kst_name: status.name,
+                                kst_diagrams_name: status.worker_name,
+                                kst_color: status.color
+                            });
+                        }
+                    } else {
+                        let index = exists.indexOf(status.id);
+                        if (index > -1) {
+                            this.splice('selectedPanel.kp_statuses', index, 1);
+                        }
+                    }
+                }
+            }
+            __onPanelChange(){
+                this.$.role.validate();
+            }
+        }
+        customElements.define(KanbanSettingsEditorPage.is, KanbanSettingsEditorPage);
+    </script>
+</dom-module>

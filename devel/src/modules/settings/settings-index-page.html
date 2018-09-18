@@ -1,0 +1,167 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+<link rel="import" href="blocks/setting-header-block.html">
+
+<dom-module id="settings-index-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .item {
+                float: left;
+                margin-right: 15px;
+                margin-bottom: 15px;
+                min-width: 100px;
+            }
+            .item > .item-icon > paper-fab {
+                box-shadow: none;
+                position: absolute;
+                left: 50%;
+                margin-left: -28px;
+                background-color: var(--google-red-300);
+            }
+            .item > .item-icon {
+                text-align: center;
+                padding-bottom: 8px;
+                position: relative;
+                height: 56px;
+            }
+            .item > .item-text {
+                text-align: center;
+                font-size: 13px;
+            }
+            h3 {
+                display: block;
+                font-size: 15px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                
+            }
+            h3 span {
+                padding: 0 5px 0 0;
+                position: relative;
+                z-index: 2;
+                background-color: var(--page-background-color);
+            }
+            paper-card {
+                display: block;
+                box-shadow: none;
+                background: var(--page-background-color);
+            }
+            paper-card + paper-card {
+                margin-top: 20px;
+            }
+            paper-card .card-content {
+                padding: 0;
+            }
+        </style>
+        
+        <kct-role id="role"></kct-role>
+
+        <kct-vbox>
+            
+            <setting-header-block text="Pengaturan" desc="Pengaturan Aplikasi" icon="settings" hide-nav></setting-header-block>
+
+            <div class="flex scroll-y">
+                <div class="padding">
+                    <template is="dom-repeat" items="[[ links ]]" as="group" on-dom-change="__onRepeaterChange">
+                        <paper-card data-perm$="[[ group.perm ]]">
+                            <div class="card-content">
+                                <h3><span>[[ group.text ]]</span></h3>
+
+                                <template is="dom-repeat" items="[[ group.children ]]" as="menu">
+                                    <div class="item" data-perm$="[[ menu.perm ]]">
+                                        <div class="item-icon">
+                                            <paper-fab on-tap="__onMenuTap" data-path$="[[ menu.path ]]" icon="[[ menu.icon ]]" class="fab-raised"></paper-fab>
+                                        </div>
+                                        <div class="item-text">[[ menu.text ]]</div>
+                                    </div>
+                                </template>
+                                <div class="clearfix"></div>
+                            </div>
+                        </paper-card>
+                    </template>
+                </div>
+            </div> 
+        </kct-vbox>
+        
+    </template>
+    <script>
+        class SettingsIndexPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'settings-index-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Settings' },
+                    links: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                {
+                                    text: 'Pengaturan Role dan User',
+                                    // perm: 'manage_user@settings',
+                                    perm: 'access@roles | access@users | access@roles-permissions',
+                                    children: [
+                                        { text: 'Role', path: '/settings/roles', icon: 'verified-user', perm: 'access@roles' },
+                                        { text: 'User', path: '/settings/users', icon: 'social:person-outline', perm: 'access@users' },
+                                        { text: 'Hak Akses', path: '/settings/roles-permissions', icon: 'lock-outline', perm: 'access@roles-permissions' }
+                                        // { text: 'User Permission', path: '/settings/users-permissions', icon: 'lock-outline' }
+                                    ]
+                                },
+                                {
+                                    text: 'Desain Bisnis Proses',
+                                    // perm: 'manage_bpm@settings',
+                                    perm: 'access@kanban-settings | access@bpmn | access@kanban-dynamic',
+                                    children: [
+                                        { text: 'Worksheet', path: '/settings/kanban-settings', icon: 'view-carousel', perm: 'access@kanban-settings' },
+                                        { text: 'Workflow', path: '/settings/bpmn', icon: 'donut-large', perm: 'access@bpmn' },
+                                        { text: 'Dynamic Form', path: '/settings/kanban-dynamic', icon: 'av:web', perm: 'access@kanban-dynamic' }
+                                    ]
+                                },
+                                // {
+                                //     text: 'Dynamic Upload',
+                                //     children: [
+                                //         { text: 'Profile', path: '/settings/dx-profile', icon: 'open-in-browser' },
+                                //         { text: 'Mapping', path: '/settings/dx-mapping', icon: 'low-priority' },
+                                //         { text: 'Authorization', path: '/settings/dx-auth', icon: 'done-all' }
+                                //     ]
+                                // },
+                                {
+                                    text: 'Pengaturan Aplikasi',
+                                    // perm: 'manage_setting@settings',
+                                    perm: 'access@general | access@menus | access@modules',
+                                    children: [
+                                        { text: 'General', path: '/settings/general', icon: 'settings', perm: 'access@general' },
+                                        // { text: 'Timezone', path: '/settings/timezone', icon: 'social:public', perm: 'access@timezone' },
+                                        // { text: 'Numbering', path: '/settings/autonumber', icon: 'image:filter-5' },
+                                        { text: 'Menu', path: '/settings/menus', icon: 'menu', perm: 'access@menus' },
+                                        { text: 'Module', path: '/settings/modules', icon: 'code', perm: 'access@modules' }
+                                    ]
+                                }
+                            ];
+                        }
+                    }
+                }
+            }
+            
+            __onMenuTap(e) {
+                let path = e.target.dataset.path;
+                if (path) {
+                    this.set('route.path', path);
+                }
+            }
+
+            __onRepeaterChange(e) {
+                this.$.role.validate();
+            }
+        }
+        customElements.define(SettingsIndexPage.is, SettingsIndexPage);
+    </script>
+</dom-module>

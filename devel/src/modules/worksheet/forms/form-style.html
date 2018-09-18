@@ -1,0 +1,24 @@
+<dom-module id="form-style">
+    <template>
+        <style include="theme-helper">
+            .section {
+                padding: 20px 20px 40px 20px;
+                border: 1px solid var(--paper-grey-200);
+                border-radius: 0;
+            }
+            .section + .section {
+                margin-top: 15px;
+            }
+            .section-title {
+                display: block;
+                font-size: 15px;
+                font-weight: 500;
+                margin: 0 0 8px 0;
+            }
+            .section.section-primary {
+                border-width: 2px;
+                border-color: var(--paper-green-500);
+            }
+        </style>
+    </template>
+</dom-module>

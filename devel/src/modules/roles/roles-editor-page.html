@@ -1,0 +1,377 @@
+<link rel="import" href="../../../../cores/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../../../cores/bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../../cores/bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../../cores/bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-message/kct-alert.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+
+<dom-module id="roles-editor-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--roles-page-height, 500px);
+            }
+
+            .header {
+                background-color: var(--paper-blue-grey-500);
+                height: 132px;
+            }
+            .content {
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            .meta {
+                padding: 24px 24px 0 24px;
+                color: #fff;
+                
+            }
+            .meta > iron-icon {
+                display: inline-block;
+                position: relative;
+                margin-right: 10px;
+                top: -3px;
+                float: left;
+                --iron-icon-width: 48px;
+                --iron-icon-height: 48px;
+            }
+            paper-tabs {
+                --paper-tabs-selection-bar-color: #fff;
+            }
+            paper-tab {
+                font-size: 15px;
+                font-weight: 300 !important;
+                min-width: 100px;
+                color: #fff;
+            }
+            iron-pages > div {
+                padding: 24px;
+            }
+            .table td {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .dker {
+                background-color: var(--paper-grey-100);
+            }
+            .perm-item {
+                padding: 15px;
+                position: relative;
+            }
+            .perm-item + .perm-item {
+                border-top: 1px solid #dfdfdf;
+            }
+            .perm-tool {
+                position: absolute;
+                right: 16px;
+                top: 16px;
+            }
+            .box {
+                @apply --shadow-elevation-2dp;
+            }
+        </style>
+
+        <kct-ajax id="ajax1"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+        <kct-ajax id="ajax3"></kct-ajax>
+        <kct-ajax id="ajax4"></kct-ajax>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-amber" icon="done" title="Save changes" on-tap="__onSaveTap" disabled$="[[ invalid ]]"></paper-fab>
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-vbox>
+            <div style="height: 2px; background-color: var(--paper-grey-100);"></div>
+            <div class="header">
+                <kct-vbox>
+                    <div class="flex meta">
+                        <iron-icon icon="verified-user"></iron-icon>
+                        <div class="caption">
+                            <h2 class="f-300">[[ record.sr_name ]]</h2>
+                            <p class="f-300">[[ record.sr_description ]]</p>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div style="height: 48px;">
+                        <paper-tabs selected="{{ page }}" attr-for-selected="name" scrollable>
+                            <paper-tab name="general">GENERAL</paper-tab>
+                            <paper-tab name="kanban">KANBAN</paper-tab>
+                            <paper-tab name="permissions">PERMISSIONS</paper-tab>
+                            <paper-tab name="menus">MENUS</paper-tab>
+                        </paper-tabs>
+                    </div>
+                </kct-vbox>
+            </div>
+            <div class="flex content">
+                <iron-pages selected="[[ page ]]" attr-for-selected="name">
+                    <div name="general">
+                        <kct-hbox>
+                            <div class="flex">
+                                
+                                <paper-input label="Role name *" value="{{ record.sr_name }}" invalid="{{ invalid }}" required auto-validate error-message="Role name is required"></paper-input>
+                                <paper-input label="Description" value="{{ record.sr_description }}"></paper-input>
+                                <kct-checkbox value="{{ record.sr_default }}">Set as default role</kct-checkbox>        
+                            </div>
+                            <div class="flex">
+                                
+                            </div>
+                        </kct-hbox>
+                    </div>
+                    <div name="kanban">
+                        <kct-column columns="3">
+                            <template is="dom-repeat" items="[[ kanban ]]">
+                                <div>
+                                    <div class="box" style="margin-bottom: 0;">
+                                        <div class="box-tool">
+                                            <paper-toggle-button on-change="__onKanbanCheckChange" checked$="{{ item.srk_selected }}"></paper-toggle-button>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="f-500 m-b-xs">[[ item.srk_ks_name ]]</div>
+                                            <div class="f-300 text-sm text-muted">[[ item.srk_ks_description ]]&nbsp;</div>
+                                        </div>
+                                    </div>    
+                                </div>
+                            </template>
+                        </kct-column>
+                    </div>
+                    <div name="permissions">
+                        <kct-column columns="2">
+                            <template is="dom-repeat" items="[[ permgroups ]]" as="group">
+                                <div>
+                                    <div class="box" style="margin-bottom: 0;">
+                                        <div class="box-header dker">
+                                            <h3 class="f-500">[[ group.sm_title ]]</h3>
+                                            <p class="f-300">[[ group.sm_version ]]</p>
+                                        </div>
+                                        <div>
+                                            <template is="dom-repeat" items="[[ group.sm_permissions ]]" as="perm">
+                                                <div class="perm-item">
+                                                    <div class="perm-tool">
+                                                        <paper-toggle-button on-change="__onPermCheckChange" checked$="{{ perm.srp_selected }}"></paper-toggle-button>
+                                                    </div>
+                                                    <div class="f-500 text-sm">[[ perm.srp_smc_name ]]</div>
+                                                    <div class="f-300 text-sm text-muted">[[ perm.srp_smc_description ]]</div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </kct-column>
+                        
+                    </div>
+                    <div name="menus">
+                        <kct-hbox>
+                            <div class="flex">
+                                <template is="dom-repeat" items="[[ menus ]]">
+                                    <div class="box">
+                                        <div class="box-tool">
+                                            <paper-toggle-button></paper-toggle-button>
+                                        </div>
+                                        <div class="box-body">
+                                            <div>
+                                                <iron-icon icon="[[ item.srm_smn_icon ]]"></iron-icon>
+                                                <span style="position: relative; top: 2px;">[[ item.srm_smn_title ]]</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="flex"></div>
+                        </kct-hbox>
+                        
+                    </div>
+                </iron-pages>
+            </div>
+        </kct-vbox>
+        
+    </template>    
+    <script>
+        class RolesEditorPage extends KctView {
+            static get is() {
+                return 'roles-editor-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String, value: 'general' },
+                    record: { type: Object },
+                    kanban: { type: Array },
+                    permgroups: { type: Array },
+                    menus: { type: Array }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__heightChanged(height)'
+                ];
+            }
+
+            handleRouteParams(setting, action, id) {
+                if (setting != 'roles') {
+                    return;
+                }
+
+                if (id) {
+                    this.__loadRecord(id);
+                } else {
+                    this.set('record', {});
+                    this.__loadKanban();
+                    this.__loadPermissions();
+                    this.__loadMenus();
+                }
+            }
+
+            __heightChanged(height) {
+                this.updateStyles({
+                    '--roles-page-height': height + 'px'
+                });
+            }
+
+            __loadRecord(id) {
+                this.$.ajax1.GET('/roles/' + id).then((res) => {
+                    if (res.success) {
+                        let record = res.data;
+                        this.set('record', record);
+                        this.__loadKanban();
+                        this.__loadPermissions();
+                        this.__loadMenus();
+                    } else {
+                        this.alert('Oops!', "It's look like this role doesn't exists in database").then(() => {
+                            this.__goback();
+                        });
+                    }
+                });
+            }
+
+            __loadKanban() {
+                let path =  '/roles/roles-kanban?setup=true';
+                
+                if (this.record.sr_id) {
+                    path += '&role=' + this.record.sr_id;
+                }
+
+                this.$.ajax2.GET(path).then((res) => {
+                    let kanban = res.data;
+                    kanban.forEach((k) => {
+                        k.srk_selected = k.srk_selected == 1 ? true : false;
+                    });
+                    this.set('kanban', kanban);
+                });
+            }
+
+            __loadPermissions() {
+                let path = '/roles/roles-permissions?setup=true';
+                
+                if (this.record.sr_id) {
+                    path += '&role=' + this.record.sr_id;
+                }
+
+                this.$.ajax3.GET(path).then((res) => {
+                    let perms = res.data,
+                        group = [],
+                        token = null;
+
+                    perms.forEach((p) => {
+                        
+                        p.srp_selected = !!(+p.srp_selected);
+
+                        if (p.srp_sm_id != token) {
+                            group.push({
+                                sm_title: p.srp_sm_title,
+                                sm_version: p.srp_sm_version,
+                                sm_permissions: [p]
+                            });
+                        } else {
+                            let index = group.length - 1;
+                            if (group[index]) {
+                                group[index].sm_permissions.push(p);    
+                            }
+                        }
+                        token = p.srp_sm_id;
+                    });
+
+                    this.set('permgroups', group);
+                }); 
+            }
+
+            __loadMenus() {
+                let path = '/roles/roles-menus?setup=true';
+                
+                if (this.record.sr_id) {
+                    path += '&role=' + this.record.sr_id;
+                }
+
+                this.$.ajax4.GET(path).then((res) => {
+                    this.set('menus', res.data);
+                }); 
+            }
+
+            __goback() {
+                this.set('route.path', '/settings/roles');
+            }
+
+            __onKanbanCheckChange(e) {
+                let kanban = e.model.item,
+                    index = e.model.index,
+                    checked = e.target.checked;
+
+                this.set('kanban.' + index + '.srk_selected', checked);
+            }
+
+            __onPermCheckChange(e) {
+                let groupIndex = e.model.parentModel.index,
+                    permIndex = e.model.index,
+                    checked = e.target.checked;
+
+                this.set('permgroups.' + groupIndex + '.sm_permissions.' + permIndex + '.srp_selected', checked);
+            }
+
+            __onSaveTap() {
+                let data = Object.assign({}, this.record);
+
+                data.sr_kanban = this.kanban;
+
+                let permissions = [];
+
+                this.permgroups.forEach((g) => {
+                    Array.prototype.push.apply(permissions, g.sm_permissions);
+                });
+
+                data.sr_permissions = permissions;
+                
+                if (data.sr_id) {
+                    this.$.ajax1.PUT('/roles/' + data.sr_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax1.POST('/roles', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        if (res.data.sr_id) {
+                            this.__loadRecord(res.data.sr_id);
+                        }
+
+                        this.toast('Success', 'Role has been saved!')
+                    }
+                }
+            }
+
+            __onBackTap() {
+                this.__goback();
+            }
+        }
+
+        customElements.define(RolesEditorPage.is, RolesEditorPage);
+    </script>
+</dom-module>

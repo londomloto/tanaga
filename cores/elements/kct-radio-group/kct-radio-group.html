@@ -1,0 +1,108 @@
+<link rel="import" href="../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../bower_components/paper-radio-button/paper-radio-button.html">
+
+<dom-module id="kct-radio-group">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .container {
+                border-bottom: 1px solid var(--paper-grey-300);
+                @apply --layout-horizontal;
+            }
+            :host([invalid]) .container {
+                border-bottom: 2px solid var(--paper-input-container-invalid-color, var(--error-color));
+            }
+            .container.horizontal {
+                padding-top: 10px;
+            }
+            label {
+                display: inline-block;
+            }
+            .container.horizontal label {
+                padding: 12px 16px 12px 0;
+            }
+            paper-radio-group {
+                @apply --layout-flex;
+            }
+            .container.horizontal > paper-radio-group {
+                display: inline-block;
+                @apply --layout-horizontal;
+            }
+
+            .container.horizontal ::slotted(paper-radio-button) {
+                display: inline-block;
+                @apply --layout-flex;
+            }
+            .container.vertical,
+            .container.wrapped {
+                padding-top: 16px;
+                padding-bottom: 9px;
+            }
+            .container.vertical ::slotted(paper-radio-button) {
+                display: block;
+            }
+            .container.wrapped ::slotted(paper-radio-button),
+            .container.vertical ::slotted(paper-radio-button) {
+                padding: 3px 12px;
+            }
+            :host([invalid]),
+            .message {
+                color: var(--paper-input-container-invalid-color, var(--error-color));
+                @apply --paper-input-error;
+            }
+            :host([invalid]) ::slotted(paper-radio-button) {
+                --paper-radio-button-label-color: var(--paper-input-container-invalid-color, var(--error-color));
+                --paper-radio-button-unchecked-color: var(--paper-input-container-invalid-color, var(--error-color));
+            }
+            [hidden] {
+                display: none;
+            }
+        </style>
+        <div class$="container [[ layout ]]">
+            <label>[[ label ]]</label>
+            <paper-radio-group selected="{{ value }}">
+                <slot></slot>
+            </paper-radio-group>
+        </div>
+        <div class="message" hidden$="[[ !invalid ]]">[[ errorMessage ]]</div>
+    </template>
+    <script>
+        class KctRadioGroup extends Polymer.Element {
+            static get is() {
+                return 'kct-radio-group';
+            }
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String, notify: true },
+                    layout: { type: String, value: 'wrapped' },
+                    errorMessage: { type: String },
+                    invalid: { type: Boolean, value: false, notify: true, reflectToAttribute: true},
+                    required: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false }
+                }
+            }
+            static get observers() {
+                return [
+                    '__valueChanged(value)'
+                ];
+            }
+            validate() {
+                let valid = true;
+                if (this.required) {
+                    valid = !!this.value;
+                }
+                this.set('invalid', ! valid);
+                return valid;
+            }
+            __valueChanged(value) {
+                if (this.required) {
+                    this.validate();
+                }
+            }
+        }
+        customElements.define(KctRadioGroup.is, KctRadioGroup);
+    </script>
+</dom-module>

@@ -1,0 +1,192 @@
+<link rel="import" href="../../../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../bower_components/app-layout/app-scroll-effects/effects/waterfall.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../kct-message/kct-confirm.html">
+<link rel="import" href="../../kct-ajax/kct-ajax.html">
+<link rel="import" href="../../kct-menu/kct-menu.html">
+
+<dom-module id="navigation-block">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: 100%;
+            }
+            app-header-layout {
+                display: block;
+                height: 100%;
+            }
+            paper-item {
+                color: #555;
+                cursor: pointer;
+            }
+            .primary-toolbar {
+                @apply --app-primary-toolbar;
+                /*height: 90px;*/
+                height: 72px;
+            }
+            /*.secondary-toolbar {
+                height: 48px; 
+                line-height: 48px;
+                padding-left: 15px; 
+                color: #fff; 
+                background-color: #fff;
+                position: relative;
+            }*/
+            
+            .primary-toolbar::before {
+                display: block;
+                content: '';
+                /*border-top: 1px solid #f0f0f0;*/
+                /*border-bottom: 3px solid var(--paper-indigo-500);*/
+                border-bottom: 1px solid #dfdfdf;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 2px;
+                bottom: 0;
+            }
+
+            [main-title] { line-height: 0; }
+            [main-title] span {
+                position: relative;
+                font-size: 24px;
+                font-weight: 500;
+            }
+            [main-title] iron-icon {
+                position: relative;
+                top: -4px;
+                --iron-icon-width: 26px;
+                --iron-icon-height: 26px;
+            }
+            .menu-group {
+                padding: 10px 16px;
+                /*color: #ccc;*/
+                font-weight: 500;
+                font-size: 15px;
+            }
+            paper-listbox {
+                padding: 0;
+            }
+            paper-listbox > paper-item {
+                --paper-item-min-height: 36px;
+                --paper-item-focused: { font-weight: 400; };
+                --paper-item-selected: { font-weight: 400; };
+                font-size: 14px;
+                font-weight: 400;
+            }
+            paper-listbox > paper-item > iron-icon {
+                position: relative;
+                top: -1px;
+                margin-right: 5px;
+                color: var(--paper-grey-600);
+            }
+            .navigation {
+                
+            }
+            .menu-list {
+                
+            }
+            .powered {
+                font-size: 10px;
+                text-transform: uppercase;
+            }
+            .powered img {
+                position: relative;
+                top: 10px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <app-header-layout has-scrolling-region>
+            <app-header slot="header" fixed effects="waterfall">
+                <app-toolbar class="primary-toolbar">
+                    <div main-title>
+                        <div class="logo">
+                            <!-- <iron-icon icon="donut-large"></iron-icon>     -->
+                            <span>[[ config.app_title ]]</span>
+                        </div>
+                        <div class="powered">
+                            powered by <img alt="worksaurus" src="images/logo/worksaurus-0.png">
+                        </div>
+                    </div>
+                </app-toolbar><!-- 
+                <div class="secondary-toolbar">
+                    <h3 class="f-300">&nbsp;</h3>
+                </div> -->
+            </app-header>
+            <div class="navigation">
+                <div class="menu-list">
+                    <kct-menu on-navigation="__onNavigation" menus="[[ menus ]]"></kct-menu>
+                </div>
+            </div>
+        </app-header-layout>
+
+        <kct-confirm id="confirm-logout">
+            <p slot="message">Are you sure want to exit from application?</p>
+        </kct-confirm>
+    </template>
+    <script>
+        class NavigationBlock extends Polymer.Element {
+            static get is() {
+                return 'navigation-block';
+            }
+            static get properties() {
+                return {
+                    folded: { type: Boolean, value: false },
+                    menus: { type: Array }
+                };
+            }
+            ready() {
+                super.ready();
+            }
+            connectedCallback() {
+                super.connectedCallback();
+
+                let nav = this.shadowRoot.querySelector('.navigation'),
+                    hdr = this.shadowRoot.querySelector('app-header-layout');
+
+                let timer;
+
+                timer = setInterval(() => {
+                    var box = nav.getBoundingClientRect();
+                    if (box.top > 0) {
+                        clearInterval(timer);
+                        timer = null;
+                    } else {
+                        resize();
+                    }
+                }, 200);
+
+                function resize() {
+                    hdr.notifyResize();
+                }
+            }
+            loadMenus() {
+                this.set('navigation', []);
+
+                this.$.ajax.GET('/users/users-menus?display=authorized').then((res) => {
+                    if (res.success) {
+                        let menus = res.data;
+                        this.set('menus', menus);
+                    }
+                });
+            }
+            __onNavigation(e) {
+                let path = e.detail.smn_path;
+
+                if (path) {
+                    this.dispatchEvent(new CustomEvent('tap'));
+                    this.set('route.path', path);
+                }
+            }
+        }
+        customElements.define(NavigationBlock.is, NavigationBlock);
+    </script>
+</dom-module>

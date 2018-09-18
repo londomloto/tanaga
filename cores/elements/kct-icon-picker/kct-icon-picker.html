@@ -1,0 +1,120 @@
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+
+<dom-module id="kct-icon-picker">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 100%;
+            }
+            paper-dropdown-menu {
+                width: 100%;
+            }
+            .dropdown-content {
+                padding: 1rem;
+                width: calc(var(--dropdown-content-width, 300px) - 2rem);
+            }
+            paper-icon-button {
+                color: var(--paper-blue-grey-500);
+            }
+            .message {
+                position: relative;
+                top: -8px;
+                color: var(--paper-input-container-invalid-color, var(--error-color));
+            }
+            [hidden] {
+                display: none;
+            }
+        </style>
+        <paper-dropdown-menu id="dropdown" label="[[ label ]]" on-opened-changed="__onOpenToggle" invalid$="[[ invalid ]]">
+            <paper-listbox class="dropdown-content" attr-for-selected="icon" selected="{{ value }}" slot="dropdown-content">
+                <template is="dom-repeat" items="{{ __icons }}">
+                    <paper-icon-button on-tap="__onIconTap" icon="[[ item ]]">[[ item ]]</paper-icon-button>
+                </template> 
+            </paper-listbox>
+        </paper-dropdown-menu>
+        <div class="message" hidden$="[[ !invalid ]]">[[ errorMessage ]]</div>
+    </template>
+    <script>
+        class KctIconPicker extends Polymer.Element {
+            static get is() {
+                return 'kct-icon-picker';
+            }
+            static get properties() {
+                return {
+                    label: { type: String, value: 'Icon', reflectToAttribute: true },
+                    value: { type: String, value: '', notify: true },
+                    invalid: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    required: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    errorMessage: { type: String }
+                }
+            }
+            static get observers() {
+                return [
+                    '__valueChanged(value)'
+                ];
+            }
+            constructor() {
+                super();
+
+                this.__icons = [
+                    '3d-rotation',
+                    'account-circle',
+                    'alarm',
+                    'android',
+                    'communication:business',
+                    'communication:phone',
+                    'description',
+                    'dashboard',
+                    'device:usb',
+                    'done',
+                    'done-all',
+                    'donut-large',
+                    'editor:attach-money',
+                    'label-outline',
+                    'home',
+                    'schedule',
+                    'settings',
+                    'shopping-cart',
+                    'social:notifications',
+                    'social:public',
+                    'trending-up',
+                    'view-carousel',
+                    'work'
+                ];
+
+                this.__contentResized = false;
+            }
+            validate() {
+                let valid = true;
+                if (this.required) {
+                    valid = !!this.value;
+                }
+                this.set('invalid', !valid);
+            }
+            __valueChanged(value) {
+                if (value && this.__icons.indexOf(value) === -1) {
+                    this.push('__icons', value);
+                }
+                if (this.autoValidate) {
+                    this.validate();
+                }
+            }
+            __onOpenToggle(e) {
+                let opened = e.detail.value;
+                if (opened && ! this.__contentResized) {
+                    let width = e.target.offsetWidth;
+                    this.updateStyles({ '--dropdown-content-width': width + 'px' });
+                    this.__contentResized = true;
+                }
+            }
+            __onIconTap() {
+                this.$.dropdown.opened = false;
+            }
+        }
+        customElements.define(KctIconPicker.is, KctIconPicker);
+    </script>
+</dom-module>

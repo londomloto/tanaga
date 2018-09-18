@@ -1,0 +1,494 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-worksheet/kct-worksheet.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../../cores/mixins/dom.html">
+<!-- <link rel="import" href="../../../../../cores/vendors/graph-interactjs/graph-interactjs.html"> -->
+<link rel="import" href="../plugins/task-item-kanban.html">
+<link rel="import" href="../mixins/kanban-dragdrop.html">
+
+<dom-module id="project-view-kanban">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .item-container {
+                padding: 16px;
+            }
+
+            .item-holder {
+                position: relative;
+                border-radius: 3px;
+                height: 0;
+                --webkit-transition: height 0.2s ease-out;
+                         transition: height 0.2s ease-out;
+            }
+            
+            .item-empty {
+                height: 100px;
+                border-radius: 3px;
+                margin-bottom: 8px;
+            }
+
+            .item-helper {
+                position: absolute;
+                z-index: 999999;
+                will-change: 'transform;
+            }
+
+            .panel-title {
+                font-size: .8em; 
+                font-weight: 500;
+            }
+            .panel-paging {
+                margin-top: 15px;
+                text-align: center;
+            }
+            .panel-paging > paper-button {
+                display: block;
+                text-transform: none;
+                font-size: 12px;
+            }
+            .panel-paging > paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -1px;
+            }
+            task-item-kanban {
+                cursor: url(../../../../images/cursors/grab.png);
+            }
+
+            :host([busy]) {
+                cursor: wait;
+            }
+
+            /*:host([dragdrop]) kct-worksheet-panel {
+                opacity: .5;
+            }
+            :host([dragdrop]) kct-worksheet-panel[dropzone] {
+                opacity: 1;
+            }*/
+
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" session="{{ socketSession }}"></kct-socket>
+
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+
+        <kct-event-subscriber 
+            on-task-save="__onTaskSave" 
+            on-task-remove="__onTaskRemove"></kct-event-subscriber>
+
+        <kct-worksheet id="worksheet" columns="4">
+            <template id="panel-repeater" is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
+                <kct-worksheet-panel 
+                    accent="[[ panel.kp_accent ]]" 
+                    title$="[[ panel.kp_title ]] [[ panel.kp_info ]]" 
+                    hide-condensed 
+                    hide-secondary>
+                    <!-- <div class="panel-title" slot="panel-title">[[ panel.kp_title ]]&nbsp;[[ panel.kp_info ]]</div> -->
+                    <div class="item-container">
+                        <template is="dom-repeat" items="[[ panel.kp_data ]]">
+                            <task-item-kanban 
+                                class="item" 
+                                record="[[ item ]]" 
+                                accent="[[ panel.kp_accent ]]" 
+                                on-item-tap="__onTaskItemTap" 
+                                ></task-item-kanban>
+                        </template>
+                        
+                        <div class="panel-paging" hidden$="[[ !panel.kp_more ]]">
+                            <paper-button on-tap="__onLoadMoreTap">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
+                        </div>
+
+                        <div class="item-empty droppable"></div>
+                    </div>
+                </kct-worksheet-panel>
+            </template>
+        </kct-worksheet>
+
+    </template>
+    <script>
+        class ProjectViewKanban extends Mixins(KctView).use(Mixins.DOM) {
+            static get is() {
+                return 'project-view-kanban';
+            }
+
+            static get properties() {
+                return {
+                    project: { type: String },
+                    projectRecord: { type: Object },
+                    worksheetRecord: { type: Object },
+                    workspaces: { type: Array },
+                    workspaceRecord: { type: Object },
+                    params: { type: Object },
+                    busy: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    pageSize: { type: Number, value: 10 },
+                    maxPageSize: { type: Number, value: 100 },
+                    dragdrop: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__projectChanged(project)',
+                    '__paramsChanged(params.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__paging = {};
+
+            }
+
+            handleRouteParams(project, action, type) {
+                if (project === undefined  || project == 'tour' || project == 'create') return;
+                if (action != 'view') return;
+                if (type != 'kanban') return;
+                
+                this.set('project', project);
+            }
+
+            handleResizing(width, height) {
+                if (this.$.worksheet) {
+                    this.$.worksheet.resize();
+                }
+            }
+
+            reload(options = {}) {
+                return this.__loadWorksheet(options);
+            }
+
+            save(record, send = false, back = false) {
+                let valid = record && record.task && record.task.tt_id && record.status && record.status.tts_worker;
+                if (valid) {
+
+                    let payload = {
+                        worker: record.status.tts_worker,
+                        record: record,
+                        send: send,
+                        back: back
+                    };
+
+                    let options = {
+                        headers: {
+                            'X-Socket-Session': this.socketSession
+                        }
+                    };
+
+                    return this.$.ajax.PUT('/kanban/' + record.task.tt_id, payload, options).then(res => {
+
+                        this.$.publisher.publish('task-save', {
+                            send: send,
+                            back: back
+                        });
+
+                        return res;
+                    });
+                } else {
+                    return Promise.resolve({ success: false });
+                }
+            }
+
+            getModelForPanel(pane) {
+                return this.$['panel-repeater'].modelForElement(pane);
+            }
+
+            __paramsChanged(changed) {
+                if (changed.path == 'params') {
+                    this.reload();
+                }
+            }
+            
+            __projectChanged(project) {
+                if (project) {
+                    this.__loadProject();
+                }
+            }
+
+            __loadProject() {
+                if ( ! this.project) {
+                    return Promise.resolve();
+                }
+                
+                return this.$.ajax.GET('/projects/load/' + this.project ).then(res => {
+                    this.set('projectRecord', res.data);
+                    return this.reload();
+                });
+            } 
+
+            __loadWorksheet(options = {}) {
+                this.set('workspaces', []);
+                this.set('busy', true);
+
+                if ( ! this.projectRecord) {
+                    this.set('worksheetRecord', {});
+                    this.set('busy', false);
+
+                    return Promise.resolve();
+                }
+
+                this.__loader = this._defer();
+
+                this.__loader.promise.then(() => {
+                    this.set('busy', false);
+                    this.$.worksheet.resize();
+                    this.__resizeEmptyItems();
+
+                    // dispatch load event
+                    let total = 0;
+                    
+                    this.worksheetRecord.ks_panels.forEach(p => {
+                        total += p.kp_data.length;
+                    });
+
+                    this.dispatchEvent(new CustomEvent('load', {
+                        detail: {
+                            total: total
+                        }
+                    }));
+
+                });
+
+                let sheet = this.projectRecord && this.projectRecord.sp_worksheet_id,
+                    cache = options.cache === undefined ? true : options.cache;
+
+                if (sheet) {
+                    let payload = {
+                        display: 'granted',
+                        project: this.projectRecord.sp_id
+                    };
+
+                    this.$.ajax.GET('/kanban/kanban-settings/' + sheet, payload).then(res => {
+                        if ( ! res.success) {
+                            return;
+                        }
+
+                        let data = res.data || {};
+                        
+                        // kurangi kesan loading disini...
+                        if (cache && this.worksheetRecord) {
+                            let cached = {};
+                            
+                            this.worksheetRecord.ks_panels.forEach((p, i) => {
+                                cached[p.kp_id] = {
+                                    data: this.get('worksheetRecord.ks_panels.' + i + '.kp_data'),
+                                    info: p.kp_info
+                                };
+                            });
+
+                            (data.ks_panels || []).forEach(p => {
+                                if (cached[p.kp_id] !== undefined) {
+                                    p.kp_data = cached[p.kp_id].data;
+                                    p.kp_info = cached[p.kp_id].info;
+                                }
+                            });
+
+                            cached = null;
+                        }
+
+                        this.set('worksheetRecord', data);
+                                
+                        this.__loadWorkspaces();
+                        this.__loadPanels();
+                    });
+                } else {
+                    this.set('worksheetRecord', {});
+                }
+
+                return this.__loader.promise;
+            }
+
+            __loadWorkspaces() {
+                this.set('workspaces', []);
+
+                if ( ! this.worksheetRecord) {
+                    return;
+                }
+
+                let sheet = this.worksheetRecord.ks_id;
+
+                this.$.ajax.GET('/kanban/kanban-workspaces?kanban=' + sheet).then(res => {
+                    this.set('workspaces', res.data);
+                });
+            }
+
+            __loadPanels() {
+                let panels = this.worksheetRecord.ks_panels;
+                let count = panels.length;
+                let index = 0;
+
+                if ( ! count) {
+                    this.__loader.resolve();
+                } else {
+                    panels.forEach((p, i) => {
+                        this.__loadPanelData(p, { start: 0 }).then(() => {
+                            index++;
+                            if (index === count) {
+                                this.__loader.resolve();
+                            }
+                        });
+                    });
+                }
+            }
+            
+            __loadPanelData(panel, options = {}) {
+                let statuses = (panel.kp_statuses || []).map(s => s.kst_status),
+                    index = (this.worksheetRecord.ks_panels || []).indexOf(panel),
+                    defer = this._defer();
+
+                let payload = Object.assign({}, this.params, options);
+
+                payload.statuses = JSON.stringify(statuses);
+                payload.project = this.projectRecord.sp_id;
+
+                let paging = this.__getPaging(panel);
+
+                if (payload.start === undefined) {
+                    payload.start = paging.__start;
+                }
+
+                if (payload.limit === undefined) {
+                    payload.limit = paging.__limit;
+                }
+
+                if (payload.start == 0 && payload.limit > this.maxPageSize) {
+                    payload.limit = this.maxPageSize;
+
+                    this.__setPaging(panel, { 
+                        __start: 0,
+                        __limit: payload.limit 
+                    });
+                }
+
+                this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', true);
+
+                this.$.ajax.GET('/kanban', payload).then((res) => {
+                    let items;
+
+                    if (payload.start == 0) {
+                        items = res.data;
+                    } else {
+                        items = (this.worksheetRecord.ks_panels[index].kp_data || []).slice();
+                        Array.prototype.push.apply(items, res.data);
+                    }
+                        
+                    this.set('worksheetRecord.ks_panels.' + index + '.kp_data', items);
+                    this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', false);
+
+                    let count = items.length,
+                        total = +res.total,
+                        info  = total > 1 ? total + ' Items' : total + ' Item';
+
+                    
+                    this.set('worksheetRecord.ks_panels.' + index + '.kp_info', '(' + info + ')');
+                    
+                    if (count >= res.total) {
+                        this.set('worksheetRecord.ks_panels.' + index + '.kp_more', false);
+                    } else {
+                        this.set('worksheetRecord.ks_panels.' + index + '.kp_more', true);
+                    }
+
+                    this.__setPaging(panel, {
+                        start: payload.start + payload.limit,
+                        limit: this.pageSize,
+                        __start: 0,
+                        __limit: count > this.pageSize ? count : this.pageSize
+                    });
+
+                    
+                    defer.resolve();
+                    
+                });
+
+                return defer.promise;
+            }
+
+            __setPaging(panel, params) {
+                let paging = this.__getPaging(panel);
+                Object.assign(paging, params);
+            }
+
+            __getPaging(panel) {
+                let token = 'panel_' + this.projectRecord.sp_id + '_' + panel.kp_id;
+
+                if (this.__paging[token] === undefined) {
+                    this.__paging[token] = {
+                        // load more paging
+                        start: 0,
+                        limit: this.pageSize,
+
+                        // reload paging
+                        __start: 0,
+                        __limit: this.pageSize
+                    };
+                }
+
+                return this.__paging[token];
+            }
+
+            __resizeEmptyItems() {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+
+                    let nodes = this.shadowRoot.querySelectorAll('.item-empty');
+
+                    nodes.forEach(node => {
+                        node.style.height = '0';
+
+                        let panel = node.parentNode.parentNode;
+                        let height = panel.clientHeight - panel.querySelector('.item-container').clientHeight;
+                        
+                        if (height < 100) {
+                            height = 100;
+                        }
+                        node.style.height = height + 'px';
+                    });
+                }, 301);
+            }
+
+            __onTaskItemTap(e) {
+                let task = e.model.item;
+
+                this.set('route.data.back', '/worksheet/' + this.project + '/view/kanban');
+                // this.set('route.data.task', task);
+                this.set('route.path', '/worksheet/' + this.project + '/task/update/' + task.status.tts_id);
+            }
+
+            __onTaskSave(e) {
+                let info = e.detail;
+                // sementara direload semua
+                this.reload();
+            }
+
+            __onTaskRemove() {
+                this.reload();
+            }
+
+            __onLoadMoreTap(e) {
+                let paging = this.__getPaging(e.model.panel);
+
+                if (paging) {
+                    this.set('busy', true);
+
+                    this.__loadPanelData(e.model.panel, {
+                        start: paging.start,
+                        limit: paging.limit
+                    }).then(() => {
+                        this.set('busy', false);
+                        this.$.worksheet.resize();
+                    });
+                }
+            }
+        }
+
+        customElements.define(ProjectViewKanban.is, ProjectViewKanban);
+    </script>
+</dom-module>

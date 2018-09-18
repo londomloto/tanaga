@@ -1,0 +1,357 @@
+<?php die; ?>
+
+DATE: Wed, 18 Jul 2018 13:32:39 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Screenshot from 2018-05-30 15-50-20.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-26-53.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-33-24.png)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281692:Screenshot from 2018-05-30 15-50-20.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:781022:Screenshot from 2018-05-09 11-26-53.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:596412:Screenshot from 2018-05-09 11-33-24.png
+
+DATE: Wed, 18 Jul 2018 13:33:35 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Screenshot from 2018-05-30 15-50-20.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-26-53.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-33-24.png)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281692:Screenshot from 2018-05-30 15-50-20.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:781022:Screenshot from 2018-05-09 11-26-53.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:596412:Screenshot from 2018-05-09 11-33-24.png
+
+DATE: Wed, 18 Jul 2018 13:36:23 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Screenshot from 2018-05-30 15-50-20.png)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281692:Screenshot from 2018-05-30 15-50-20.png
+
+DATE: Wed, 18 Jul 2018 13:36:45 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Screenshot from 2018-05-30 15-50-20.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-26-53.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-33-24.png)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281692:Screenshot from 2018-05-30 15-50-20.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:781022:Screenshot from 2018-05-09 11-26-53.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:596412:Screenshot from 2018-05-09 11-33-24.png
+
+DATE: Wed, 18 Jul 2018 13:37:08 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Screenshot from 2018-05-30 15-50-20.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-26-53.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-33-24.png)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281692:Screenshot from 2018-05-30 15-50-20.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:781022:Screenshot from 2018-05-09 11-26-53.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:596412:Screenshot from 2018-05-09 11-33-24.png
+
+DATE: Wed, 18 Jul 2018 13:39:23 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Screenshot from 2018-05-30 15-50-20.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-26-53.png)! Unauthorised file upload manipulation detected (Screenshot from 2018-05-09 11-33-24.png)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281692:Screenshot from 2018-05-30 15-50-20.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:781022:Screenshot from 2018-05-09 11-26-53.png
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:596412:Screenshot from 2018-05-09 11-33-24.png
+
+DATE: Wed, 18 Jul 2018 13:45:27 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 13:48:20 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 13:49:04 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 13:49:21 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 13:49:31 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 13:50:45 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 13:52:11 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 13:59:02 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:01:22 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:02:17 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:03:29 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:07:27 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:07:46 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:08:51 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:09:13 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:09:34 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:09:51 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 14:10:03 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-3.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:93774:Desktop-Wallpaper-3.jpg
+
+DATE: Wed, 18 Jul 2018 15:57:55 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Crack (copy).jpeg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:557568:Crack (copy).jpeg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:05:12 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Crack (copy).jpeg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:557568:Crack (copy).jpeg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:05:42 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Crack (copy).jpeg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:557568:Crack (copy).jpeg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:07:44 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Crack (copy).jpeg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:557568:Crack (copy).jpeg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:07:49 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Crack (copy).jpeg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:557568:Crack (copy).jpeg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:08:30 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Crack (copy).jpeg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:557568:Crack (copy).jpeg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:12:21 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Crack (copy).jpeg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:557568:Crack (copy).jpeg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:12:54 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:12:58 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-2.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:2050828:Desktop-Wallpaper-2.jpg
+
+DATE: Wed, 18 Jul 2018 16:35:20 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-4.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:254495:Desktop-Wallpaper-4.jpg
+
+DATE: Wed, 18 Jul 2018 16:35:24 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-4.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:254495:Desktop-Wallpaper-4.jpg
+
+DATE: Wed, 18 Jul 2018 16:36:35 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+Unauthorised file upload manipulation detected (Desktop-Wallpaper-1.jpg)! Unauthorised file upload manipulation detected (Desktop-Wallpaper-4.jpg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:281621:Desktop-Wallpaper-1.jpg
+UNAUTHORISED-FILE-UPLOAD-NO-HASH:254495:Desktop-Wallpaper-4.jpg
+
+DATE: Wed, 18 Jul 2018 19:06:26 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+EXE chameleon attack detected (Crack+%28exe%29.jpeg)! Image chameleon attack detected (Crack+%28exe%29.jpeg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+b322d5d8692bea3647697325aa7965c4:557568:Crack (exe).jpeg
+== PE SECTIONAL SIGNATURES RECONSTRUCTION (SECTION-SIZE:SECTION-HASH:FILE-NAME--SECTION-NAME) ==
+512:4c584307e5aa70f515ee8c3d942e5f6c:Crack (exe).jpeg-.text
+512:e5aa65265e17d8a1b524adbc10c0a1ad:Crack (exe).jpeg-.rdata
+512:f8fedf1be1122ff5cd0e5b4716311cc5:Crack (exe).jpeg-.data
+30208:d957875d70d1fba99d2d49cb09a91e60:Crack (exe).jpeg-.rsrc
+512:5f14b63e4ad2ff7ccb217b73b09a4961:Crack (exe).jpeg-.reloc
+
+DATE: Wed, 18 Jul 2018 19:06:34 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+EXE chameleon attack detected (Crack+%28exe%29.jpeg)! Image chameleon attack detected (Crack+%28exe%29.jpeg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+7fa4f5c6c31a3d7a00c2cf050b811f92:254495:Desktop-Wallpaper-4.jpg
+b322d5d8692bea3647697325aa7965c4:557568:Crack (exe).jpeg
+
+DATE: Wed, 18 Jul 2018 19:06:56 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+EXE chameleon attack detected (Crack+%28exe%29.jpeg)! Image chameleon attack detected (Crack+%28exe%29.jpeg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+7fa4f5c6c31a3d7a00c2cf050b811f92:254495:Desktop-Wallpaper-4.jpg
+b322d5d8692bea3647697325aa7965c4:557568:Crack (exe).jpeg
+
+DATE: Wed, 18 Jul 2018 19:09:21 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+EXE chameleon attack detected (Crack+%28exe%29.jpeg)! Image chameleon attack detected (Crack+%28exe%29.jpeg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+7fa4f5c6c31a3d7a00c2cf050b811f92:254495:Desktop-Wallpaper-4.jpg
+b322d5d8692bea3647697325aa7965c4:557568:Crack (exe).jpeg
+
+DATE: Wed, 18 Jul 2018 19:11:20 +0700
+IP ADDRESS: 127.0.0.1
+== SCAN RESULTS / WHY FLAGGED ==
+EXE chameleon attack detected (Crack+%28exe%29.jpeg)! Image chameleon attack detected (Crack+%28exe%29.jpeg)!
+== MD5 SIGNATURE RECONSTRUCTION (FILE-HASH:FILE-SIZE:FILE-NAME) ==
+7fa4f5c6c31a3d7a00c2cf050b811f92:254495:Desktop-Wallpaper-4.jpg
+b322d5d8692bea3647697325aa7965c4:557568:Crack (exe).jpeg
+

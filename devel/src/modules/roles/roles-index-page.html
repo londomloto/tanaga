@@ -1,0 +1,368 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-search/kct-search.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="roles-index-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+
+            .card-content {
+                padding: 0;
+            }
+
+            .card-image {
+                text-align: center;
+                --iron-icon-width: 32px;
+                --iron-icon-height: 32px;
+            }
+
+            .card-image > span {
+                display: inline-block;
+                background-color: var(--google-red-300);
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 50px;
+                color: #fff;
+            }
+
+            paper-card h3 {
+                font-size: 14px;
+                font-weight: 400;
+            }
+            paper-card p {
+                font-size: 13px;
+                font-weight: 300;
+            }
+            paper-card .card-actions {
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+
+            .box-icon {
+                height: 150px;
+                line-height: 150px;
+                position: relative;
+                text-align: center;
+            }
+            .box-icon span {
+                display: inline-block;
+                background-color: var(--google-red-300);
+                color: #fff;
+                --iron-icon-width: 50px;
+                --iron-icon-height: 50px;
+                width: 80px;
+                height: 80px;
+                line-height: 70px;
+                border-radius: 50%;
+            }
+            .box-foot {
+                padding: 0 15px 15px 15px;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-role id="role"></kct-role>
+
+        <kct-vbox>
+            <setting-header-block on-back-tap="__onBackTap" icon="hardware:security" text="Pengaturan" desc="Role Aplikasi">
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-button data-perm="manage@roles" style="margin-left: 5px;" on-tap="__onAddRoleTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Role</paper-button>
+            </setting-header-block>
+
+            <div class="flex scroll-y page-content">
+                <div class="padding">
+                    <kct-column columns="5">
+                        <template is="dom-repeat" items="[[ roles ]]" on-dom-change="__onRolesRender">
+                            <paper-card title="[[ __computeDescription(item.sr_description) ]]">
+                                <div class="card-content">
+                                    <div class="card-image p-a">
+                                        <span><iron-icon icon="hardware:security"></iron-icon></span>
+                                    </div>
+                                    <div class="p-a p-t-0 text-center">
+                                        <h3>[[ item.sr_name ]]</h3>
+                                        <p>[[ __computeDescription(item.sr_description) ]]</p>    
+                                    </div>
+                                    <kct-hbox>
+                                        
+                                        <div class="flex">
+                                            
+                                        </div>
+                                    </kct-hbox>
+                                </div>
+                                <div class="card-actions text-center" data-perm="manage@roles">
+                                    <paper-button class="btn-sm" on-tap="__onEditTap">Edit</paper-button>
+                                    <!-- <paper-button class="btn-sm" on-tap="__onKanbanTap">Worksheet</paper-button> -->
+                                    <paper-button class="btn-sm" on-tap="__onDeleteTap" class="text-danger">Delete</paper-button>
+                                </div>
+                                
+                            </paper-card>
+                        </template>
+                    </kct-column>
+                </div>
+            </div>
+        </kct-vbox>
+
+        <kct-search id="search" fields="[[ searchFields ]]" on-query="__onSearch"></kct-search>
+        
+        <kct-dialog id="editor" title="Role Editor" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
+                        <paper-input value="{{ selectedRole.sr_name }}" label="Nama Role" required auto-validate error-message="Role name is required"></paper-input>
+                        <paper-input value="{{ selectedRole.sr_description }}" label="Deskripsi"></paper-input>    
+                    </kct-form-validator>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ __formInvalid ]]">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="kanban-dialog" title="Worksheet" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    h3 { font-weight: 400; font-size: 14px; }
+                    p { font-weight: 300; font-size: 13px; }
+                    .box { 
+                        padding: 8px 0;
+                        margin-bottom: 0;
+                        border-top: 1px solid #dfdfdf;
+                        border-bottom: 1px solid #dfdfdf;
+                    }
+                    .box + .box {
+                        border-top: none;
+                    }
+                    .icon > span {
+                        margin: auto;
+                        display: inline-block;
+                        width: 40px;
+                        height: 40px;
+                        line-height: 38px;
+                        text-align: center;
+                        color: #fff;
+                        background-color: var(--paper-amber-500);
+                        border-radius: 50%;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <template is="dom-repeat" items="[[ kanban ]]">
+                        <div class="box">
+                            <kct-hbox>
+                                <div class="icon">
+                                    <span><iron-icon icon="view-carousel"></iron-icon></span>
+                                </div>
+                                <div class="flex p-l">
+                                    <h3>[[ item.srk_ks_name ]]</h3>
+                                    <p class="text-muted">[[ __computeDescription(item.srk_ks_description) ]]</p>
+                                </div>
+                                <div>
+                                    <paper-toggle-button checked="{{ item.srk_selected }}"></paper-toggle-button>    
+                                </div>
+                            </kct-hbox>
+                        </div>    
+                    </template>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onKanbanSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onKanbanResetTap">Reset</paper-button>
+                    <paper-button on-tap="__onKanbanCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>    
+    <script>
+        class RolesIndexPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'roles-index-page';
+            }
+
+            static get properties() {
+                return {
+                    roles: { type: Array, value: () => ([]) },
+                    selectedRole: { type: Object },
+                    kanban: { type: Array },
+                    searchFields: {
+                        type: Array,
+                        value: () => ([
+                            { name: 'sr_name', text: 'Role Name' }
+                        ])
+                    }
+                };
+            }
+            render() { 
+                super.render();
+            }
+
+            handleRouteParams(setting, action) {
+                if (setting == 'roles' && ! action) {
+                    this.__loadRoles();
+                }
+            }
+            __computeDescription(desc) {
+                return desc || 'No description';
+            }
+            __loadRoles(data = {}) {
+                this.$.ajax.GET('/roles', data).then(res => {
+                    this.set('roles', res.data);
+                });
+            }
+            __loadKanban(role) {
+                let path =  '/roles/roles-kanban?display=setup',
+                    ajax = this.$.ajax;
+                
+                if (role.sr_id) {
+                    path += '&role=' + role.sr_id;
+                }
+
+                ajax.GET(path).then((res) => {
+                    let kanban = res.data;
+                    
+                    kanban.forEach((k) => {
+                        k.srk_selected = k.srk_selected == 1 ? true : false;
+                    });
+
+                    this.set('kanban', kanban);
+                });
+            }
+            __onRolesRender() {
+                this.$.role.validate();
+            }
+            __onAddRoleTap() {
+                this.set('selectedRole', {});
+
+                this.$.editor.open();
+                this.$.validator.validate();
+
+            }
+            __onEditTap(e) {
+                let role = e.model.item;
+                this.set('selectedRole', role);
+                this.$.editor.open();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.selectedRole,
+                    ajax = this.$.ajax;
+
+                if (data.sr_id) {
+                    ajax.PUT('/roles/' + data.sr_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/roles', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Role has been saved');
+                        this.__loadRoles();
+                    }
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onDeleteTap(e) {
+                let record = e.model.item;
+                this.confirm('Delete Confirm', 'Are you sure want to delete this role?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/roles/' + record.sr_id).then(() => {
+                            this.__loadRoles();
+                        });
+                    }
+                });
+            }
+
+            __onKanbanTap(e) {
+                let role = e.model.item;
+                this.set('selectedRole', role); 
+                this.__loadKanban(role);
+
+                this.$['kanban-dialog'].title = `${role.sr_name} - Worksheet`;
+                this.$['kanban-dialog'].open();
+            }
+
+            __onKanbanCloseTap() {
+                this.$['kanban-dialog'].close();
+            }
+
+            __onKanbanSaveTap() {
+                this.$['kanban-dialog'].close();
+
+                let data = this.selectedRole,
+                    ajax = this.$.ajax;
+
+                data.sr_kanban = this.kanban;
+
+                ajax.PUT('/roles/' + data.sr_id, data).then(res => {
+                    if (res.success) {
+                        this.toast('Success', 'Role worksheet has been saved');
+                    }
+                });
+            }
+
+            __onKanbanResetTap() {
+                this.$['kanban-dialog'].close();
+
+                this.confirm('Confirm', 'Are you sure want to reset to default configuration ?').then(y => {
+                    if (y) {
+                        let ajax = this.$.ajax,
+                            data = this.selectedRole;
+                        
+                        data.sr_kanban = [];
+
+                        ajax.PUT('/roles/' + data.sr_id, data).then(res => {
+                            this.toast('Success', 'Role worksheet has been saved');  
+                        });
+                    }
+                });
+            }
+
+            __onSearch(e) {
+                this.__loadRoles(e.detail);
+            }
+
+            __onSearchTap() {
+                this.$.search.open();
+            }
+
+            __onReloadTap() {
+                this.__loadRoles();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(RolesIndexPage.is, RolesIndexPage);
+    </script>
+</dom-module>

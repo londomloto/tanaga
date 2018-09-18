@@ -1,0 +1,106 @@
+<link rel="import" href="../../bower_components/wysiwyg-e/wysiwyg-e.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/blockquote.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/bold.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/clear.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/code.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/color.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/heading.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/indent.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/outdent.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/italic.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/underline.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/justify.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/link.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/ordered.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/unordered.html">
+
+<dom-module id="kct-html-editor">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            #editor {
+                width: 100%;
+                height: 100%;
+                --wysiwyg-font: var(--app-font-family, Roboto);
+            }
+            [hidden] {
+                display: none;
+            }
+        </style>
+
+        <wysiwyg-e 
+            id="editor" 
+            value="{{ value }}" 
+            placeholder="[[ placeholder ]]" 
+            show-placeholder></wysiwyg-e>
+
+    </template>
+    <script>
+        class KctHtmlEditor extends Polymer.Element {
+            static get is() {
+                return 'kct-html-editor';
+            }
+
+            static get properties() {
+                return {
+                    value: { type: String, notify: true },
+                    tools: { type: String, value: 'bold,italic,underline,color,clear,code,link,ordered,unordered,indent,outdent,justify,heading' },
+                    placeholder: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__toolsChanged(tools)'
+                ]
+            }
+
+            ready() {
+                super.ready();
+
+                if ( ! this.value) {
+                    let space = document.createTextNode(' ');
+                    this.$.editor.target.appendChild(space);
+                }
+            }
+
+            __toolsChanged(tools) {
+                let items = (tools || '').split(/,/).map(e => e.replace(/\s+/g, '')),
+                    editor = this.$.editor;
+
+                editor.innerHTML = '';
+
+                items.forEach(e => {
+                    let t;
+                    switch(e) {
+                        case 'justify':
+                            t = document.createElement('wysiwyg-tool-justify');
+                            t.right = true;
+                            t.center = true;
+                            t.full = true;
+                            editor.appendChild(t);
+                            break;
+                        case 'heading':
+                            t = document.createElement('wysiwyg-tool-heading');
+                            t.h1 = true;
+                            t.h2 = true;
+                            t.h3 = true;
+                            t.h4 = true;
+                            t.h5 = true;
+                            t.h6 = true;
+                            editor.appendChild(t);
+                            break;
+                        default:
+                            t = document.createElement('wysiwyg-tool-' + e);
+                            editor.appendChild(t);
+                    }
+                });
+            }
+
+        }
+
+        customElements.define(KctHtmlEditor.is, KctHtmlEditor);
+    </script>
+</dom-module>

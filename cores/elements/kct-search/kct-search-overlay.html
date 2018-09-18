@@ -1,0 +1,238 @@
+<link rel="import" href="../../bower_components/vaadin-combo-box/vaadin-combo-box-overlay.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+
+<dom-module id="kct-search-overlay">
+    <template>
+        <style>
+            :host {
+                position:absolute;
+                @apply --shadow-elevation-2dp;
+                background:#fff;
+                border-radius:0 0 2px 2px;
+                top:0;
+                left:0;
+                pointer-events:auto;
+                z-index:200;
+                overflow:hidden;
+            }
+            #scroller {
+                overflow:auto;
+                max-height:var(--vaadin-combo-box-overlay-max-height,65vh);
+                transform:translate3d(0,0,0);
+                -webkit-overflow-scrolling:touch;
+            }
+            #selector {
+                --iron-list-items-container: {
+                    border-top:8px solid transparent;
+                    border-bottom:8px solid transparent;
+                };
+            }
+            #selector vaadin-combo-box-item {
+                cursor:pointer;
+                /*padding: 13px 16px;*/
+                padding: 0;
+                color:var(--primary-text-color);
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+            }
+            :host([opened][loading]) {
+                display:block !important;
+                height:58px;
+            }
+            #selector:not([touch-device]) vaadin-combo-box-item:hover,
+            #selector vaadin-combo-box-item[focused] {
+                background:#eee;
+            }
+            #selector vaadin-combo-box-item[selected] {
+                color:var(--primary-color);
+            }
+            #selector vaadin-combo-box-item[hidden] {
+                display:none;
+            }
+            .pagination {
+                padding:3px;
+                border-top:1px solid #dfdfdf;
+                text-align:center;
+                font-size:13px;
+            }
+            .pagination paper-icon-button {
+                width:32px;
+                height:32px;
+                padding:4px;
+                margin:0 2px;
+            }
+            .pagination paper-icon-button[disabled] {
+                opacity: .5;
+            }
+        </style>
+
+        <vaadin-spinner active="[[loading]]"></vaadin-spinner>
+
+
+        <div id="scroller" scroller="[[_getScroller()]]"
+            on-tap="_stopPropagation"
+            on-touchstart="_onTouchStart"
+            on-touchend="_preventDefault"
+            on-scroll="_onScroll"
+            hidden$="[[loading]]">
+            <iron-list
+                id="selector"
+                touch-device$="[[touchDevice]]"
+                role="listbox"
+                items="[[_items]]"
+                scroll-target="[[_getScroller()]]">
+                <template>
+                    <vaadin-combo-box-item
+                        on-tap="_onTap"
+                        index="[[index]]"
+                        item="[[item]]"
+                        label="[[getItemLabel(item)]]"
+                        selected="[[_isItemSelected(item, _selectedItem)]]"
+                        role$="[[_getAriaRole(index)]]"
+                        aria-selected$="[[_getAriaSelected(_focusedIndex,index)]]"
+                        focused="[[_isItemFocused(_focusedIndex,index)]]">
+                    </vaadin-combo-box-item>
+                </template>
+            </iron-list>
+        </div>
+        
+        <div class="pagination" hidden$="[[ ! pagingEnabled ]]">
+            <paper-icon-button on-tap="__onPaginationTap" data-action="first" icon="first-page" disabled$="[[ __firstDisabled ]]"></paper-icon-button>
+            <paper-icon-button on-tap="__onPaginationTap" data-action="prev"  icon="chevron-left" disabled$="[[ __prevDisabled ]]"></paper-icon-button>
+            <label>Page [[ paging.page ]] of [[ paging.pages ]]</label>
+            <paper-icon-button on-tap="__onPaginationTap" data-action="next" icon="chevron-right" disabled$="[[ __nextDisabled ]]"></paper-icon-button>
+            <paper-icon-button on-tap="__onPaginationTap" data-action="last" icon="last-page" disabled$="[[ __lastDisabled ]]"></paper-icon-button>
+        </div>
+
+  </template>
+
+    <script>
+        {
+            let BaseClass = customElements.get('vaadin-combo-box-overlay');
+            
+            class KctSearchOverlay extends BaseClass {
+                static get is() {
+                    return 'kct-search-overlay';
+                }
+
+                static get properties() {
+                    return {
+                        paging: { type: Object, value: () => ({}), readonly: true },
+                        pagingEnabled: { type: Boolean, value: false }
+                    };
+                }
+
+                static get observers() {
+                    return [
+                        '__pagingChanged(paging.*)'
+                    ];
+                }
+
+                constructor() {
+                    super();
+
+                    this.__firstDisabled = false;
+                    this.__prevDisabled = false;
+                    this.__nextDisabled = false;
+                    this.__lastDisabled = false;
+                }
+
+                _maxHeight (targetRect) {
+                    var margin = 8;
+                    var minHeight = 116;
+                    var bottom = Math.min(window.innerHeight, document.body.scrollHeight - document.body.scrollTop);
+
+                    if (this._alignedAbove) {
+                        return Math.max(targetRect.top - margin + Math.min(document.body.scrollTop, 0), minHeight) + 'px';
+                    } else {
+                        return Math.max(bottom - targetRect.bottom - margin, minHeight) + 'px';
+                    }
+                }
+
+                _setPosition (e) {
+                    
+                    if (e && e.target) {
+                        var target = e.target === document ? document.body : e.target;
+                        var parent = this._unwrapIfNeeded(this.parentElement);
+                        if (!(target.contains(this) || target.contains(this.positionTarget)) || parent !== document.body) {
+                            return;
+                        }
+                    }
+
+                    var targetRect = this.positionTarget.getBoundingClientRect();
+                    this._alignedAbove = this._shouldAlignAbove();
+
+                    this.style.maxHeight = this._maxHeight(targetRect);
+
+                    let selectorMaxHeight = this._maxHeight(targetRect);
+                    let pagingHeight = this.pagingEnabled ? 40 : 0;
+
+                    selectorMaxHeight = (parseInt(selectorMaxHeight.replace(/px/, '')) - pagingHeight) + 'px';
+                    this.$.selector.style.maxHeight = selectorMaxHeight;
+                    var overlayRect = this.getBoundingClientRect();
+                    
+                    this._translateX = targetRect.left - overlayRect.left + (this._translateX || 0);
+                    this._translateY = targetRect.top - overlayRect.top + (this._translateY || 0) +
+                    this._verticalOffset(overlayRect, targetRect);
+
+                    var _devicePixelRatio = window.devicePixelRatio || 1;
+                    this._translateX = Math.round(this._translateX * _devicePixelRatio) / _devicePixelRatio;
+                    this._translateY = Math.round(this._translateY * _devicePixelRatio) / _devicePixelRatio;
+                    this.translate3d(this._translateX + 'px', this._translateY + 'px', '0');
+
+                    this.style.width = this.positionTarget.clientWidth + 'px';
+
+                    this.updateViewportBoundaries();
+                }
+
+                __pagingChanged(changed) {
+                    if (changed.path == 'paging') {
+                        let paging =  (this.paging || {});
+
+                        let total = isNaN(+paging.total) ? 0 : +paging.total;
+                        let limit = isNaN(+paging.limit) ? 0 : +paging.limit;
+                        let start = isNaN(+paging.start) ? 0 : +paging.start;
+
+                        let pages = 0;
+                        let page = 0;
+
+                        if (limit > 0) {
+                            pages = Math.ceil(total / limit);
+                        }
+                        
+                        page = Math.ceil((start - 1) / limit) + 1;
+
+                        this.set('paging.pages', pages);
+                        this.set('paging.page', page);
+
+                        // update button state
+                        
+                        this.set('__firstDisabled', false);
+                        this.set('__prevDisabled', false);
+                        this.set('__nextDisabled', false);
+                        this.set('__lastDisabled', false);
+
+                        if (page == pages) {
+                            this.set('__nextDisabled', true);
+                            this.set('__lastDisabled', true);
+                        }
+
+                        if (page == 1) {
+                            this.set('__firstDisabled', true);
+                            this.set('__prevDisabled', true);
+                        }
+                    }
+                }
+
+                __onPaginationTap(e) {
+                    let action = e.target.dataset.action;
+                    this.dispatchEvent(new CustomEvent('pagination', { detail: { action: action } }));
+                }
+
+            }
+
+            customElements.define(KctSearchOverlay.is, KctSearchOverlay);
+        }
+    </script>
+</dom-module>

@@ -1,0 +1,226 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+
+<dom-module id="dx-mapping-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #grid {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-grid 
+            id="grid" 
+            url="/dx/mapping" 
+            columns="{{ columns }}" 
+            selection="{{ selection }}" 
+            selected="{{ selected }}" 
+            extra-size>
+
+            <label slot="grid-info">Upload Mapping</label>
+            <vaadin-combo-box 
+                id="combo-profile" 
+                slot="grid-info" 
+                label="Upload Mapping"  
+                items="[[ profiles ]]" 
+                selected-item="{{ profile }}"
+                item-value-path="profile_name" 
+                item-label-path="profile_name" 
+                no-label-float></vaadin-combo-box>
+
+            <paper-button slot="primary-toolbar" class="paper-button-icon" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;New</paper-button>
+            <paper-button slot="primary-toolbar" class="paper-button-icon" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button slot="primary-toolbar" class="paper-button-icon" on-tap="__onDeleteTap"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>        
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Mapping Editor" width="400" height="100%">
+            <template preserve-content>
+                
+                <div slot="dialog-body">
+                    <paper-input label="Table" value="{{ selected.map_table }}"></paper-input>
+                    <paper-input label="Column" value="{{ selected.map_xls_col }}"></paper-input>
+                    <paper-input label="Field" value="{{ selected.map_tbl_col }}"></paper-input>
+                    <paper-input label="Field Type" value="{{ selected.map_dtype }}"></paper-input>
+                    <!-- <paper-input label="Primary Key" value="{{ selected.map_pk }}"></paper-input> -->
+                    <div>
+                        <kct-checkbox value="{{ selected.map_pk }}">Set as primary key</kct-checkbox>    
+                    </div>
+                    
+                    <!-- <paper-input label="Secondary Key" value="{{ selected.map_sk }}"></paper-input> -->
+                    <div>
+                        <kct-checkbox value="{{ selected.map_sk }}">Set as secondary key</kct-checkbox>
+                    </div>
+
+                    <!-- <paper-input label="Active" value="{{ selected.map_active }}"></paper-input> -->
+
+                    <div>
+                        <kct-checkbox value="{{ selected.map_active }}">Check to activate</kct-checkbox>
+                    </div>
+                </div>
+
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSubmitTap">SAVE</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">CLOSE</paper-button>
+                </div>
+                
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class DxMappingPage extends KctView {
+            static get is() {
+                return 'dx-mapping-page';
+            }
+            static get observers() {
+                return [
+                    '__profileChanged(profile.*)'
+                ];
+            }
+            static get properties() {
+                return {
+                    profiles: { type: Array, value: () => ([])},
+                    profile: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { type: 'rownumber' },
+                                { text: 'Table', dataIndex: 'map_table' },
+                                { text: 'Column', dataIndex: 'map_xls_col' },
+                                { text: 'Field', dataIndex: 'map_tbl_col' },
+                                { 
+                                    text: 'Primary Key', 
+                                    dataIndex: 'map_pk',
+                                    align: 'center',
+                                    renderer: e => {
+                                        return e.data ? (e.data.map_pk == 1 ? 'Y' : '-') : '-';
+                                    }
+                                },
+                                { 
+                                    text: 'Sencondary Key', 
+                                    dataIndex: 'map_sk',
+                                    align: 'center',
+                                    renderer: e => {
+                                        return e.data ? (e.data.map_sk == 1 ? 'Y' : '-') : '-';
+                                    }
+                                },  
+                                { 
+                                    text: 'Active', 
+                                    dataIndex: 'map_active',
+                                    align: 'center',
+                                    renderer: e => {
+                                        return e.data ? (e.data.map_active == 1 ? 'Y' : '-') : '-';
+                                    }
+                                }
+                            ];
+                        }
+                    }
+                };
+            }
+            ready() {
+                super.ready();
+            }
+            handleRouteParams(setting) {
+                if (setting != 'dx-mapping') return;
+                this.__loadProfiles();
+            }
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+            __loadProfiles() {
+                this.$.ajax.GET('/dx/profiles').then((r) => {
+                    this.set('profiles', r.data);
+                });
+            }
+            __loadMapping() {
+                if (this.profile) {
+                    let params = this.$.grid.params || {};
+                    params['map_profile_id'] = this.profile.profile_id;
+
+                    this.$.grid.set('params', {
+                        params: params
+                    });
+
+                    this.$.grid.load();
+                }
+            }
+            __profileChanged() {
+                if (this.profile) {
+                    this.__loadMapping();
+                }
+            }
+            __onAddTap() {
+                this.set('selected', {});
+                this.$.editor.open();
+            }
+            __onEditTap() {
+                if ( ! this.selected) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.$.editor.open();
+            }
+            __onDeleteTap() {
+                if ( ! this.selection.length) {
+                    this.toast('Warning', 'No record(s) selected', 'warn');
+                    return;   
+                }
+
+                let record = this.selection[0];
+
+                this.confirm('Confirm', 'Are you sure want to delete selected record(s)?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/dx/mapping/' + record.map_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+            __onEditorSubmitTap() {
+                let data = this.selected,
+                    ajax = this.$.ajax;
+
+                data.map_profile_id = this.profile.profile_id;
+
+                if (data.map_id) {
+                    ajax.PUT('/dx/mapping/' + data.map_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/dx/mapping', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                        this.$.editor.close();
+                    }
+                }
+            }
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(DxMappingPage.is, DxMappingPage);
+    </script>
+</dom-module>

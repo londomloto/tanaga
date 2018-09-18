@@ -1,0 +1,55 @@
+<dom-module id="chart-styles">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 100%;
+                height: 100%;
+                box-sizing: border-box;
+            }
+            :host([theme="dark"]) {
+                background-color: #343435;
+            }
+            :host([theme="light"]) {
+                background-color: #fff;
+            }
+            .panel {
+                height: 100%;
+                position: relative;
+                box-sizing: border-box;
+            }
+            :host([theme="light"]) .panel {
+                
+            }
+            #chart {
+                width: 100%;
+                height: 100%;
+                box-sizing: border-box;
+            }
+            .toolbar {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                z-index: 5;
+            }
+            :host([theme="light"]) .toolbar {
+                color: var(--paper-blue-grey-500);
+            }
+            :host([theme="dark"]) .toolbar {
+                color: #E0E0E0;
+            }
+            :host([theme="phantom"]) .toolbar {
+                color: #FFFFFF;
+            }
+            .toolbar[hidden] {
+                display: none;
+            }
+            .highcharts-credits {
+                display: none;
+            }
+            :host([hidden]) {
+                display: none;
+            }
+        </style>
+    </template>
+</dom-module>

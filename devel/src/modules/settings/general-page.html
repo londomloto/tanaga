@@ -1,0 +1,125 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="general-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-role id="role"></kct-role>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block icon="settings" text="Settings" desc="General Settings" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-button data-perm="manage@general" style="margin-left: 5px;" class="btn-blue" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </setting-header-block>
+            <!-- <page-header-block icon="settings" title="Application" description="General Settings">
+                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </page-header-block> -->
+            <div class="flex scroll-y">
+                <div class="padding">
+                    <kct-column columns="2">
+                        <div>
+                            <paper-input label="App Title" value="{{ config.app_title }}" required auto-validate error-message="App title is required!"></paper-input>
+                            <paper-input label="App Version" value="{{ config.app_version }}"></paper-input>
+                            <paper-input label="Description" value="{{ config.app_description }}"></paper-input>
+                            <paper-input label="Keywords" value="{{ config.app_keywords }}"></paper-input>
+                            <paper-input label="Author" value="{{ config.app_author }}" readonly></paper-input>
+                            <kct-checkbox value="{{ tour }}">Enable tour guide</kct-checkbox>
+                        </div>
+                        <div></div>
+                    </kct-column>
+                </div>
+            </div>
+        </kct-vbox>
+        
+    </template>
+    <script>
+        class GeneralPage extends KctView {
+            static get is() {
+                return 'general-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'General Settings' },
+                    tour: { type: String }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__configChanged(config.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__reset = null;
+            }
+
+            ready() {
+                super.ready();
+                this.$.role.validate();
+
+                let tour = this.config.app_tour_enabled;
+                tour = tour === undefined ? '0' : (tour === true ? '1' : '0');
+                this.set('tour', tour);
+            }
+
+            __configChanged(changed) {
+                if (changed.path == 'config') {
+                    if ( ! this.__reset) {
+                        this.__reset = Object.assign({}, this.config);
+                    }
+                }
+            }
+
+            __onSaveTap() {
+                let data = {};
+
+                for (let k in this.config) {
+                    if ([
+                        'app_name', 
+                        'app_host', 
+                        'app_base', 
+                        'app_site', 
+                        'app_push_server',
+                        'app_package_info', 
+                        'app_tour_enabled'].indexOf(k) === -1) {
+                        data[k] = this.config[k];
+                    }
+                }
+
+                this.$.ajax.POST('/config/save', data).then((res) => {
+                    this.__reset = res.data;
+                    this.toast('Success', 'Configuration has been saved!');
+                    this.set('config.app_tour_enabled', this.tour == '1' ? true : false);
+                });
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(GeneralPage.is, GeneralPage);
+    </script>
+</dom-module>

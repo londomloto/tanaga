@@ -1,0 +1,233 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+
+<dom-module id="modules-editor-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+            h3 {
+                font-weight: 400;
+                margin-bottom: 1rem;
+            }
+            iron-pages > div {
+                padding: 24px;
+            }
+            .table paper-icon-button {
+                padding: 4px;
+                width: 26px;
+                height: 26px;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-role id="role"></kct-role>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block icon="code" desc="Module Aplikasi" on-back-tap="__onBackTap">
+                <paper-button data-perm="manage@modules" on-tap="__onSubmitTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Simpan Perubahan</paper-button>
+            </setting-header-block>
+            <!-- <page-header-block icon="code" description="Application Modules">
+                <paper-button on-tap="__onSubmitTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </page-header-block> -->
+            <div class="flex scroll-y padding">
+                <kct-column columns="2">
+                    <div>
+                        <h3>Detail Module</h3>
+                        <kct-form-validator id="module-validator" invalid="{{ __formInvalid }}" auto-validate>
+                            <paper-input label="Nama Module" value="{{ record.sm_name }}" required auto-validate error-message="Name is required"></paper-input>
+                            <paper-input label="Path" value="{{ record.sm_api }}" required auto-validate error-message="API is required"></paper-input>
+                            <paper-input label="Label" value="{{ record.sm_title }}" required auto-validate error-message="Title is required"></paper-input>
+                            <paper-input label="Versi" value="{{ record.sm_version }}"></paper-input>
+                            <paper-input label="Author" value="{{ record.sm_author }}"></paper-input>
+                            <paper-input label="Repository" value="{{ record.sm_repository }}"></paper-input>    
+                        </kct-form-validator>
+                    </div>
+                    <div>
+                        <div class="p-l">
+                            <h3>Kapabilitas Module</h3>
+
+                            <div class="m-b">
+                                <paper-button data-perm="manage@modules" on-tap="__onAddCapabilityTap" class="btn-primary" disabled$="[[ __formInvalid ]]">Tambah</paper-button>    
+                            </div>
+                            
+                            <template is="dom-repeat" items="[[ capabilities ]]" on-dom-change="__onCapabilitiesRender">
+                                <div class="box box-shadow">
+                                    <div class="box-tool">
+                                        <paper-icon-button data-perm="manage@modules" on-tap="__onDeleteCapabilityTap" icon="clear"></paper-icon-button>
+                                    </div>
+                                    <div class="box-body">
+                                        <div class="f-400 m-b-xs"><a on-click="__onEditCapabilityClick" href="#" style="text-decoration: none;">[[ item.smc_name ]]</a></div>
+                                        <div class="text-muted">[[ item.smc_description ]]</div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </kct-column>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="capability-dialog" width="400" title="Capability">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-form-validator id="cap-validator" invalid="{{ __capInvalid }}" auto-validate>
+                        <paper-input value="{{ capability.smc_name }}" label="Nama Kapabilitas" required auto-validate error-message="Capability name is required"></paper-input>
+                        <paper-input value="{{ capability.smc_description }}" label="Deskripsi"></paper-input>
+                    </kct-form-validator>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onCapabilityOK" disabled$="[[ __capInvalid ]]">Tambah</paper-button>
+                    <paper-button on-tap="__onCapabilityCancel">Batal</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+        
+    </template>
+    <script>
+        class ModulesEditorPage extends KctView {
+            static get is() {
+                return 'modules-editor-page';
+            }
+            static get properties() {
+                return {
+                    page: { type: String, value: 'general' },
+                    record: { type: Object },
+                    capabilities: { type: Array, value: () => [] },
+                    capability: { type: Object, notify: true }
+                };
+            }
+            constructor() {
+                super();
+                this.__capabilityAction = null;
+            }
+            ready() {
+                super.ready();
+                this.$.role.validate();
+            }
+            handleRouteParams(setting, action, id) {
+                if (setting != 'modules') {
+                    return;
+                }
+
+                if (id) {
+                    this.$.ajax.GET('/modules/' + id).then((res) => {
+                        if (res.data) {
+                            this.set('record', res.data);
+                            this.__loadCapabilities();
+                        } else {
+                            this.alert('Oops!', "It's look like module doesn't exists in database").then(() => {
+                                this.__goback();
+                            });
+                        }
+                    }); 
+                } else {
+                    this.set('record', {});
+                    this.set('capabilities', []);
+                    this.$['module-validator'].validate();
+                }
+            }
+            __loadCapabilities() {
+                this.$.ajax.GET('/modules/modules-capabilities?module=' + this.record.sm_id).then((res) => {
+                    this.set('capabilities', res.data);
+                });
+            }
+            __onCapabilitiesRender() {
+                this.$.role.validate();
+            }
+            __goback() {
+                this.set('route.path', '/settings/modules');
+            }
+            __onBackTap() {
+                this.__goback();
+            }
+            __onSubmitTap() {
+                let data = Object.assign({}, this.record),
+                    phantom = ! data.sm_id;
+
+                data.sm_capabilities = this.capabilities;
+
+                if (phantom) {
+                    this.$.ajax.POST('/modules', data).then(done.bind(this));
+                } else {
+                    this.$.ajax.PUT('/modules/' + data.sm_id, data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Module has been saved');
+
+                        if (phantom) {
+                            this.__goback();
+                        }
+                    }
+                }
+            }
+            __onAddCapabilityTap() {
+                let item = { smc_sm_id: this.record.sm_id };
+
+                this.push('capabilities', item);
+                let index = this.capabilities.indexOf(item);
+
+                this.set('capability', item);
+                this.linkPaths('capability', 'capabilities.' + index);
+
+                this.__capabilityAction = 'add';
+                this.$['capability-dialog'].open();
+                this.$['cap-validator'].validate();
+            }
+            __onEditCapabilityClick(e) {
+                e.preventDefault();
+
+                let item = e.model.item,
+                    index = e.model.index;
+
+                this.set('capability', item);
+                this.linkPaths('capability', 'capabilities.' + index);
+
+                this.__capabilityAction = 'edit';
+                this.$['capability-dialog'].open();
+            }
+
+            __onDeleteCapabilityTap(e) {
+                let item = e.model.item,
+                    index = e.model.index;
+
+                this.splice('capabilities', index, 1);
+            }
+            __onCapabilityOK() {
+                this.$['capability-dialog'].close();
+            }
+            __onCapabilityCancel() {
+                if (this.__capabilityAction == 'add') {
+                    let index = this.capabilities.indexOf(this.capability);
+                    if (index !== -1) {
+                        this.splice('capabilities', index, 1);
+                    }
+                }
+                this.$['capability-dialog'].close();
+            }
+        }
+
+        customElements.define(ModulesEditorPage.is, ModulesEditorPage);
+    </script>
+</dom-module>

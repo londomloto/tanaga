@@ -1,0 +1,169 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="notifications-page">
+    <template>
+        <style include="theme-helper">
+            :host{ 
+                height: 100%;  
+                background-color: var(--page-background-color);
+            };
+            .item {
+                padding: 10px;
+                color: #666;
+                font-size: 13px;
+                cursor: pointer;
+                @apply --layout-horizontal;
+            }
+            .item:hover {
+                background-color: var(--paper-grey-200);
+            }
+            .item > .text {
+                @apply --layout-flex;
+            }
+            .item > .icon {
+                padding: 5px 15px 5px 5px;
+            }
+            .item + .item {
+                border-top: 1px solid #dfdfdf;
+            }
+            .time {
+                font-size: 12px;
+            }
+            kct-html {
+                --paragraph: { font-size: 13px; };
+                --strong: { font-weight: 500; color: var(--paper-purple-500);  };
+            }
+            .paginator {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .paginator paper-button {
+                font-size: 13px;
+                text-transform: none;
+                padding-left: 30px;
+                padding-right: 30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+
+        <kct-vbox>
+            <setting-header-block icon="social:notifications" text="Module" desc="Notifications" hide-nav></setting-header-block>
+            <div class="flex scroll-y">
+                <template is="dom-repeat" items="[[ items ]]">
+                    <div class="item" on-tap="__onItemTap">
+                        <div class="icon">
+                            <iron-icon icon="[[ item.tta_icon ]]"></iron-icon>
+                        </div>
+                        <div class="text">
+                            <div class="time">[[ item.tta_time ]]</div>
+                            <kct-html html="[[ item.tta_verb ]]"></kct-html>    
+                        </div>
+                    </div>
+                </template>
+                <div class="paginator">
+                    <paper-button hidden$="[[ !__more ]]" on-tap="__onLoadMoreTap" class="btn-more">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>    
+                </div>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class NotificationsPage extends KctView {
+
+            static get is() {
+                return 'notifications-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Notifications', notify: true },
+                    items: { type: Array, value: () => ([]) }
+                };
+            }
+
+            constructor() {
+                super();
+
+                this.__more = false;
+
+                this.__paging = {
+                    start: 0,
+                    limit: 25
+                };
+            }
+
+            ready() {
+                super.ready();
+                this.__load();
+            }
+
+            __load(options = {}) {
+                let payload = Object.assign({}, options);
+
+                if (payload.start === undefined) {
+                    payload.start = this.__paging.start;
+                } else {
+                    this.__paging.start = payload.start;
+                }
+
+                if (payload.limit === undefined) {
+                    payload.limit = this.__paging.limit;
+                } else {
+                    this.__paging.limit = payload.limit;
+                }
+
+                if (payload.start == 0) {
+                    this.set('items', []);
+                }
+
+                this.$.ajax.GET('/notifications', payload).then(res => {
+                    let data = res.data || [];
+
+                    if (payload.start == 0) {
+                        this.set('items', data);    
+                    } else {
+                        let items = (this.items || []).slice();
+                        Array.prototype.push.apply(items, data);
+                        this.set('items', items);
+                    }
+
+                    this.set('__paging.start', (this.__paging.start + this.__paging.limit));
+                    this.set('__paging.total', res.total);
+
+                    if ( (payload.start + payload.limit) >= res.total ) {
+                        this.set('__more', false);
+                    } else{
+                        this.set('__more', true);
+                    }
+                });
+            }
+
+            __onItemTap(e) {
+                let item = e.model.item;
+                if (item.tta_link) {
+                    this.set('route.path', item.tta_link);
+                }
+            }
+
+            __onSocketNotify() {
+                this.__load({ start: 0 });
+            }
+
+            __onLoadMoreTap() {
+                let start = this.__paging.start,
+                    limit = this.__paging.limit;
+
+                this.__load({ start: start, limit: limit });
+            }   
+        }
+
+        customElements.define(NotificationsPage.is, NotificationsPage);
+    </script>
+</dom-module>

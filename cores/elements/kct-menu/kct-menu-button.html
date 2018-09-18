@@ -1,0 +1,165 @@
+<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="kct-menu-list.html">
+
+<dom-module id="kct-menu-button">
+    <template>
+        <style>
+            paper-menu-button {
+                padding: 0;
+            }
+            paper-button {
+                margin: 0;
+                font-size: 13px;
+                padding: 0.3em 0.7em;
+                font-weight: normal;
+                border: 1px solid #dfdfdf;
+                @apply --kct-menu-button-trigger;
+            }
+            paper-button > * {
+                pointer-events: none;
+            }
+            .caret {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+                position: relative;
+            }
+        </style>
+
+        <div style="display: none;">
+            <slot id="slot"></slot>
+        </div>
+
+        <paper-menu-button 
+            id="menu" 
+            horizontal-align="left" 
+            horizontal-offset="0" 
+            vertical-offset="0" 
+            ignore-select 
+            no-animations 
+            on-paper-dropdown-close="__onPopupClose" 
+            on-paper-dropdown-open="__onPopupOpen" 
+            no-overlap>
+            <paper-button slot="dropdown-trigger">[[ label ]]&nbsp;<iron-icon icon="arrow-drop-down" class="caret"></iron-icon></paper-button>
+            <kct-menu-list 
+                id="list" 
+                slot="dropdown-content" 
+                items="[[ items ]]" 
+                on-item-tap="__onItemTap"></kct-menu-list>
+        </paper-menu-button>
+
+    </template>
+    <script>
+        class KctMenuButton extends Polymer.Element {
+            static get is() {
+                return 'kct-menu-button';
+            }
+
+            static get properties() {
+                return {
+                    label: { type: String, value: 'Button' },
+                    items: { type: Array, value: () => ([]) }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__closing = false;
+            }
+
+            ready() {
+                super.ready();
+                this.__populateItems();
+            }
+
+            close() {
+                this.__closing = true;
+                this.$.list.close();
+                this.$.menu.close();
+                this.__closing = false;
+            }
+
+            authorize() {
+
+            }
+
+            __populateItems() {
+                let items = [];
+                let label = [];
+
+                this.$.slot.assignedNodes().forEach(n => {
+                    if (n.nodeType == Node.ELEMENT_NODE) {
+                        if (n.localName == 'paper-item') {
+                            this.__traverse(n, items);    
+                        } else {
+                            label.push(n);
+                        }
+                    }
+                });
+
+                this.set('items', items);
+                
+            }
+
+            __traverse(node, stack) {
+                let item = {};
+                let children = node.children;
+                let isparent = false;
+                let count = children.length;
+
+                for (let i = 0; i < count; i++) {
+                    if (children[i].localName == 'paper-item') {
+                        isparent = true;
+                        break;
+                    }
+                }
+
+                item.node = node;
+                item.icon = node.dataset.icon === undefined ? false : (node.dataset.icon || ' ');
+                item.text = node.dataset.text;
+                item.separator = !!node.dataset.separator;
+
+                if (isparent) {
+                    item.leaf = false;
+                    item.children = [];
+
+                    let content = [];
+
+                    for (let i = 0; i < count; i++) {
+                        if (children[i].localName == 'paper-item') {
+                            this.__traverse(children[i], item.children);    
+                        } else {
+                            content.push(children[i]);
+                        }
+                    }
+
+                } else {
+                    item.leaf = true;
+                }
+
+                stack.push(item);
+            }
+
+            __onItemTap(e) {
+                let item = e.detail.item;
+                item.node.dispatchEvent(new CustomEvent('tap'));
+                this.close();
+            }
+
+            __onPopupClose(e) {
+                if ( ! this.__closing) {
+                    this.close();
+                }
+            }
+
+            __onPopupOpen(e) {
+                this.$.list.resize();
+            }
+        }
+
+        customElements.define(KctMenuButton.is, KctMenuButton);
+    </script>
+</dom-module>

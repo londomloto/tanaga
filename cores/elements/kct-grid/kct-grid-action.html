@@ -1,0 +1,94 @@
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="kct-grid-action">
+    <template>
+        <style>
+            paper-button {
+                margin: 0 2px 0 0;
+                padding: 0.25rem 0.5rem;
+                font-size: 10px;
+                font-weight: 500;
+                background-color: var(--kct-grid-action-accent, var(--paper-grey-300));
+                color: var(--kct-grid-action-color, #666);
+            }
+            iron-icon { 
+                margin-right: 5px; 
+                pointer-events: none; 
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+            }
+            iron-icon[hidden] { 
+                display: none; 
+            }
+            :host([icon-only]) paper-button,
+            :host([rounded]) paper-button {
+                padding: 0;
+                min-width: 0;
+                width: 24px;
+                height: 24px;
+            }
+            :host([rounded]) paper-button {
+                border-radius: 50%;
+            }
+            :host([icon-only]) iron-icon {
+                margin-right: 0;
+            }
+        </style>
+
+        <paper-button on-tap="__onButtonTap">
+            <iron-icon icon="[[ icon ]]" hidden$="[[ __computeHideIcon(icon) ]]"></iron-icon>
+            <slot></slot>
+        </paper-button>
+
+    </template>
+    <script>
+        class KctGridAction extends Polymer.Element {
+            static get is() {
+                return 'kct-grid-action';
+            }
+
+            static get properties() {
+                return {
+                    icon: { type: String },
+                    accent: { type: String },
+                    iconOnly: { type: Boolean, value: false, reflectToAttribute: true },
+                    rounded: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__accentChanged(accent)'
+                ];
+            }
+
+            __computeHideIcon(icon) {
+                return icon ? false : true;
+            }
+
+            __accentChanged(accent) {
+                if (accent) {
+                    let styles = { 
+                        '--kct-grid-action-accent': 'var(--paper-' + accent + '-300)',
+                        '--kct-grid-action-color': '#ffffff'
+                    };
+                    this.updateStyles(styles);
+                }
+            }
+
+            __onButtonTap(e) {
+                e.stopPropagation();
+                
+                let event = new CustomEvent('tap', {
+                    composed: true,
+                    bubble: true
+                });
+
+                this.dispatchEvent(event);
+            }
+        }
+
+        customElements.define(KctGridAction.is, KctGridAction);
+    </script>
+</dom-module>

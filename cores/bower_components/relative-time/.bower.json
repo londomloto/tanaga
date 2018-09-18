@@ -1,0 +1,39 @@
+{
+  "name": "relative-time",
+  "description": "a Polymer 2 element to show (relative) time",
+  "main": "relative-time.html",
+  "authors": [
+    "Glenn Dirkx <glenn.dirkx@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "Polymer",
+    "Web-Components",
+    "relative",
+    "time"
+  ],
+  "homepage": "https://github.com/Juravenator/relative-time",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^2.0.0-rc.3",
+    "moment": "^2.18.1",
+    "moment-timezone": "^0.5.13"
+  },
+  "version": "0.1.5",
+  "_release": "0.1.5",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.1.5",
+    "commit": "acea6a0dc7127a61785df2799f161d3ca3ea8f83"
+  },
+  "_source": "git://github.com/Juravenator/relative-time.git",
+  "_target": "^0.1.5",
+  "_originalSource": "Juravenator/relative-time",
+  "_direct": true
+}

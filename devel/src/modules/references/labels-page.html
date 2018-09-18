@@ -1,0 +1,230 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+
+<dom-module id="labels-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid id="grid" 
+            url="/labels" 
+            columns="[[ columns ]]" 
+            selected="{{ selectedRecord }}" 
+            selection="{{ selection }}"
+            header-text="References" 
+            header-icon="view-list" 
+            header-desc="List of available labels" 
+            
+            hide-nav>
+            <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Remove</paper-button>
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Label Editor" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper">
+                    label { font-size: 11px; }
+                    .item-color {
+                        display: block;
+                        float: left;
+                        width: 24px;
+                        height: 24px;
+                        margin: 0 5px 5px 0;
+                    }
+                    .item-color.iron-selected {
+                        outline: 1px solid #fff;
+                        outline-offset: -2px;
+                    }
+                    .form-group {
+                        margin-top: 8px;
+                    }
+                    .btn-add-project {
+                        background-color: var(--paper-grey-300);
+                        border-radius: 0;
+                        padding: 0.5em;
+                        min-width: 0;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <paper-input label="Label" value="{{ editingRecord.sl_label }}"></paper-input>
+                    <div class="form-group">
+                        <label>Select label color</label>
+                        <div>
+                            <iron-selector attr-for-selected="name" selected="{{ editingRecord.sl_color }}">
+                                <template is="dom-repeat" items="[[ colors ]]">
+                                    <a class="item-color" href="javascript:;" name="[[ _cssval(item.color) ]]" style$="background-color: [[ _cssval(item.color) ]]"></a>    
+                                </template>
+                                <div class="clearfix"></div>
+                            </iron-selector>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <kct-combobox 
+                            url="/projects" 
+                            value="{{ editingRecord.sl_sp_id }}" 
+                            label="Add label to project" 
+                            page-size="10" 
+                            item-label-path="sp_title" 
+                            item-value-path="sp_id" 
+                            autoload></kct-combobox>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class LabelsPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'labels-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Labels', notify: true }, 
+                    selection: { type: Array, value: [] },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { 
+                                text: 'Label', 
+                                dataIndex: 'sl_label', 
+                                width: 200,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return '<iron-icon icon="image:lens" style="color: '+ e.data.sl_color +'"></iron-icon>&nbsp;' + e.data.sl_label;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                text: 'Availability',
+                                dataIndex: 'sl_sp_title',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return e.data.sl_sp_title ? 'Project ' + e.data.sl_sp_title : 'All Project';
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    },
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object },
+                    colors: {
+                        type: Array,
+                        value: () => ([
+                            { color: 'var(--paper-purple-500)' },
+                            { color: 'var(--paper-red-500)' },
+                            { color: 'var(--paper-amber-500)' },
+                            { color: 'var(--paper-indigo-500)' },
+                            { color: 'var(--paper-pink-500)' },
+                            { color: 'var(--paper-blue-500)' },
+                            { color: 'var(--paper-teal-500)' },
+                            { color: 'var(--paper-blue-grey-500)' },
+                            { color: 'var(--paper-green-500)' }
+                        ])
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__foo(selection.*)'
+                ];
+            }
+
+            __foo(changed) {
+                console.log(changed);
+                console.log(this.selection);
+            }
+
+            handleRouteParams() {
+                if (this.$.grid) {
+                    this.$.grid.deferAutoload();
+                }
+            }
+
+            handleResizing(width, height) {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.set('editingRecord', JSON.parse(JSON.stringify(this.selectedRecord)));
+                this.$.editor.open();
+            }
+
+            __onRemoveTap() {
+                if ( ! this.selectedRecord) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.confirm('Confirm', 'Are you sure want to delete this record?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/labels/' + this.selectedRecord.sl_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                
+                let data = this.editingRecord;
+                data.sl_color = this._cssval(data.sl_color);
+
+                if (data.sl_id) {
+                    this.$.ajax.PUT('/labels/' + data.sl_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/labels', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();    
+                    } else {
+                        this.toast('Warning', res.message, 'warn');
+                    }
+                }
+            }
+        }
+
+        customElements.define(LabelsPage.is, LabelsPage);
+    </script>
+</dom-module>

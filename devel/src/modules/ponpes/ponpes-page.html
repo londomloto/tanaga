@@ -1,0 +1,65 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../blocks/module-header-block.html">
+
+<dom-module id="ponpes-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
+            <ponpes-list id="list" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-list.html"></ponpes-list>
+            <ponpes-home id="home" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-home.html"></ponpes-home>
+            <ponpes-edit id="edit" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-edit.html"></ponpes-edit>
+        </kct-pages>
+    </template>
+    <script>
+        class PonpesPage extends KctView {
+            static get is() {
+                return 'ponpes-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Pesantren', notify: true },
+                    page: { type: String }
+                };
+            }
+            handleRouteParams(menu) {
+                if ( ! menu) {
+                    this.set('route.path', '/ponpes/list');
+                } else {
+                    let page;
+
+                    switch(menu) {
+                        case 'list':
+                            page = 'list';
+                            break;
+                        case 'create':
+                            page = 'edit';
+                            break;
+                        case 'update':
+                            page = 'edit';
+                            break;
+                        default:
+                            page = 'home';
+                            break;
+                    }
+
+                    this.set('page', page);
+                }
+            }
+        }
+        customElements.define(PonpesPage.is, PonpesPage);
+    </script>
+</dom-module>

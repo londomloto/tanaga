@@ -1,0 +1,144 @@
+<dom-module id="kct-form-validator">
+    <template>
+        <slot id="slot"></slot>
+    </template>
+    <script>
+        class KctFormValidator extends Polymer.Element {
+            static get is() {
+                return 'kct-form-validator';
+            }
+            static get properties() {
+                return {
+                    invalid: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    manualCollect: { type: Boolean, value: false }
+                };
+            }
+            constructor() {
+                super();
+                this.__collections = [];
+                this.__node = null;
+                this.__validationHandler = this.__onNodeValidate.bind(this);
+            }
+            ready() {
+                super.ready();
+
+                if ( ! this.manualCollect) {
+                    this.collect();
+                }
+            }
+            connectedCallback() {
+                super.connectedCallback();
+                this.__bindEvent();
+            }
+            disconnectedCallback() {
+                this.__unbindEvent();
+                super.disconnectedCallback();
+            }
+            collect() {
+                let defer = {};
+
+                defer.promise = new Promise((res, rej) => {
+                    defer.resolve = res;
+                    defer.reject = rej;
+                });
+
+                this.__collections = [];
+                this.__collecting = Polymer.Debouncer.debounce(
+                    this.__collecting,
+                    Polymer.Async.timeOut.after(1),
+                    () => {
+
+                        let owner = this.parentNode;
+
+                        if (owner) {
+                            let selector = 'paper-input,vaadin-combo-box,vaadin-date-picker,kct-icon-picker-kct-radio-group';
+                            owner.querySelectorAll(selector).forEach(node => {
+                                if ('validate' in node) {
+
+                                    let found = node.hasAttribute('required') || 
+                                                node.hasAttribute('auto-validate') || 
+                                                node.hasAttribute('error-message') || 
+                                                ['email'].indexOf(node.type) !== -1;
+
+                                    if (found) {
+                                        this.__collections.push({
+                                            type: 'required',
+                                            node: node
+                                        });
+                                    }
+                                }
+                            });
+
+                            if (this.manualCollect) {
+                                this.__bindEvent();
+                            }
+                            
+                            this.dispatchEvent(new CustomEvent('ready'));
+                        }
+
+                        defer.resolve();
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__collecting);
+
+                return defer.promise;
+            }
+            reset() {
+                this.validate();
+            }
+            validate(node) {
+                let valid = true;
+
+                if (node) {
+                    this.__collections.forEach(item => {
+                        valid = valid && ( ! item.node.invalid );
+                    });
+                } else {
+
+                    this.__collections.forEach(item => {
+                        let _invalid = item.node.invalid;
+                        
+                        item.node.validate();
+                        valid = valid && ( ! item.node.invalid );
+                        
+                        item.node.invalid = _invalid;
+                    });
+                }
+
+                this.set('invalid', ! valid);
+            }
+            __bindEvent() {
+
+                this.__listening = Polymer.Debouncer.debounce(
+                    this.__listening,
+                    Polymer.Async.timeOut.after(2),
+                    () => {
+                        if (this.manualCollect) {
+                            this.__unbindEvent();
+                        }
+                        
+                        this.__collections.forEach(item => {
+                            if ('invalid' in item.node) {
+                                item.node.addEventListener('iron-input-validate', this.__validationHandler);
+                            }
+                        });
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__listening);
+            }
+            __unbindEvent() {
+                this.__collections.forEach(item => {
+                    item.node.removeEventListener('iron-input-validate', this.__validationHandler);
+                });
+            }
+            __onNodeValidate(e) {
+                if (this.autoValidate) {
+                    this.validate(e.target);
+                }
+            }
+        }
+
+        customElements.define(KctFormValidator.is, KctFormValidator);
+    </script>
+</dom-module>

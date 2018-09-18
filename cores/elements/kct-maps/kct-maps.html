@@ -1,0 +1,288 @@
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../kct-view/kct-view.html">
+<link rel="import" href="../kct-layouts/kct-vbox.html">
+<link rel="import" href="../kct-layouts/kct-hbox.html">
+<link rel="import" href="../kct-pages/kct-pages.html">
+<link rel="import" href="../kct-message/kct-alert.html">
+<link rel="import" href="services/maps-providers-service.html">
+<link rel="import" href="services/maps-layers-service.html">
+<link rel="import" href="services/maps-routing-service.html">
+<link rel="import" href="services/maps-geocoding-service.html">
+<link rel="import" href="services/maps-help-service.html">
+
+<dom-module id="kct-maps">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: 100%;
+            }
+            .container {
+                height: 100%;
+            }
+            .menu-pane {
+                width: 50px;
+                background-color: var(--paper-grey-300);
+                --paper-listbox-background-color: transparent;
+                z-index: 5;
+                position: relative;
+            }
+            .menu-pane paper-icon-button {
+                color: var(--paper-blue-grey-200);
+                width: 48px;
+                height: 48px;
+                position: relative;
+            }
+            .menu-pane paper-icon-button.iron-selected {
+                color: var(--paper-blue-grey-500);
+            }
+            .menu-pane paper-icon-button.iron-selected::after {
+                display: block;
+                position: absolute;
+                top: 50%;
+                margin-top: -8px;
+                right: -4px;
+                content: '';
+                width: 0;
+                height: 0;
+                border-style: solid;
+                border-width: 8px 8px 8px 0;
+                border-color: transparent #fff transparent transparent;
+            }
+            .side-pane {
+                width: 240px;
+                background-color: #fff;
+                @apply --shadow-elevation-2dp;
+                position: relative;
+                z-index: 4;
+            }
+            .side-toolbox, 
+            .maps-toolbox {
+                height: 50px;
+            }
+            .side-toolbox {
+                background-color: var(--paper-indigo-700);
+            }
+            .maps-toolbox {
+                background-color: var(--paper-indigo-500);
+                text-align: center;
+            }
+            .maps-toolbox::slotted(paper-fab),
+            .maps-toolbox > paper-fab {
+                --paper-fab-background: var(--paper-indigo-500);
+                display: inline-block;
+                position: relative;
+                top: 5px;
+                box-shadow: none;
+                margin: 0 8px;
+            }
+            .maps-viewer {
+                position: relative;
+                height: 100%;
+            }
+            .provider-layer {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 1;
+                overflow: hidden;
+            }
+            .provider-layer > kct-pages {
+                height: 100%;
+                position: relative;
+            }
+
+        </style>
+
+        <kct-hbox fit>
+            <div class="menu-pane">
+                <paper-listbox selected="{{ service }}" attr-for-selected="name">
+                    <template is="dom-repeat" items="[[ services ]]">
+                        <paper-icon-button name="[[ item.name ]]" icon="[[ item.icon ]]"></paper-icon-button>    
+                    </template>    
+                </paper-listbox>
+            </div>
+            <div class="side-pane">
+                <kct-vbox>
+                    <div class="flex">
+                        <kct-pages class="services-pane" selected="[[ service ]]" attr-for-selected="name" fallback-selection="maps-help-service">
+                            <maps-providers-service name="maps-providers-service" provider="{{ provider }}"></maps-providers-service>
+                            
+                            <maps-layers-service name="maps-layers-service">
+                                
+                                <div slot="layer-header">
+                                    <slot name="layers-service-header"></slot>
+                                </div>
+                                
+                                <div slot="layer-body">
+                                    <slot name="layers-service-body"></slot>    
+                                </div>
+
+                            </maps-layers-service>
+
+                            <maps-routing-service name="maps-routing-service"></maps-routing-service>
+                            <maps-geocoding-service name="maps-geocoding-service"></maps-geocoding-service>
+                            <maps-help-service name="maps-help-service"></maps-help-service>
+                        </kct-pages>  
+                    </div>
+                    <div class="side-toolbox">
+                        
+                    </div>
+                </kct-vbox>
+            </div>
+            <div class="flex maps-pane">
+                <kct-vbox>
+                    <div class="flex maps-viewer">
+                        <div class="provider-layer">
+                            <kct-pages id="provider-selector" selected="[[ provider ]]" attr-for-selected="name" lazy-load>
+                                <!-- <mapserver-maps-provider  name="mapserver"  import="providers/mapserver/mapserver-maps-provider.html"></mapserver-maps-provider> -->
+                                <google-maps-provider name="google" import="providers/google/google-maps-provider.html" markers="{{ markers }}" zoom="[[ zoom ]]" center="[[ center ]]"></google-maps-provider>
+                                <!-- <bing-maps-provider   name="bing"   import="providers/bing/bing-maps-provider.html"></bing-maps-provider>
+                                <osm-maps-provider    name="osm"    import="providers/osm/osm-maps-provider.html"></osm-maps-provider>
+                                <mapbox-maps-provider name="mapbox" import="providers/mapbox/mapbox-maps-provider.html" markers="{{ markers }}" zoom="[[ zoom ]]" center="[[ center ]]"></mapbox-maps-provider> -->
+                            </kct-pages>
+                        </div>
+                        <div class="overlay-layer">
+                            <template is="dom-repeat" items="[[ overlay ]]">
+                                
+                            </template>
+                        </div>
+                    </div>
+                    <div class="maps-toolbox">
+                        <paper-fab mini icon="pan-tool"></paper-fab>
+                        <paper-fab mini icon="maps:add-location" on-tap="__toolMarkerTap"></paper-fab>
+                        <paper-fab mini icon="maps:my-location" on-tap="__toolPointerTap"></paper-fab>
+                        <paper-fab mini icon="gesture"></paper-fab>
+                        <paper-fab mini icon="editor:border-color"></paper-fab>
+                        <paper-fab mini icon="info-outline"></paper-fab>
+                    </div>    
+                </kct-vbox>
+            </div>
+        </kct-hbox>
+
+        <!-- message -->
+        <kct-alert id="alert-pointer" title="Pointing">
+            <p slot="message">
+                You were clicked at coordinate:<br>
+                (lon: <b>[[ pointer.longitude ]]</b>, lat: <b>[[ pointer.latitude ]]</b>)
+            </p>
+        </kct-alert>
+        <!-- /message -->
+
+    </template>
+    <script>
+
+        class KctMaps extends KctView {
+            static get is() {
+                return 'kct-maps';
+            }
+
+            static get properties() {
+                return {
+                    services: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { name: 'maps-providers-service', icon: 'maps:map' },
+                                { name: 'maps-layers-service', icon: 'maps:layers' },
+                                { name: 'maps-customers-service', icon: 'business' }
+                                // { name: 'maps-routing-service', icon: 'maps:directions' },
+                                // { name: 'maps-geocoding-service', icon: 'maps:place' },
+                                // { name: 'maps-help-service', icon: 'help-outline' }
+                            ];
+                        }
+                    },
+                    overlays: {
+                        type: Array(),
+                        value: () => {
+                            return [];
+                        }
+                    },
+                    service: { type: String, value: 'maps-layers-service' },
+                    provider: { type: String, value: 'google' },
+                    center: {
+                        type: Object,
+                        value: () => {
+                            return {
+                                longitude: 106.79558999764845,
+                                latitude: -6.179589588197359
+                            };
+                        }
+                    },
+                    pointer: {
+                        type: Object,
+                        value: () => {
+                            return {
+                                longitude: 0,
+                                latitude: 0
+                            };
+                        }
+                    },
+                    markers: {
+                        type: Array,
+                        value: () => {
+                            return [];
+                        }
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__providerChanged(provider)'
+                ];
+            }
+
+            get providerLayers() {
+                return this.$['provider-selector'].items;
+            }
+
+            get providerLayer() {
+                return this.$['provider-selector'].selectedItem;
+            }
+
+            resize() {
+                if (this.providerLayer && this.providerLayer.resize) {
+                    this.providerLayer.resize();
+                }
+            }
+
+            __providerChanged(changed) {
+                if (this.providerLayer && this.providerLayer.load) {
+                    this.providerLayer.load().then(() => {
+                        this.providerLayer.resize();
+                    });
+                }
+            }
+
+            __toolPointerTap() {
+                if (this.providerLayer) {
+                    this.providerLayer.pointing().then((coord) => {
+                        
+                        this.setProperties({
+                            'pointer.longitude': coord.longitude,
+                            'pointer.latitude': coord.latitude
+                        });
+
+                        this.$['alert-pointer'].open();
+                    });
+                }
+            }
+
+            __toolMarkerTap() {
+                if (this.providerLayer) {
+                    this.providerLayer.pointing().then((coord) => {
+                        this.push('markers', coord);
+                    });
+                }
+            }
+        }
+
+        customElements.define(KctMaps.is, KctMaps);
+    </script>
+</dom-module>

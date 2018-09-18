@@ -1,0 +1,60 @@
+<dom-module id="kct-event-publisher">
+    <script>
+        class KctEventPublisher extends Polymer.Element {
+            static get is() {
+                return 'kct-event-publisher';
+            }
+
+            constructor() {
+                super();
+                this.__context = null;
+            }
+
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                this.__resolveContext();
+            }
+
+            publish(name, data) {
+                let e = new CustomEvent('global-event', {
+                    bubbles: true,
+                    composed: true,
+                    detail: {
+                        name: name,
+                        data: data,
+                        publisher: this.__context
+                    }
+                });
+
+                this.dispatchEvent(e);
+            }
+
+            __resolveContext() {
+                let parent = this.parentNode,
+                    context = null;
+
+                while(parent) {
+                    if (parent.host) {
+                        context = parent.host;
+                        break;
+                    }
+
+                    if (parent == document.body) {
+                        break;
+                    }
+
+                    parent = parent.parentNode;
+                }
+
+                this.set('__context', context);
+            }
+        }
+
+        customElements.define(KctEventPublisher.is, KctEventPublisher);
+    </script>
+</dom-module>

@@ -1,0 +1,77 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="settings-group-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" on-itemactivate="__onPageActive" lazy-load>
+            <general-page name="general" route="{{ route }}" config="{{ config }}" state="[[ state ]]" import="general-page.html"></general-page>
+            <autonumber-page name="autonumber" route="{{ route }}" config="{{ config }}" state="[[ state ]]" import="autonumber-page.html"></autonumber-page>
+            <timezone-page name="timezone" route="{{ route }}" config="{{ config }}" state="[[ state ]]" import="../timezone/timezone-page.html"></timezone-page>
+            <menus-page name="menus" route="{{ route }}" state="[[ state ]]" import="../menus/menus-page.html"></menus-page>
+            <modules-page name="modules" route="{{ route }}" state="[[ state ]]" import="modules-page.html"></modules-page>
+            <users-page name="users" route="{{ route }}" state="[[ state ]]" import="../users/users-page.html"></users-page>
+            <users-permissions-page name="users-permissions" route="{{ route }}" state="[[ state ]]" import="../users/users-permissions-page.html"></users-permissions-page>
+            <roles-page name="roles" route="{{ route }}" state="[[ state ]]" import="../roles/roles-page.html"></roles-page>
+            <roles-permissions-page name="roles-permissions" route="{{ route }}" state="[[ state ]]" import="../roles/roles-permissions-page.html"></roles-permissions-page>
+            <bpmn-page name="bpmn" route="{{ route }}" state="[[ state ]]" import="../bpmn/bpmn-page.html"></bpmn-page>
+            <kanban-settings-page name="kanban-settings" route="{{ route }}" state="[[ state ]]" import="../kanban/kanban-settings-page.html"></kanban-settings-page>
+            <kanban-dynamic-page name="kanban-dynamic" route="{{ route }}" user="[[ user ]]" state="[[ state ]]" import="../kanban/kanban-dynamic-page.html"></kanban-dynamic-page>
+            <dx-profile-page name="dx-profile" route="{{ route }}" state="[[ state ]]" import="../dx/dx-profile-page.html"></dx-profile-page>
+            <dx-mapping-page name="dx-mapping" route="{{ route }}" state="[[ state ]]" import="../dx/dx-mapping-page.html"></dx-mapping-page>
+            <dx-auth-page name="dx-auth" route="{{ route }}" state="[[ state ]]" import="../dx/dx-auth-page.html"></dx-auth-page>
+        </kct-pages>
+
+    </template>
+
+    <script>
+        class SettingsGroupPage extends KctView {
+            static get is() {
+                return 'settings-group-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Settings' },
+                    page: { type: String }
+                }
+            }
+            static get observers() {
+                return [
+                    '__stateChanged(state.*)'
+                ];
+            }
+
+            handleResizing(width, height) {
+                let pageNode = this.$.pages.selectedItem;
+                
+                if (pageNode && pageNode.handleResizing) {
+                    pageNode.handleResizing(width, height);
+                }
+            }
+
+            __stateChanged(changed) {
+                if (this.state.setting) {
+                    this.set('page', this.state.setting);
+                }
+            }
+
+            __onPageActive(e) {
+                let pageNode = e.detail.activeItem;
+                
+                if (pageNode && pageNode.activate) {
+                    pageNode.activate();
+                }
+            }
+        }
+        customElements.define(SettingsGroupPage.is, SettingsGroupPage);
+    </script>
+</dom-module>

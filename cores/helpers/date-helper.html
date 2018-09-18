@@ -1,0 +1,17 @@
+<link rel="import" href="../../vendors/moment/moment.html">
+
+<script>
+    
+    class DateHelper {
+
+        static today(format = 'YYYY-MM-DD') {
+            return moment().format(format);
+        }
+
+        static nextday(format = 'YYYY-MM-DD') {
+            return moment().add(1, 'days').format(format);
+        }
+        
+    }
+
+</script>

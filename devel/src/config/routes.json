@@ -1,0 +1,41 @@
+{
+    "fallback": "/home",
+    "routes": {
+        "/login": {
+            "layout": "auth",
+            "module": "auth",
+            "page": "login-page",
+            "authentication": false
+        },
+        "/invitation": {
+            "layout": "page",
+            "module": "invitation",
+            "page": "invitation-page",
+            "authentication": false
+        },
+        "/projects/:project": {
+            "module": "projects",
+            "page": "project-page"
+        },
+        "/settings/:setting/:params": {
+            "module": "settings",
+            "page": "settings-page"
+        },
+        "/settings/:setting": {
+            "module": "settings",
+            "page": "settings-page"
+        },
+        "/worksheet/:project/:action/:params": {
+            "module": "worksheet",
+            "page": "worksheet-page"
+        },
+        "/worksheet/:project/:action": {
+            "module": "worksheet",
+            "page": "worksheet-page"
+        },
+        "/worksheet/:project": {
+            "module": "worksheet",
+            "page": "worksheet-page"
+        }
+    }
+}

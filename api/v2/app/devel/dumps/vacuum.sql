@@ -1,0 +1,9 @@
+VACUUM ANALYZE sys_projects;
+VACUUM ANALYZE sys_projects_users;
+VACUUM ANALYZE sys_labels;
+VACUUM ANALYZE sys_users;
+VACUUM ANALYZE trx_tasks;
+VACUUM ANALYZE trx_tasks_statuses;
+VACUUM ANALYZE trx_tasks_activities;
+VACUUM ANALYZE trx_tasks_labels;
+VACUUM ANALYZE trx_tasks_users;

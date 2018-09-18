@@ -1,0 +1,325 @@
+<link rel="import" href="../../../../../cores/bower_components/polymer/polymer.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="kanban-form">
+    <template>
+        <style include="theme-helper">
+            :host { display: block; }
+            paper-dialog {
+                width: 600px;
+                height: 100%;
+            }
+            .dialog-content {
+                padding: 0;
+                margin: 0;
+            }
+            .dialog-header { padding: 1.5rem; }
+            .dialog-header h3 {
+                font-size: 18px;
+                font-weight: 400;
+                margin: 0;
+            }
+            .dialog-body { padding: 0 1.5rem 1.5rem 1.5rem; }
+            .dialog-footer {
+                background-color: #F44455;
+                padding: 8px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            .dialog-footer paper-button { color: #ffffff; }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+
+        <!-- <paper-dialog id="dialog" modal>
+            <kct-vbox class="dialog-content">
+                <div class="dialog-header"><h3>[[ form.bf_name ]]</h3></div>
+                <div class="dialog-body flex">
+                    <div id="html"></div>
+                    <div>
+                        <kct-hbox>
+                            <div class="flex">
+                                <paper-input></paper-input>
+                            </div>
+                        </kct-hbox>
+                    </div>
+                </div>
+                <div class="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">SAVE</paper-button>
+                    <paper-button on-tap="__onSaveSendTap">SAVE & SEND</paper-button>
+                    <paper-button on-tap="__onCloseTap">CLOSE</paper-button>
+                </div>
+            </kct-vbox>
+        </paper-dialog> -->
+
+        <kct-dialog id="dialog" title="[[ form.bf_name ]]" width="[[ formWidth ]]" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    vaadin-combo-box { padding: 2px 0; }
+                    vaadin-date-picker { 
+                        padding-top: 6px; font-size: 12px; width: 100%;
+                        --paper-input-container-label:{
+                              color:red !important;
+                              font-size: 12px;
+                        }
+                    }
+                        vaadin-text-field[part="text-field"] {
+                            font-size: 2em !important;
+                        }
+
+                    paper-input[type=number] { 
+                        padding: 0;
+                        --paper-input-container: {
+                            padding: 12px 0;
+                        };
+                    }
+                    .btn-remove-item {
+                        position: relative;
+                        top: 25px;
+                    }
+
+                    .message-box-left {
+                        border: 1px solid #eee;
+                        padding: 0 10px;
+                        margin: 5px 0;
+                    }
+
+                    .message-info {
+                        font-size: 12px;
+                    }
+
+                    .message {
+                        font-family: inherit;
+                        font-size: inherit;
+                    }
+
+                    .comment-container {
+                        margin: 30px 0;
+                    }
+
+                    .post-comment {
+                        margin:22px 5px;
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <div id="html"></div>
+
+                    <template is="dom-if" if="[[!newRecord]]">
+                        <div class="attachment">
+                            
+                        </div>
+                        <div class="comment-container">
+                            <div>Comments :</div>
+                            <div class="listbox">
+                                <template is="dom-repeat" items="[[record.comments]]">
+                                    
+                                    <paper-item class="message-box-left">
+                                        <paper-item-body two-line>
+                                            <kct-hbox class="message-info">
+                                                <div class="flex">[[item.user]]</div>
+                                                <div>[[item.tsc_created]]</div>
+                                            </kct-hbox>
+                                            <div secondary>
+                                                    [[item.tsc_message]]
+                                            </div>
+                                        </paper-item-body>
+                                    </paper-item>
+                                    
+                                </template>                            
+                            </div>
+                            <kct-hbox>
+                                <div class="flex">
+                                    <paper-textarea placeholder="Type your message here ..." value="{{newComment.tsc_message}}"></paper-textarea>
+                                </div>
+                                <div><paper-button class="btn btn-sm btn-indigo post-comment" on-tap="__addComment">Comment</paper-button></div>
+                            </kct-hbox>
+                            
+                        </div>
+                    </template>
+
+                </div>
+                <div slot="dialog-footer">
+                    <template is="dom-if" if="[[ buttons.SAVE ]]">
+                        <paper-button on-tap="__onSaveTap">[[ buttons.SAVE ]]</paper-button>
+                    </template>
+                    <template is="dom-if" if="[[ buttons.SAVE_SEND ]]">
+                        <paper-button on-tap="__onSaveSendTap">[[ buttons.SAVE_SEND ]]</paper-button>
+                    </template>
+                    <template is="dom-if" if="[[ __isDefault() ]]">
+                        <paper-button on-tap="__onSaveTap">SAVE</paper-button>
+                        <paper-button on-tap="__onSaveSendTap">SAVE & SEND </paper-button>
+                    </template>
+                    <paper-button on-tap="__onCloseTap">CLOSE</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+
+    <script>
+        class KanbanForm extends Polymer.Element {
+            static get is() {
+                return 'kanban-form';
+            }
+
+            static get properties() {
+                return {
+                    form: { type: Object },
+                    record: { type: Object },
+                    action: { type: String },
+                    worker: { type: String },
+                    buttons: { type: Object },
+                    formWidth: { type: Number, value: 800 },
+                    buttonsAction: { 
+                        type: Object , 
+                        value: {"SAVE":"__onSaveTap","SAVE_SEND":"__onSaveSendTap","CLOSE":"__onCloseTap"}
+                    },
+                    newComment: { type: Object, value: {} },
+                    newRecord: { type: Boolean, value: false }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__formChanged(form)',
+                    '__recordChanged(record)'
+                ];
+            }
+
+            open() {
+                this.set('newRecord',(typeof this.record.ts_id == 'undefined'));
+                this.__relocate();
+                this.$.dialog.open();
+            }
+
+            close() {
+                this.$.dialog.close();
+                this.__restore();
+            }
+            __isDefault() {
+                return (typeof this.buttons == 'undefined');
+            }
+
+            __formChanged() {
+                this.__renderForm();
+            }
+
+            __recordChanged(){
+                console.log('record changed',this.record);
+            }
+
+            __renderForm() {
+                let form = this.form;
+                
+                this.$.html.innerHTML = '';
+
+                if (form && form.bf_html) { 
+                    if(typeof customElements.get(form.bf_tpl_orig.replace('.html','')) == 'undefined'){
+                        Polymer.Base.importHref('/api/v2/demo/bpmn/forms/view/'+form.bf_tpl_file+'?access_token='+this.user.su_access_token, (e)=>{
+                            let element = this.$.element = document.createElement(form.bf_tpl_orig.replace('.html',''));
+                            element.record = this.record;
+                            element.addEventListener("record-changed", function(ev){
+                                console.log('something changed');
+                              self.record = this.record;
+                            });
+                            this.$.html.appendChild(element);
+                            this.$.dialog.recenter();
+                        });
+                    }else{
+                        let element = document.createElement(form.bf_tpl_orig.replace('.html',''));
+                        element.record = this.record;
+                        element.addEventListener("record-changed", function(ev){
+                            console.log('something changed');
+                          self.record = this.record;
+                        });
+                        this.$.html.appendChild(element);
+                    }
+                }
+            }
+
+            __relocate() {
+                let owner = (this.parentNode && this.parentNode.host) || this.parentNode;
+
+                if (owner.localName != 'body') {
+                    this.__owner = owner;
+                    document.body.appendChild(this);
+                }
+            }
+
+            __restore() {
+                if (this.__owner) {
+                    this.__owner.appendChild(this);
+                    this.__owner = null;
+                }
+            }
+
+            __onSaveTap() {
+                this.__onSave();
+            }
+
+            __onSaveSendTap() {
+                this.__onSave(true);
+            }
+
+            __onSave(isSend) {
+                isSend = isSend || false;
+                this.close();
+
+                let payload = {
+                    action: isSend ? 'SEND' : 'SAVE',
+                    worker: this.worker,
+                    data: this.record
+                };
+
+                let ajax = this.$.ajax;
+
+                if (this.action == 'CREATE') {
+                    ajax.POST('/kanban', payload).then(done.bind(this));
+                } else if (this.action == 'UPDATE') {
+                    ajax.PUT('/kanban/' + this.record.id, payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    let evt = new CustomEvent('save', {
+                        detail: {
+                            response: res
+                        }
+                    });
+
+                    this.dispatchEvent(evt);
+                }
+            }
+
+            __onCloseTap() {
+                this.close();
+            }
+
+            __addComment() {
+                let ajax = this.$.ajax2;
+                this.newComment.tsc_ts_id = this.record.ts_id;
+                this.newComment.tsc_sender = this.user.su_id;
+                let payload = {
+                    data: this.newComment
+                };
+                ajax.POST('/kanban/comment', payload).then((res)=>{
+                    res.data.user = res.user.su_fullname;
+                    console.log(this.record);
+                    this.push('record.comments', res.data);
+                    this.set('newComment',{});
+                });
+            }
+        }
+
+        customElements.define(KanbanForm.is, KanbanForm);
+    </script>
+</dom-module>

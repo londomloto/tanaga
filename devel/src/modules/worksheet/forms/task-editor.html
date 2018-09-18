@@ -1,0 +1,362 @@
+
+<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+<link rel="import" href="../../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+
+<dom-module id="task-editor">
+    
+    <template>
+        <style include="form-style">
+            #view-section { font-weight: 300; }
+            #view-section strong { font-weight: 500; }
+
+            .text-title { 
+                font-size: 17px;
+            }
+            
+            .text-meta {
+                font-size: 11px;
+                color: #999;
+            }
+            .text-paragraph {
+                margin-top: 20px;
+                font-size: 13px;
+                line-height: 24px;
+                color: #000;
+                font-weight: normal;
+            }
+            .line {
+                border-bottom: 1px dashed #dfdfdf;
+                margin: 15px 0;
+            }
+            .tool {
+                margin: 15px 0;
+                padding: 8px 0;
+            }
+            .tool paper-button {
+                margin: 0 3px 0 0;
+                text-transform: none;
+                border: 1px solid #dfdfdf;
+                padding: 5px 10px;
+                font-size: 13px;
+                display: inline-block;
+            }
+            .tool paper-button[checked] {
+                border-color: var(--paper-red-500);
+                color: var(--paper-red-500);
+            }
+            .tool paper-button[primary] {
+                border-color: var(--paper-cyan-500);
+                background-color: var(--paper-cyan-500);
+                color: #fff;
+            }
+            .tool paper-button[info] {
+                border-color: var(--paper-blue-500);
+                background-color: var(--paper-blue-500);
+                color: #fff;
+            }
+            .tool paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+            }
+            .tool > .text-tool {
+                display: inline-block;
+                margin: 0 3px 0 0;
+                padding: 5px 10px;
+                font-size: 13px;
+                box-sizing: border-box;
+            }
+            .tool > .text-tool[hidden] {
+                display: none;
+            }
+            .form-group + .form-group {
+                margin-top: 15px;
+            }
+            .form-group > label {
+                display: block;
+                font-size: 12px;
+                margin-bottom: 12px;
+                color: #666;
+            }
+            .form-group > paper-input {
+                font-size: 15px;
+                --paper-input-container-label-floating: { 
+                    font-size: 16px; 
+                    margin-bottom: 30px; 
+                };
+            }
+
+            .form-group > kct-html-editor {
+                border: 1px solid #dfdfdf; 
+                height: 200px;
+
+                --wysiwyg-toolbar-background: #fff;
+                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
+                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
+                --wysiwyg-toolbar: {
+                    border-bottom: 1px solid #dfdfdf;
+                };
+                --wysiwyg-editable: {
+                    line-height: 24px;
+                    font-size: 15px;
+                };
+            }
+
+            .edit-warning {
+                background-color: #ff9800;
+                padding: 12px;
+            }
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" session="{{ socketSession }}"></kct-socket>
+        <kct-event-subscriber on-task-save="__onSubscribeTaskSave"></kct-event-subscriber>
+        <kct-confirm id="remove-confirm" title="Confirm">
+            <p>Are you sure want to remove this task?</p>
+        </kct-confirm>
+
+        <div id="edit-section" hidden$="[[ !__editing ]]">
+            <div class="form-group edit-warning" hidden$="[[ !__notifTask ]]">
+                <div><b>Warning</b></div>
+                <div>
+                    Someone has modify this task. <br>
+                    BEWARE your changes will get overwriten. Please do backup your changes before reload ! <br>                    
+                </div>
+                <kct-hbox>
+                    <div class="flex"></div>
+                    <paper-button class="align-right" on-tap="__onNotifTap"><iron-icon icon="done"></iron-icon>&nbsp;Reload Data</paper-button>
+                    <paper-button class="align-right" on-tap="__onNotifCancelTap"><iron-icon icon="cancel"></iron-icon>&nbsp;close</paper-button>
+                </kct-hbox>
+            </div>
+            <div class="form-group">
+                <paper-input 
+                    id="field-title" 
+                    label="Subject" 
+                    value="{{ record.task.tt_title }}" 
+                    always-float-label 
+                    required 
+                    auto-validate 
+                    error-message="Task title is required"></paper-input>    
+            </div>
+
+            <div class="form-group">
+                <label>Description (optional)</label>
+                <kct-html-editor id="field-desc" value="{{ record.task.tt_desc }}"></kct-html-editor>    
+            </div>
+
+            <div class="tool" hidden$="[[ __phantom ]]">
+                <paper-button on-tap="__onUpdateTap" primary disabled$="[[ invalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                <div class="text-tool">
+                    or&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onCancelTap">cancel editing</a>
+                </div>
+                <!-- <paper-button on-tap="__onCancelTap"><iron-icon icon="close"></iron-icon>&nbsp;Cancel Editing</paper-button> -->
+            </div>
+
+            <div class="tool" hidden$="[[ !__phantom ]]">
+                <paper-button on-tap="__onCreateTap" info disabled$="[[ invalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Create Task</paper-button>
+                <div class="text-tool">
+                    or&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onCancelCreateTap">cancel</a></label>
+                </div>
+            </div>
+
+            <div class="line" hidden$="[[ __phantom ]]"></div>
+
+        </div>
+
+        <div id="view-section" hidden$="[[ __editing ]]">
+            <div class="text-title">[[ record.task.tt_title ]]</div>
+            <div class="text-meta">Created by <strong>[[ record.task.creator_su_fullname ]]</strong> [[ record.task.tt_created_dt_relative ]]</div>
+            <div class="text-paragraph">
+                <kct-html html="[[ record.task.tt_desc ]]"></kct-html>
+            </div>
+            
+            <div class="tool">
+                <!-- <paper-button checked><iron-icon icon="thumb-up"></iron-icon>&nbsp;5 Likes</paper-button> -->
+                <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                <div class="text-tool" hidden$="[[ !record.task.tt_is_editable ]]">
+                    or&nbsp;&nbsp;<a on-tap="__onDeleteTap" href="javascript:void(0);">remove task</a>
+                </div>
+            </div>
+
+            <div class="line"></div>
+
+        </div>
+        
+    </template>
+    
+    <script>
+        class TaskEditor extends FormBase {
+            
+            static get is() {
+                return 'task-editor';
+            }
+
+            static get observers() {
+                return [
+                    '__actionChanged(action)',
+                    '__recordChanged(record.*)',
+                    '__validityChanged(record.task.tt_title)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__default = {};
+                this.__editing = true;
+                this.__phantom = true;
+                this.__notifTask = false;
+                this.__notifData = {};
+            }
+
+            save(send = false, back = false) {
+                if ( ! this.project && ! this.workspace.worker) {
+                    return;
+                }
+
+                this.record.task.tt_sp_id = this.project.sp_id;
+
+                let payload = {
+                    worker: this.workspace.worker,
+                    record: this.record,
+                    send: send,
+                    back: back
+                };
+
+                let options = {
+                    headers: {
+                        'X-Socket-Session': this.socketSession
+                    }
+                };
+
+                this.trigger('beforesave');
+
+                if (this.action == 'create') {
+                    this.$.ajax.POST('/kanban', payload, options).then(done.bind(this));
+                } else {
+                    this.$.ajax.PUT('/kanban/' + this.record.task.tt_id, payload, options).then(done.bind(this));
+                }
+                
+                function done(res) {
+                    
+                    this.trigger('aftersave', {
+                        send: send,
+                        back: back,
+                        response: res
+                    });
+
+                    if (res.success) {
+                        this.set('__editing', false);
+                        this.set('__default', Object.assign({}, this.record.task));
+                    } else {
+                        this.toast('Failed', res.message, 'danger');
+                    }
+
+                }
+            }
+
+            __recordChanged(changed) {
+                if (changed.path == 'record') {
+                    let reset = Object.assign({}, (changed.value || {}).task);
+                    this.set('__default', reset);
+                }
+            }
+
+            __actionChanged(action) {
+                this.set('__editing', action == 'create');
+                this.set('__phantom', action == 'create');
+            }
+
+            __validityChanged(title) {
+                let valid = true;
+                valid = valid && !!title;
+                this.set('invalid', !valid);
+            }
+
+            __onEditTap() {
+
+                // resize textarea
+                let height = this.$['view-section'].getBoundingClientRect().height;
+                height = height > 200 ? height : 200;
+                this.$['field-desc'].style.height = height + 'px';
+
+                this.set('__editing', true);
+                
+                this.$['field-title'].focus();
+            }
+
+            __onUpdateTap() {
+                this.save(false, false);
+            }   
+
+            __onCreateTap() {
+                this.save(true, true);
+            }
+
+            __onDeleteTap() {
+                this.$['remove-confirm'].open().then(btn => {
+                    if (btn == 'yes') {
+
+                        let options = {
+                            headers: {
+                                'X-Socket-Session': this.socketSession
+                            }
+                        };
+
+                        this.$.ajax.DELETE('/kanban/' + this.record.task.tt_id, null, options).then(res => {
+                            if (res.success) {
+                                this.trigger('remove', { back: true });
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onCancelTap() {
+                let reset = Object.assign({}, this.__default);
+                this.set('record.task', reset);
+                this.set('__editing', false);
+            }
+
+            __onCancelCreateTap() {
+                this.trigger('cancel', { back: true });
+            }
+
+            __onSubscribeTaskSave(e) {
+                let response = e.detail.response;
+                if (response && response.success && this.record.task.tt_id == response.data.task.tt_id) {
+                    this.set('record.task', response.data.task);
+                    this.set('__default', Object.assign({}, response.data.task));
+                }
+            }
+
+            __onSocketNotify(e, params){
+                if(params.type == 'task-update' && this.record.task.tt_id == params.data.tt_id){
+                    let task = Object.assign({}, this.record.task , params.data);
+                    if(!this.__editing){
+                        this.set('record.task', task);                        
+                    }else{
+                        this.set('__notifData', task);                        
+                        this.set('__notifTask', true);
+                    }
+                }
+            }
+
+            __onNotifTap(){
+                this.set('record.task', Object.assign({}, this.__notifData));  
+                this.set('__notifData', {});  
+                this.set('__notifTask', false);
+            }
+
+            __onNotifCancelTap(){
+                this.set('__default', Object.assign({}, this.__notifData));
+                this.set('__notifData', {});  
+                this.set('__notifTask', false);
+            }
+        }
+
+        customElements.define(TaskEditor.is, TaskEditor);
+    </script>
+</dom-module>

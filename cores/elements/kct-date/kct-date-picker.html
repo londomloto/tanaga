@@ -1,0 +1,78 @@
+<link rel="import" href="../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+
+<dom-module id="kct-date-picker">
+    <script>
+        class KctDatePicker extends Vaadin.DatePickerElement {
+            
+            static get is() {
+                return 'kct-date-picker';
+            }
+
+            constructor() {
+                super();
+
+                this.i18n.abbrMonths = this.i18n.monthNames.map(e => e.substr(0, 3));
+                this.i18n.abbrMonthsIndexed = {};
+
+                this.i18n.abbrMonths.forEach((e, i) => {
+                    this.i18n.abbrMonthsIndexed[e] = i;
+                });
+                
+                this.i18n.formatDate = d => {
+
+                    let yearStr = String(d.getFullYear());
+                    yearStr = yearStr.replace(/\d+/, y => '0000'.substr(y.length) + y);
+
+                    let dateStr = String(d.getDate());
+                    dateStr = dateStr.replace(/\d+/, e => '00'.substr(e.length) + e);
+
+                    let monthIndex = d.getMonth();
+                    let monthAbbr = this.i18n.abbrMonths[monthIndex];
+
+                    return [dateStr, monthAbbr, yearStr].join(' ');
+                    // return [d.getMonth() + 1, d.getDate(), yearStr].join('/');
+                };
+
+                this.i18n.parseDate = text => {
+                    
+                    if (/\s([a-z]+)\s/i.test(text)) {
+                        // convert to 'm/d/Y'
+                        let dmy = text.split(' '),
+                            month = this.i18n.abbrMonthsIndexed[dmy[1]] + 1;
+
+                        text = [month, dmy[0], dmy[2]].join('/');
+                    }
+
+                    const parts = text.split('/');
+                    const today = new Date();
+                    let date, month = today.getMonth(), year = today.getFullYear();
+                        
+                    if (parts.length === 3) {
+                        year = parseInt(parts[2]);
+                        if (parts[2].length < 3 && year >= 0) {
+                            year += year < 50 ? 2000 : 1900;
+                        }
+                        month = parseInt(parts[0]) - 1;
+                        date = parseInt(parts[1]);
+                    } else if (parts.length === 2) {
+                        month = parseInt(parts[0]) - 1;
+                        date = parseInt(parts[1]);
+                    } else if (parts.length === 1) {
+                        date = parseInt(parts[0]);
+                    }
+
+                    if (date !== undefined) {
+                        const result = new Date(0, 0);
+                        result.setFullYear(year);
+                        result.setMonth(month);
+                        result.setDate(date);
+                        return result;
+                    }
+                };
+            }
+            
+        }
+        customElements.define(KctDatePicker.is, KctDatePicker);
+    </script>
+</dom-module>

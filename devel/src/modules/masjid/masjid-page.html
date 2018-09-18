@@ -1,0 +1,20 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+
+<dom-module id="masjid-page">
+    <template>
+        
+    </template>
+    <script>
+        class MasjidPage extends KctView {
+            static get is() {
+                return 'masjid-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Masjid', notify: true }
+                };
+            }
+        }
+        customElements.define(MasjidPage.is, MasjidPage);
+    </script>
+</dom-module>

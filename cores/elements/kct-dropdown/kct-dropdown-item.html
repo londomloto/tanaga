@@ -1,0 +1,69 @@
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+
+<dom-module id="kct-dropdown-item">
+    <template>
+        <style>
+            paper-item {
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 400;
+                --paper-item-min-height: 36px;
+            }
+            paper-item iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                margin-right: 5px;
+            }
+        </style>
+        <paper-item>
+            <template is="dom-if" if="[[ checked ]]">
+                <iron-icon icon="[[ checkedIcon ]]"></iron-icon>
+            </template>
+            <template is="dom-if" if="[[ !checked ]]">
+                <iron-icon icon="[[ uncheckedIcon ]]"></iron-icon>
+            </template>
+            <paper-item-body id="item-body">
+                <slot>[[ label ]]</slot>
+            </paper-item-body>
+        </paper-item>
+    </template>
+    <script>
+        class KctDropdownItem extends Polymer.Element {
+            static get is() {
+                return 'kct-dropdown-item';
+            }
+
+            static get properties() {
+                return {
+                    checkedIcon: { type: Boolean, value: 'done' },
+                    uncheckedIcon: { type: Boolean, value: '' },
+                    checked: { type: Boolean, value: false },
+                    item: { type: Object },
+                    label: { type: String }
+                }
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+
+                if (this.itemTemplate) {
+                    let template = document.createElement('template');
+                    template.innerHTML = this.itemTemplate.innerHTML;
+
+                    let instance = this._stampTemplate(template);
+
+                    if (this.itemStyle) {
+                        let style = document.createElement('style');
+                        style.textContent = this.itemStyle;
+                        
+                        instance.appendChild(style);
+                    }
+                    
+                    this.$['item-body'].innerHTML = '';
+                    this.$['item-body'].appendChild(instance);
+                }
+            }
+        }
+        customElements.define(KctDropdownItem.is, KctDropdownItem);
+    </script>
+</dom-module>

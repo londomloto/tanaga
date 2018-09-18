@@ -1,0 +1,205 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="task-combo-label">
+    <template>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-combobox 
+            id="combo" 
+            url="/labels" 
+            page-size="10" 
+            placeholder="Search or select label..." 
+            item-label-path="sl_label" 
+            item-value-path="sl_label" 
+            on-beforeload="__onComboBeforeload" 
+            no-label-float 
+            hide-clear>
+            
+            <paper-button slot="toolbar" on-tap="__onAddLabelTap"><iron-icon icon="add"></iron-icon>&nbsp;Add Label</paper-button>
+            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+            <!-- <paper-icon-button icon="close" slot="toolbar" on-tap="__onComboCloseTap"></paper-icon-button> -->
+
+            <template>
+                <style>
+                    :host {
+                        --kct-combobox-item-padding: 5px 16px;
+                    }
+                    span { font-size: 13px;  }
+                    iron-icon {
+                        --iron-icon-width: 18px;
+                        --iron-icon-height: 18px;
+                        position: relative;
+                        top: -2px;
+                    }
+                </style>
+                <div>
+                    <iron-icon icon="label" style$="color: [[ item.sl_color ]]"></iron-icon>&nbsp;
+                    <span>[[ item.sl_label ]]</span>
+                </div>
+            </template>        
+        </kct-combobox>           
+
+        <kct-dialog id="editor" title="Label Editor" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper">
+                    label { font-size: 11px; }
+                    .item-color {
+                        display: block;
+                        float: left;
+                        width: 24px;
+                        height: 24px;
+                        margin: 0 5px 5px 0;
+                    }
+                    .item-color.iron-selected {
+                        outline: 1px solid #fff;
+                        outline-offset: -2px;
+                    }
+                    .message {
+                        padding: 10px;
+                        background-color: var(--paper-yellow-100);
+                        border: 1px solid var(--paper-yellow-200);
+                        font-size: 13px;
+                        border-radius: 2px;
+                    }
+                </style>
+                <div slot="dialog-body">
+
+                    <div class="message" hidden$="[[ __hideMessage(message) ]]">[[ message ]]</div>
+
+                    <paper-input label="Label" value="{{ record.sl_label }}" on-change="__onInputLabelChange"></paper-input>
+                    <div class="m-t-sm">
+                        <label>Select label color</label>
+                        <div>
+                            <iron-selector attr-for-selected="name" selected="{{ record.sl_color }}">
+                                <template is="dom-repeat" items="[[ colors ]]">
+                                    <a class="item-color" href="javascript:;" name="[[ item.color ]]" style$="background-color: [[ item.color ]]"></a>    
+                                </template>
+                            </iron-selector>
+                        </div>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Add Label</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class TaskComboLabel extends Polymer.Element {
+            static get is() {
+                return 'task-combo-label';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object },
+                    message: { type: String, value: '' },
+                    colors: {
+                        type: Array,
+                        value: () => ([
+                            { color: 'var(--paper-purple-500)' },
+                            { color: 'var(--paper-red-500)' },
+                            { color: 'var(--paper-amber-500)' },
+                            { color: 'var(--paper-indigo-500)' },
+                            { color: 'var(--paper-pink-500)' },
+                            { color: 'var(--paper-blue-500)' },
+                            { color: 'var(--paper-teal-500)' },
+                            { color: 'var(--paper-blue-grey-500)' },
+                            { color: 'var(--paper-green-500)' }
+                        ])
+                    }
+                };
+            }
+
+            open() {
+
+                this.$.combo.value = '';
+                
+                this.$.combo.load({
+                    sort: [{ property: 'sl_label', direction: 'asc' }]
+                }).then(() => {
+                    this.$.combo.open();
+                });
+            }
+
+            close() {
+                this.$.combo.close();
+            }
+
+            clear() {
+                this.$.combo.value = '';
+            }
+
+            getSelectedLabel() {
+                let value = this.$.combo.value;
+                return this.$.combo.getModelForValue(value);
+            }
+
+            __hideMessage(message) {
+                return !(!!message);
+            }
+
+            __onAddLabelTap() {
+                this.$.combo.close();
+
+                this.set('record', {});
+                this.$.editor.open();
+                this.dispatchEvent(new CustomEvent('action'));
+            }
+
+            __onComboBeforeload(e) {
+                if (this.project) {
+                    e.detail.options.display = 'context';
+                    e.detail.options.project = this.project.sp_id;
+                }
+            }
+
+            __onComboCloseTap() {
+                this.close();
+                this.dispatchEvent(new CustomEvent('action'));
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                let data = this.record;
+                data.sl_sp_id = this.project.sp_id;
+
+                if (data.sl_id) {
+                    this.$.ajax.PUT('/labels/' + data.sl_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/labels', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        let e = new CustomEvent('label-add', {
+                            detail: {
+                                label: res.data
+                            }
+                        });
+
+                        this.dispatchEvent(e);
+                    } else {
+                        this.set('message', res.message);
+                    }
+                    this.set('record', {});
+                }
+            }
+
+            __onInputLabelChange() {
+                this.set('message', '');
+            }
+        }
+
+        customElements.define(TaskComboLabel.is, TaskComboLabel);
+    </script>
+</dom-module>

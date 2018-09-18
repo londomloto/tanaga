@@ -1,0 +1,10 @@
+<div>
+    <paper-input label="Site Name" value="{{ record.tsp_name }}"></paper-input>
+    <div>
+        <label>Request Type</label>
+        <paper-radio-group selected="{{ record.tss_request_type }}" attr-for-selected="name">
+            <paper-radio-button name="NEW">NEW REQUEST</paper-radio-button>
+            <paper-radio-button name="ADD ON">ADD-ON REQUEST</paper-radio-button>
+        </paper-radio-group>
+    </div>
+</div>

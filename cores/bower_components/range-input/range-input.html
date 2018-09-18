@@ -1,0 +1,85 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="range-input">
+  <script>
+    /**
+     * `range-input`
+     * alternative inputs for ranges
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class RangeInput extends Polymer.Element {
+      static get is() {
+        return 'range-input';
+      }
+
+      static get template() {
+        return `
+          ${this.styleTemplate}
+          ${this.inputTemplate}
+        `
+      }
+
+      /**
+       * custom style template
+       * @type {string}
+       */
+      static get styleTemplate() {
+        return `
+          <style include="${this.customStyleToInclude || ''}">
+            ${this.customStyleContent}
+          </style>
+        `;
+      }
+
+      /**
+       * custom style to include in `<style include="..."`
+       * @type {string}
+       */
+      static get customStyleToInclude() {
+        return `${super.customStyleToInclude || ''}`;
+      }
+
+      static get customStyleContent() {
+        return `
+          ${super.customStyleContent || ''}
+        `;
+      }
+
+      static get inputTemplate() {
+        return `
+          <svg id="circle" width="100%" height="100%">
+            <circle class="Circle-background"
+                r$="[[_radius]]"
+                cx$="[[_cx]]"
+                cy$="[[_cy]]"
+                fill="transparent"
+                stroke-width$="[[strokeWidth]]" />
+            <circle class="Circle-foreground"
+                r$="[[_radius]]"
+                cx$="[[_cx]]"
+                cy$="[[_cy]]"
+                fill="transparent"
+                stroke-width$="[[strokeWidth]]"
+                stroke-dasharray$="[[_dasharray]]"
+                stroke-dashoffset$="[[_dashoffset]]"
+                transform$="[[_transform]]" />
+          </svg>
+        `;
+      }
+
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'range-input'
+          }
+        };
+      }
+    }
+
+    window.customElements.define(RangeInput.is, RangeInput);
+  </script>
+</dom-module>

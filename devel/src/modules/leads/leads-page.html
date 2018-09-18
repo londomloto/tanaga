@@ -1,0 +1,293 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="leads-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--leads-page-height, 100%);
+            }
+        </style>
+        
+        <kct-ajax id="ajax1"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+        
+
+        <kct-grid 
+            id="grid" 
+            url="/leads"
+            row-height="56" 
+            columns="[[ columns ]]" 
+            selected="{{ selectedLead }}" 
+            icon="view-quilt" 
+            title="Leads"  
+            description="List of contacted customers" 
+            autoload 
+            data-authorized>
+
+            <template preserve-content>
+                <style>
+                    .cell-customer {
+                        @apply --layout-horizontal;
+                    }
+                    .cell-customer > .logo > span {
+                        display: block;
+                        width: 40px;
+                        height: 40px;
+                        color: #fff;
+                        text-align: center;
+                        font-size: 20px;
+                        line-height: 36px;
+                        font-weight: 300;
+                        border-radius: 50%;
+                        margin-right: 8px;
+                    }
+                    .cell-customer > .text {
+                        @apply --layout-flex;
+                    }
+                    .cell-customer > .text > .title {
+                        font-weight: 500;
+                    }
+                    .cell-customer > .text > .contact {
+                        color: #999;
+                        font-size: 12px; 
+                    }
+                    .cell-status .badge {
+                        display: inline-block;
+                        width: 50px;
+                        text-align: center;
+                        padding: 4px 6px;
+                        color: #fff;
+                        border-radius: 4px;
+                        font-size: 12px;
+                    }
+                </style>
+            </template>
+
+            <paper-button slot="primary-toolbar" on-tap="__onAddTap" data-perm="add@leads"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onEditTap" data-perm="edit@leads"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onRemoveTap" data-perm="remove@leads"><iron-icon icon="clear"></iron-icon>&nbsp;Remove</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Lead Editor" height="100%" width="400">
+            <template preserve-content>
+                <style>
+                    vaadin-combo-box { padding: 2px 0; }
+                    .hidden-phantom[hidden] { display: none;  }
+                </style>
+
+                <div slot="dialog-body">
+                    <vaadin-combo-box 
+                        id="combo-customer" 
+                        label="Customer" 
+                        value="{{ selectedLead.tl_mc_id }}" 
+                        items="[[ customers ]]" 
+                        item-label-path="mc_company_name" 
+                        item-value-path="mc_id">
+                        <template>
+                            <style>
+                                .bold { font-weight: 500; }
+                                .nude { color: #999; font-size: 14px;  }
+                            </style>
+                            <div class="bold">[[ item.mc_company_name ]]</div>
+                            <div class="nude">Contact: [[ item.mc_contact_name ]] - [[ item.mc_phone ]]</div>
+                        </template>        
+                    </vaadin-combo-box>
+
+                    <div class="hidden-phantom" hidden$="[[ selectedLead.tl_phantom ]]">
+                        <vaadin-combo-box 
+                            id="combo-customer" 
+                            label="Status" 
+                            value="{{ selectedLead.tl_status }}" 
+                            items="[[ statuses ]]" 
+                            item-label-path="text" 
+                            item-value-path="name"></vaadin-combo-box>    
+                        <paper-input label="Products" value="{{ selectedLead.ts_products }}"></paper-input>
+                        <paper-input label="Amounts" value="{{ selectedLead.ts_amounts }}"></paper-input>    
+                    </div>
+                    
+                    <paper-input label="Notes" value="{{ selectedLead.tl_notes }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSave">Save</paper-button>
+                    <paper-button on-tap="__onEditorClose">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-role id="role" auto-validate></kct-role>
+
+    </template>
+    <script>
+        class LeadsPage extends KctView {
+            static get is() {
+                return 'leads-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Leads' },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { 
+                                text: 'Customer', 
+                                dataIndex: 'mc_company_name',
+                                width: 300,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let logo = (e.data.mc_company_name || '').substr(0, 1).toUpperCase(),
+                                            colors = [
+                                                'var(--paper-red-500)',
+                                                'var(--paper-pink-500)',
+                                                'var(--paper-purple-500)',
+                                                'var(--paper-indigo-500)',
+                                                'var(--paper-blue-500)',
+                                                'var(--paper-cyan-500)',
+                                                'var(--paper-teal-500)',
+                                                'var(--paper-green-500)',
+                                                'var(--paper-amber-500)',
+                                                'var(--paper-orange-500)',
+                                                'var(--paper-brown-500)'
+                                            ],
+                                            accent = colors[(Math.floor(Math.random() * colors.length))];
+
+                                        return `
+                                            <div class="cell-customer">
+                                                <div class="logo">
+                                                    <span style="background-color: ${accent}">${logo}</span>
+                                                </div>
+                                                <div class="text">
+                                                    <div class="title">${e.data.mc_company_name}</div>
+                                                    <div class="contact">${e.data.mc_contact_name} - ${e.data.mc_phone}</div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'Notes', width: 300, dataIndex: 'tl_notes' },
+                            { 
+                                text: 'Status', 
+                                dataIndex: 'tl_status',
+                                renderer: (e) => {
+                                    let status = e.data && e.data.tl_status;
+                                    if (status) {
+                                        let accent = status == 'HOT' 
+                                                ? 'var(--paper-cyan-500)' 
+                                                : (status == 'HOLD' 
+                                                    ? 'var(--paper-amber-500)'
+                                                    : 'var(--paper-red-500)');
+                                        return `
+                                            <div class="cell-status">
+                                                <span class="badge" style="background-color: ${accent}">${e.data.tl_status}</span>
+                                            </div>
+                                        `;    
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    },
+                    customers: { type: Array },
+                    statuses: {
+                        type: Array,
+                        value: () => ([
+                            { text: 'HOT', name: 'HOT' },
+                            { text: 'HOLD', name: 'HOLD' },
+                            { text: 'DUMP', name: 'DUMP' }
+                        ])
+                    },
+                    selectedLead: { type: Object }
+                };
+            }
+            handleResizing(width, height) {
+                this.updateStyles({'--leads-page-height': height + 'px'});
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+            activate() {
+                this.__loadCustomers();
+
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+            __loadCustomers() {
+                let ajax = this.$.ajax1;
+                ajax.GET('/customers').then(res => {
+                    this.set('customers', res.data);
+                });
+            }
+            __onAddTap() {
+                let data = {
+                    tl_mc_id: null,
+                    tl_status: '',
+                    tl_notes: '',
+                    tl_phantom: true
+                };
+
+                this.set('selectedLead', data);
+                this.$.editor.open();
+            }
+            __onEditTap() {
+                if ( ! this.selectedLead) {
+                    this.toast('Warning', 'No selected record to edit', 'warn');
+                    return;
+                }
+
+                this.set('selectedLead.tl_phantom', false);
+                this.$.editor.open();
+            }
+            __onRemoveTap() {
+                if ( ! this.selectedLead) {
+                    this.toast('Warning', 'No selected record to edit', 'warn');
+                    return;
+                }
+
+                this.confirm('Confirm', 'Delete selected record?').then(y => {
+                    if (y) {
+                        let ajax = this.$.ajax1;
+                        ajax.DELETE('/leads/' + this.selectedLead.tl_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+
+            }
+            __onEditorClose() {
+                this.$.editor.close();
+            }
+            __onEditorSave() {
+                this.$.editor.close();
+
+                let data = this.selectedLead,
+                    ajax = this.$.ajax2;
+
+                if (data.tl_id) {
+                    ajax.PUT('/leads/' + data.tl_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/leads', data).then(done.bind(this))
+                }
+                
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+        }
+
+        customElements.define(LeadsPage.is, LeadsPage);
+    </script>
+</dom-module>

@@ -1,0 +1,65 @@
+<link rel="stylesheet" type="text/css" href="../../bower_components/hopscotch/dist/css/hopscotch.min.css">
+
+<style>
+    
+    .animated {
+        -webkit-animation-fill-mode: both;
+        -moz-animation-fill-mode: both;
+        -ms-animation-fill-mode: both;
+        -o-animation-fill-mode: both;
+        animation-fill-mode: both;
+        -webkit-animation-duration: 0.5s;
+        -moz-animation-duration: 0.5s;
+        -ms-animation-duration: 0.5s;
+        -o-animation-duration: 0.5s;
+        animation-duration: 0.5s;
+    }
+
+    /** override */
+    div.hopscotch-bubble,
+    div.hopscotch-bubble h3,
+    div.hopscotch-bubble .hopscotch-content, 
+    div.hopscotch-bubble .hopscotch-nav-button {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+
+    div.hopscotch-bubble .hopscotch-nav-button.next {
+        border-radius: 2px;
+        outline: none;
+        background-image: none;
+        background-color: var(--paper-cyan-500);
+        text-shadow: none;
+        box-shadow: none;
+        border: none;
+        margin-left: 3px;
+    }
+
+    div.hopscotch-bubble .hopscotch-nav-button.hopscotch-cta {
+        background-color: var(--paper-grey-300);
+        color: #666;
+    }
+
+    div.hopscotch-bubble .hopscotch-nav-button:active {
+        background-color: var(--paper-cyan-900);
+    }
+
+    div.hopscotch-bubble .hopscotch-nav-button.next:hover {
+        background-image: none;
+        background-color: var(--paper-cyan-700);
+        text-shadow: none;
+        box-shadow: none;
+        border: none;
+    }
+
+    div.hopscotch-bubble .hopscotch-nav-button.hopscotch-cta:hover {
+        background-color: var(--paper-grey-500);
+        color: #fff;
+    }
+
+    div.hopscotch-bubble .hopscotch-nav-button.hopscotch-cta:active {
+        background-color: var(--paper-grey-700);
+        color: #fff;
+    }
+</style>
+
+<script src="../../bower_components/hopscotch/dist/js/hopscotch.min.js"></script>

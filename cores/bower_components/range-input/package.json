@@ -1,0 +1,14 @@
+{
+  "name": "range-input",
+  "version": "0.5.1",
+  "description": "alternative inputs for ranges",
+  "main": "range-input.html",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "fooloomanzoo",
+  "license": "MIT"
+}

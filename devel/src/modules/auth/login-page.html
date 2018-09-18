@@ -1,0 +1,352 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-auth/kct-auth.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-message/kct-alert.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+
+<dom-module id="login-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                
+                --paper-input-container-input: {
+                    font-size: 20px;
+                    color: #fff;
+                };
+
+                --paper-input-container-label: {
+                    font-size: 15px;
+                    color: #fff;
+                };
+
+                --paper-input-error: {
+                    font-weight: 300;
+                };
+            }
+
+            .container {
+                height: 100vh;
+                background-color: var(--app-login-background);
+                background-image: url(../../../images/backgrounds/background-6.jpg);
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-position: 0 0;
+                background-attachment: scroll;
+
+                @apply --layout-horizontal;
+            }
+
+            .story {
+                position: relative;
+                padding: 30px;
+                max-width: 40%;
+                color: #fff;
+                
+            }
+            .story h3 {
+                font-size: 50px;
+                font-weight: 400;
+            }
+            .story p {
+                font-size: 26px;
+                font-weight: 300;
+                line-height: 1.2;
+            }
+            
+            .column-left.sm { display: none; }
+            .column-left.md { @apply --layout-flex; }
+            .column-left.lg { @apply --layout-flex-2; }
+            .column-left.xl { @apply --layout-flex-3; }
+
+            .column-right.sm { @apply --layout-flex; }
+            .column-right.md { @apply --layout-flex; }
+            .column-right.lg { @apply --layout-flex; }
+            .column-right.xl {
+                width: 460px;
+            }
+
+            .cover {
+                height: 100%;
+            }
+            
+            .login {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                right: 0;
+                overflow: hidden;
+                background-color: rgba(0,0,0,.3);
+                padding: 1.5rem;
+                color: #fff;
+            }
+            .login-logo {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .login-navbar {
+                background-color: var(--paper-indigo-700);
+                height: 30px;
+            }
+            .login-header {
+                color: #fff;
+                text-align: center;
+                background-color: var(--paper-indigo-500);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+                font-weight: 200;
+                height: 110px;
+            }
+            .login-header .logo {
+                --iron-icon-width: 64px;
+                --iron-icon-height: 64px;
+            }
+            .login-body {
+                overflow-y: auto;
+                @apply --layout-flex;
+            }
+            .form-group {
+                @apply --layout-horizontal;
+                margin-bottom: 15px;
+            }
+            .form-icon {
+                width: 40px;
+                position: relative;
+                top: 2px;
+                color: #fff;
+            }
+            .form-icon iron-icon {
+                position: absolute;
+                display: block;
+                bottom: 10px;
+            }
+            .form-control {
+                @apply --layout-flex;
+            }
+            .btn-login {
+                display: block;
+                text-align: center;
+            }
+            .captcha {
+                display: inline-block;
+                border: 1px solid #fff;
+                width: 120px;
+                height: calc(120px * 0.35);
+            }
+            .powered {
+                display: block;
+                text-decoration: none;
+                font-size: 10px;
+                margin-top: 20px;
+                color: var(--paper-grey-500);
+            }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-300);
+            }
+        </style>
+
+        <kct-auth id="auth" config="[[ config ]]" on-load="__onAuthLoaded"></kct-auth>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        
+        <div class="container">
+
+            <div class$="column-left [[ screen ]]">
+                <div class="cover">
+                    <div class="story">
+                        <h3>[[ config.app_title ]]</h3>
+                        <p>[[ config.app_description ]]</p>
+                    </div>
+                </div>    
+            </div>
+
+            <div class$="column-right [[ screen ]]">
+                
+                <div name="login" class="login">
+                    <div class="login-form">
+                        <div class="form-group">
+                            <div class="form-icon"><iron-icon icon="mail"></iron-icon></div>
+                            <div class="form-control">
+                                <paper-input 
+                                    id="email" 
+                                    type="email" 
+                                    value="{{ email }}" 
+                                    label="Username atau email" 
+                                    on-keypress="__onEmailEnter" 
+                                    tabindex="0" 
+                                    autofocus></paper-input>    
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-icon"><iron-icon icon="lock-outline"></iron-icon></div>
+                            <div class="form-control">
+                                <paper-input 
+                                    id="password" 
+                                    value="{{ password }}" 
+                                    label="Password" 
+                                    type="password" 
+                                    on-keypress="__onPasswordEnter"></paper-input>    
+                            </div>
+                        </div>
+                        <div class="m-t-md">
+                            <kct-hbox>
+                                <div class="flex" style="background-color: #fff; text-align: center;">
+                                    <img on-tap="__reloadCaptcha" alt="" title="Click to refresh" class="captcha" src$="[[ __captcha ]]">
+                                </div>    
+                                <div class="p-l">
+                                    <paper-input 
+                                        id="captcha" 
+                                        value="{{ captcha }}" 
+                                        label="Kode keamanan" 
+                                        required 
+                                        no-label-float 
+                                        on-keypress="__onCaptchaEnter"
+                                        style="position: relative; top: 6px; text-align: center;"></paper-input>
+                                </div>
+                            </kct-hbox>
+                            
+                        </div>
+
+                        <div class="m-t-lg">
+                            <paper-button id="submit" raised disabled$="[[ __loginInvalid ]]" on-tap="__onLoginButtonTap" class="btn-md btn-login btn-raised btn-indigo">Login</paper-button>
+                        </div>
+
+                        <div class="text-center m-t">
+                            <p class="m-b-xs">Lupa password Anda? <a on-tap="__onForgotTap" href="javascript:;">klik di sini</a></p>
+                            <a class="powered" href="javascript:;" target="_blank">
+                                <img src$="[[ resolveUrl('../../../images/logos/logo-48x48.png') ]]">
+                                <span class="block">POWERED BY <b>TANAGA</b></span>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <kct-alert id="message" title="Oh Snap!">
+            <p>
+                Terjadi kegagalan dalam proses login<br>
+                <b class="f-600">[[ message ]]</b>
+            </p>
+        </kct-alert>
+
+    </template>
+
+    <script>
+
+        class LoginPage extends KctView {
+            static get is() {
+                return 'login-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: 'String', notify: true, value: 'Login' },
+                    email: { type: String },
+                    password: { type: String },
+                    message: { type: String },
+                    section: { type: String, value: 'login' }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__loginValidator(email, password, captcha)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__captcha = '';
+                this.__loginInvalid = true;
+                this.__forgotInvalid = true;
+            }
+
+            ready() {
+                super.ready();
+                this.__reloadCaptcha();
+            }
+
+            __loginValidator(email, password, captcha) {
+                let valid = true;
+                valid = valid && (this.$.email.validate());
+                valid = valid && password;
+                valid = valid && captcha;
+                this.set('__loginInvalid', !valid);
+            }
+
+            __onForgotTap(e) {
+                this.set('route.path', '/forgot');
+            }
+            
+            __onAuthLoaded() {
+                // force to logout
+                this.$.auth.logout();
+            }
+            
+            __onEmailEnter(e) {
+                if (e.key == 'Enter') {
+                    this.$.password.focus();
+                }
+            }
+
+            __onPasswordEnter(e) {
+                if (e.key == 'Enter') {
+                    this.$.captcha.focus();
+                }
+            }
+
+            __onCaptchaEnter(e) {
+                if (e.key == 'Enter') {
+                    this.$.submit.dispatchEvent(new CustomEvent('tap'));   
+                }
+            }
+
+            __onLoginButtonTap(e) {
+                this.mask('Logging in...');
+                this.$.auth.login(this.email, this.password, this.captcha, false).then((user) => {
+                    if (user) {
+                        this._debounce(
+                            'redirect',
+                            () => {
+                                this.unmask();
+                                location.href = this._siteurl(this.route.fallback);        
+                            }, 
+                            1000
+                        );
+                    } else {
+                        this.unmask();
+                        this.__reloadCaptcha();
+                        this.set('message', this.$.auth.errors);
+                        this.$.message.open();
+                    }
+                });
+            }
+
+            __reloadCaptcha() {
+                let session = this.config.app_session || '';
+                
+                this.set('__captcha', '');
+                
+                this.$.ajax.__resolveUrl('/auth/captcha?type=image&session=' + session).then(url => {
+                    this.set('__captcha', url);
+                });
+            }
+
+            __onRequestPasswordTap() {
+                let payload = {
+                    email: this.email_forgot
+                };
+                this.$.ajax.POST('/auth/recover', payload);
+            }
+        }
+
+        customElements.define(LoginPage.is, LoginPage);
+    </script>
+</dom-module>

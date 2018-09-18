@@ -1,0 +1,88 @@
+<link rel="import" href="../../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../elements/kct-page/kct-page.html">
+<link rel="import" href="base-layout.html">
+
+<dom-module id="page-layout">
+    <template>
+        <style>
+            :host {
+                display: block;
+                height: 100%;
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="switcher" selected="[[ page ]]" on-itemactivate="__onPageActive" attr-for-selected="name">
+            <dom-repeat items="[[ pages ]]">
+                <template>
+                    <kct-page 
+                        type="[[ item.type ]]" 
+                        name="[[ item.name ]]" 
+                        state="[[ item.state ]]" 
+                        title="{{ item.title }}" 
+                        config="{{ config }}" 
+                        route="{{ route }}" 
+                        user="{{ user }}"></kct-page>
+                </template>
+            </dom-repeat>
+        </kct-pages>
+    </template>
+    <script>
+        class PageLayout extends BaseLayout {
+            static get is() {
+                return 'page-layout';
+            }
+            static get properties() {
+                return {
+                    name: { type: String, value: 'page' },
+                    page: { type: String },
+                    pages: { type: Array, value: () => ([]) }
+                };
+            }
+            static get observers() {
+                return [
+                    '__routeEventChanged(route.event)'
+                ];
+            }
+
+            __routeEventChanged(event) {
+                if (event != 'finish') return;
+
+                if (this.state.layout == this.name) {
+                    this._resolvePageFromState(this.state).then(p => {
+                        let page = (this.pages || []).find(e => e.name == p.name),
+                            pageState = Object.assign(Object.create(null), this.state);
+
+                        if ( ! page) {
+                            Polymer.importHref(
+                                p.file,
+                                () => {
+                                    p.state = pageState;
+                                    this.push('pages', p);
+
+                                    this._debounce('selectpage', () => {
+                                        this.set('page', name);
+                                    }, 0);
+                                },
+                                (err) => {
+                                    this.set('route.path', '/not-found');
+                                }
+                            );
+                        } else {
+                            let index = this.pages.indexOf(page);
+                            this.set('page', p.name);
+                            this.set('pages.' + index + '.state', pageState);
+                        }
+                    });
+                }
+            }
+            __onPageActive() {
+                
+            }
+        }
+        customElements.define(PageLayout.is, PageLayout);
+    </script>
+</dom-module>

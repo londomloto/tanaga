@@ -1,0 +1,65 @@
+<link rel="import" href="../../../../cores/elements/kct-bpmn/kct-bpmn.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+
+<dom-module id="bpmn-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                overflow: hidden;
+            }
+            kct-bpmn {
+                display: block;
+                height: 100%;
+            }
+        </style>
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+        <kct-bpmn id="bpmn" on-back-tap="__onBackTap"></kct-bpmn>
+    </template>
+    <script>
+        class BpmnPage extends KctView {
+            static get is() {
+                return 'bpmn-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Bpmn' }
+                };
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+
+                if (window.InteractJS12 === undefined) {
+                    window.InteractJS12 = interact;
+                    InteractJS12.__version = '1.2.4';
+                }
+
+                interact = InteractJS12;
+            }
+
+            handleResizing(width, height) {
+                if (this.$.bpmn) {
+                    this.$.bpmn.resize();
+                }
+            }
+
+            handleRouteEnter() {
+                let setting = (this.state || {}).setting;
+                
+                if (setting === 'bpmn') {
+                    interact = InteractJS12;
+                }
+            }
+            
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(BpmnPage.is, BpmnPage);
+    </script>
+</dom-module>

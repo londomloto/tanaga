@@ -1,0 +1,9 @@
+SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
+
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks
+    RewriteEngine on
+    RewriteCond %{REQUEST_URI} !^/api/v2/(app|index\.php)
+    #RewriteCond %{REQUEST_URI} !^/ws-team/api/v2/(app|index\.php)
+    RewriteRule ^(.*)$ app/$1/ [L,NC]
+</IfModule>

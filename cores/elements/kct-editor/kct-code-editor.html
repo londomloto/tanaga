@@ -1,0 +1,72 @@
+<link rel="import" href="../../vendors/codemirror/codemirror.html">
+<link rel="import" href="../../vendors/codemirror/codemirror-style.html">
+
+<dom-module id="kct-code-editor">
+    <template>
+        <style include="codemirror-style">
+            :host {
+                display: block;
+                height: 100%;
+            }
+            #editor {
+                height: 100%;
+            }
+        </style>
+
+        <div id="editor"></div>
+
+    </template>
+    <script>
+        class KctCodeEditor extends Polymer.Element {
+            static get is() {
+                return 'kct-code-editor';
+            }
+
+            ready() {
+                super.ready();
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.__setupEditor();    
+                });
+            }
+
+            __setupEditor() {
+                this.editor = CodeMirror(this.$.editor, {
+                    value: `
+<dom-module id="example-component">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        <\/style>
+        
+    <\/template>
+    <script>
+        class ExampleComponent extends Polymer.Element {
+
+            static get is() {
+                return 'example-component';
+            }
+
+            static get properties() {
+                return {
+                    foo: { type: String }
+                };
+            }
+
+        }
+
+        customElements.define(ExampleComponent.is, ExampleComponent);
+    <\/script>
+</dom-module>
+`,
+                    mode: 'htmlmixed',
+                    lineNumbers: true,
+                    viewportMargin: Infinity
+                });
+            }
+        }
+
+        customElements.define(KctCodeEditor.is, KctCodeEditor);
+    </script>
+</dom-module>

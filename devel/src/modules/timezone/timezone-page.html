@@ -1,0 +1,85 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="timezone-page">
+
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;   
+            }
+        </style>
+        
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+        
+        <kct-vbox>
+            <page-header-block icon="social:public" title="Settings" description="Application Timezone"></page-header-block>
+            <div class="flex">
+                <div class="p-a">
+                    <paper-button class="btn btn-md btn-primary" on-tap="__onButtonTap">Test Dialog</paper-button>    
+                </div>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Timezone Editor" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-button on-tap="__onAddFormTap">Add</paper-button>
+                    <template is="dom-repeat" items="[[ forms ]]">
+                        <paper-input label$="Input [[ index ]]"></paper-input>
+                    </template>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+
+    <script>
+        class TimezonePage extends KctView {
+            static get is() {
+                return 'timezone-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Timezone' },
+                    forms: { type: Array, value: () => ([]) }
+                }
+            }
+
+            __onAddFormTap() {
+                this.push('forms', {});
+            }
+
+            __onButtonTap() {
+                this.$.editor.open();
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(TimezonePage.is, TimezonePage);
+    </script>
+
+</dom-module>

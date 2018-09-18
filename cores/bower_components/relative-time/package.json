@@ -1,0 +1,36 @@
+{
+  "name": "relative-time",
+  "version": "1.0.0",
+  "description": "",
+  "main": "relative-time.html",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juravenator/relative-time.git"
+  },
+  "keywords": [
+    "Polymer",
+    "Web-Components",
+    "relative",
+    "time"
+  ],
+  "author": "Glenn Dirkx <glenn.dirkx@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Juravenator/relative-time/issues"
+  },
+  "homepage": "https://github.com/Juravenator/relative-time#readme",
+  "dependencies": {
+    "autoprefixer": "^6.7.7",
+    "grunt": "^1.0.1",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-htmlmin": "^2.4.0",
+    "grunt-import": "^1.0.3",
+    "grunt-inline": "^0.3.6",
+    "grunt-postcss": "^0.8.0",
+    "grunt-prettify": "^0.4.0",
+    "grunt-sass": "^2.0.0"
+  }
+}

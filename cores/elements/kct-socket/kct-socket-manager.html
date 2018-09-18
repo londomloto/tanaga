@@ -1,0 +1,202 @@
+<link rel="import" href="../../vendors/socket-io-client/socket-io-client.html">
+<link rel="import" href="../../mixins/location.html">
+
+<dom-module id="kct-socket-manager">
+    <script>
+        {
+            let instances = {};
+
+            class KctSocketManager extends Mixins(Polymer.Element).use(Mixins.Location) {
+                static get is() {
+                    return 'kct-socket-manager';
+                }
+
+                static get properties() {
+                    return {
+                        name: { type: String, reflectToAttribute: true },
+                        host: { type: String },
+                        port: { type: Number },
+                        path: { type: String },
+                        session: { type: String, value: '' },
+                        namespace: { type: String },
+                        secure: { type: Boolean, value: false, reflectToAttribute: true },
+                        autoConnect: { type: Boolean, value: false, reflectToAttribute: true }
+                    };
+                }
+
+                static get observers() {
+                    return [
+                        '__sessionChanged(session)'
+                    ];
+                }
+
+                static get(name) {
+                    return instances[name];
+                }
+
+                constructor() {
+                    super();
+
+                    this.__socket = null;
+                    this.__subscribers = [];
+                }
+
+                ready() {
+                    super.ready();
+                    this._ensureAttribute('hidden', true);
+
+                    if ( ! instances[this.name]) {
+                        instances[this.name] = this;
+                    }
+
+                    if (this.autoConnect) {
+                        this.connect();
+                    }
+                }
+
+                disconnectedCallback() {
+
+                    if (this.__socket) {
+                        this.__socket.disconnect();
+                        this.__socket = null;
+                    }
+
+                    this.__subscribers = [];
+                    super.disconnectedCallback();
+                }
+
+                register(subscriber) {
+                    subscriber.session = this.session;
+                    this.__subscribers.push(subscriber);
+                }
+
+                unregister(subscriber) {
+                    let index = this.__subscribers.indexOf(subscriber);
+                    if (index !== -1) {
+                        this.__subscribers.splice(index, 1);
+                    }
+                }
+
+                connect() {
+                    this.__createConnection();
+                }
+
+                emit(event, data) {
+                    if ( ! this.__socket) {
+                        return;
+                    }
+
+                    this.__socket.emit(event, data);
+                }
+
+                __resolveUrl() {
+                    let scheme = this._protocol();
+
+                    if (scheme == 'https:') {
+                        this.set('secure', true);
+                    }
+
+                    if ( ! this.host) {
+                        this.set('host', KctConfig.instance().config.app_push_server || this._hostname(false));
+                    }
+                    if ( ! this.port) {
+                        this.set('port', this.secure ? 8443 : 8080);
+                    }
+
+                    //console.log(scheme + '//' + this.host + ':' + this.port);
+                    return scheme + '//' + this.host + ':' + this.port;
+                }
+
+                __resolveNamespace() {
+                    if ( ! this.namespace) {
+                        let host = this._hostname();
+                        let base = this._baseuri().replace(/(^\/|\/$)/g, '');
+                        let namespace = '/' + host + '/' + base;
+
+                        if (this.path) {
+                            namespace += this.path;
+                        }
+
+                        this.set('namespace', namespace);
+                    }
+
+                    return this.namespace;
+                }
+
+                __createConnection() {
+                    if (this.__socket) {
+                        return;
+                    }
+
+                    let url = this.__resolveUrl();
+                    let nsp = this.__resolveNamespace();
+                    let room = KctConfig.instance().config.app_push_room || nsp;
+
+                    let opt = {
+                        query: { room: room },
+                        transports: [ 'websocket' ],
+                        upgrade: false
+                    };
+
+                    if (this.secure) {
+                        // opt.secure = true;
+                        // opt.verify = false;
+                    }
+                    
+                    this.__socket = io(url, opt);
+
+                    this.__socket.on('connect', () => {
+                        this.set('session', this.__socket.id);
+                        this.dispatchEvent(new CustomEvent('connect'));
+                    });
+
+                    this.__socket.on('emit', this.__dispatch.bind(this, 'emit'));
+                    this.__socket.on('broadcast', this.__dispatch.bind(this, 'broadcast'));
+                }
+
+                __dispatch(action, data) {
+                    if (action == 'broadcast') {
+                        let sender = data.__sender;
+
+                        if (sender !== undefined && sender == this.session) {
+                            return;
+                        }
+                    }
+
+                    if (this.__subscribers.length) {
+                        let type = data.__event;
+
+                        this.__subscribers.forEach(s => {
+                            let e;
+                            
+                            e = new CustomEvent(type, {
+                                detail: data
+                            });
+
+                            s.dispatchEvent(e);
+
+                            e = new CustomEvent(action, {
+                                detail: {
+                                    eventType: type,
+                                    eventData: data
+                                }
+                            });
+
+                            s.dispatchEvent(e);
+                        });
+
+                    }
+                }
+
+                __sessionChanged(session) {
+                    this.__subscribers.forEach(s => {
+                        s.session = this.session;
+                    });
+                }
+            }
+
+            customElements.define(KctSocketManager.is, KctSocketManager);
+        }
+        
+    </script>
+</dom-module>

@@ -1,0 +1,116 @@
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../mixins/language.html">
+
+<dom-module id="kct-toast">
+    <template>
+        <style>
+            h3 {
+                margin: 0;
+                font-weight: 400;
+                font-size: 14px;
+                text-transform: uppercase;
+            }
+            p {
+                margin: 0;
+                line-height: 1.2rem;
+                font-size: 13px;
+            }
+            .clear { clear: both; }
+            .icon, .text { float: left; }
+            .icon {
+                margin-right: 5px;
+            }
+            .icon > iron-icon {
+                --iron-icon-width: 36px;
+                --iron-icon-height: 36px;
+                position: relative;
+                top: -2px;
+            }
+            .warn {
+                background-color: var(--google-yellow-500);
+                color: #666;
+            }
+            .info {
+                background-color: var(--google-blue-300);
+                color: #fff;
+            }
+            .danger {
+                background-color: var(--google-red-300);
+                color: #fff;   
+            }
+            paper-toast {
+                padding: 16px;
+            }
+        </style>
+        
+        <paper-toast 
+            id="toast" 
+            class$="[[ type ]]" 
+            duration="[[ duration ]]"
+            on-tap="__onToastTap" 
+            on-iron-overlay-closed="__onClosed" 
+            with-backdrop$="[[ !duration ]]">
+            <div class="icon">
+                <iron-icon icon="[[ icon ]]"></iron-icon>
+            </div>
+            <div class="text">
+                <h3 class="title">{{ _(title) }}</h3>
+                <p>
+                    {{ _(message) }}
+                    <template is="dom-if" if="[[ button ]]">
+                        <br>
+                        <a class="btn" href="javascript:;">{{ _(button) }}</a>    
+                    </template>
+                </p>
+            </div>
+            <div class="clear"></div>
+        </paper-toast>
+    </template>
+    <script>
+        class KctToast extends Mixins(Polymer.Element).use(Mixins.Language) {
+            static get is() {
+                return 'kct-toast';
+            }
+
+            static get properties() {
+                return {
+                    type: { type: String, value: 'warn' },
+                    icon: { type: String, computed: '__computeIcon(type)' },
+                    title: { type: String },
+                    message: { type: String },
+                    button: { type: String },
+                    duration: { type: Number, value: 0 }
+                }
+            }
+
+            open() {
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.$.toast.open(); 
+                });
+            }
+
+            __computeIcon(type) {
+                return type == 'warn' ? 'error-outline' : (type == 'info' ? 'info-outline' : 'highlight-off');
+            }
+
+            __onToastTap(e) {
+                e.stopPropagation();
+
+                let target = e.target;
+
+                if (target.localName == 'a' && target.classList.contains('btn')) {
+                    this.dispatchEvent(new CustomEvent('close'));
+                }
+
+                this.$.toast.close();
+            }
+
+            __onClosed() {
+                this.parentNode.removeChild(this);
+            }
+        }
+
+        customElements.define(KctToast.is, KctToast);
+    </script>
+</dom-module>

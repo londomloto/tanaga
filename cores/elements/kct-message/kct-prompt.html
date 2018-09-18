@@ -1,0 +1,100 @@
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/dialog.html">
+
+<dom-module id="kct-prompt">
+    <template>
+        <style include="theme-helper"></style>
+        <style>
+            paper-dialog {
+                min-width: 280px;
+            }
+            h2, ::slotted(h2) {
+                font-weight: 300;
+                margin-bottom: 15px !important;
+            }
+            p, ::slotted(p) {
+                font-weight: 300;
+                margin-bottom: 0 !important;
+            }
+
+            .body > iron-icon {
+                color: var(--app-danger);
+                margin-bottom: 30px;
+                --iron-icon-width: 48px;
+                --iron-icon-height: 48px;
+            }
+            .footer {
+                background-color: var(--app-danger);
+                margin-bottom: 0;
+                color: #ffffff;
+                text-align: center;
+                text-transform: uppercase;
+                padding: 8px;
+            }
+            paper-button {
+                padding-top: 0.5em;
+                padding-bottom: 0.5em;
+            }
+        </style>
+        <paper-dialog id="dialog" always-on-top on-iron-overlay-closed="__onClose" modal>
+            <div class="body text-center">
+                <iron-icon icon="help"></iron-icon>
+                <slot name="title">
+                    <h2>[[ title ]]</h2>
+                </slot>
+                <slot name="message">
+                    <p>[[ message ]]</p>
+                </slot>
+                <div>
+                    <paper-input type="[[ type ]]" value="{{ value }}" autofocus></paper-input>
+                </div>
+            </div>
+            <div class="footer">
+                <paper-button on-tap="__onSubmitTap">SUBMIT</paper-button>
+                <paper-button on-tap="__onCancelTap">CANCEL</paper-button>
+            </div>
+        </paper-dialog>
+    </template>    
+    <script>
+        class KctPrompt extends Mixins(Polymer.Element).use(Mixins.Dialog, Mixins.Resolver) {
+            static get is() {
+                return 'kct-prompt';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Try Answer!' },
+                    message: { type: String },
+                    value: { type: String, notify: true },
+                    type: { type: String, value: 'text' }
+                }
+            }
+            open() {
+                this._relocate();
+
+                this.__d = this._defer();
+                this.$.dialog.open();
+                return this.__d.promise;
+            }
+
+            __onSubmitTap() {
+                this.$.dialog.close();
+            }
+
+            __onCancelTap() {
+                this.set('value', null);
+                this.$.dialog.close();
+            }
+
+            __onClose() {
+                this._restore();
+                this.dispatchEvent(new CustomEvent('close'));
+                this.__d.resolve(this.value);
+            }
+        }
+        customElements.define(KctPrompt.is, KctPrompt);
+    </script>
+</dom-module>

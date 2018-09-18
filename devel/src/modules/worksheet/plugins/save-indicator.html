@@ -1,0 +1,98 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="save-indicator">
+    <template>
+        <style>
+            :host {
+                display: inline-block;
+            }
+            .container {
+                position: relative;
+                width: 18px;
+                height: 18px;
+            }
+            #busy,
+            #done {
+                display: block;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin-left: -9px;
+                margin-top: -9px;
+            }
+            #busy {
+                width: 18px;
+                height: 18px;
+                --paper-spinner-stroke-width: 2px;
+            }
+            #done {
+                opacity: 0;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                color: var(--paper-green-500);
+                transition: opacity 0.4s ease-out;
+            }
+            #done.active {
+                opacity: 1;
+            }
+        </style>
+
+        <div class="container">
+            <paper-spinner-lite id="busy" active$="[[ __running ]]"></paper-spinner-lite>
+            <iron-icon id="done" icon="done"></iron-icon>
+        </div>
+    </template>
+    <script>
+        class SaveIndicator extends Polymer.Element {
+            static get is() {
+                return 'save-indicator';
+            }
+            static get properties() {
+                return {
+                    busy: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+            static get observers() {
+                return [
+                    '__busyChanged(busy)'
+                ]
+            }
+            constructor() {
+                super();
+                this.__running = false;
+            }
+            __busyChanged(busy) {
+                if (busy) {
+                    this.$.done.classList.remove('active');
+                    this.set('__running', true);
+                } else {
+                    if ( ! this.__running) {
+                        return;
+                    }
+
+                    this.set('__running', false);
+                    
+                    // show done
+                    let t1, t2;
+
+                    t1 = setTimeout(() => {
+                        this.$.done.classList.add('active');
+                        clearTimeout(t1);
+                        t1 = null;
+                    }, 400);
+
+                    // wait for 1s
+                    t2 = setTimeout(() => {
+                        this.$.done.classList.remove('active');
+                        clearTimeout(t2);
+                        t2 = null;
+
+                        
+                    }, 1400);
+                }
+            }
+        }
+        customElements.define(SaveIndicator.is, SaveIndicator);
+    </script>
+</dom-module>

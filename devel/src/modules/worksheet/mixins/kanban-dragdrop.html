@@ -1,0 +1,373 @@
+<link rel="import" href="../../../../../cores/vendors/interactjs/interactjs.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+
+<script>
+    Mixins.KanbanDragDrop = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            constructor() {
+                super();
+                this.__draggable = null;
+                this.__droppable = null;
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+
+                if (window.InteractJS13 === undefined) {
+                    window.InteractJS13 = interact;
+                    InteractJS13.__version = '1.3.3';
+                }
+
+                interact = InteractJS13;
+                this.setupDragDrop();
+            }
+
+            disconnectedCallback() {
+                this.removeDragDrop();
+                super.disconnectedCallback();
+            }
+
+            handleRouteEnter() {
+                super.handleRouteEnter();
+                interact = InteractJS13;
+            }
+
+            setupDragDrop() {
+                let context = this.$.worksheet,
+                    holder  = document.createElement('div'),
+                    drag = {
+                        x: 0,
+                        y: 0,
+                        z: '',
+                        node: null,
+                        pane: null,
+                        helper: null
+                    },
+                    drop = {
+                        node: null,
+                        pane: null,
+                        zones: [],
+                        valid: false
+                    };
+
+                holder.classList.add('item-holder');
+
+                // install draggable
+                this.__draggable = interact('.draggable', { context: context })
+                    .draggable({
+                        manualStart: true,
+                        onstart: e => {
+                            drag.pane = e.target.parentNode.parentNode;
+                            drag.pane.dropzone = false;
+
+                            // reinitialization
+                            drag.node = e.target;
+                            drag.node.dragActive = true;
+                            drag.helper = drag.node.clone();
+                            drag.helper.classList.add('item-helper');
+                            drag.helper.style.width = drag.node.clientWidth + 'px';
+                            drag.x = 0;
+                            drag.y = 0;
+                            drag.z = drag.node.clientHeight + 'px';
+
+                            drop.valid = false;
+                            
+                            // sink node with animation
+                            let timer = setTimeout(() => {
+                                clearTimeout(timer);
+                                timer = null;
+                                drag.node.hide();
+                                drag.node.parentNode.insertBefore(drag.helper, drag.node);
+                            }, 0);
+
+                        },
+                        onmove: e => {
+                            let x = drag.x + e.dx,
+                                y = drag.y + e.dy,
+                                t = 'translate(' + x + 'px,' + y + 'px)';
+
+                            drag.helper.style.webkitTransform = t;
+                            drag.helper.style.transform = t;
+
+                            drag.x = x; 
+                            drag.y = y;
+                        }
+                    })
+                    .on('move', e => {
+                        let i = e.interaction;
+                        if (i.pointerIsDown && ! i.interacting()) {
+                            if (this._elementMatches(e.target, '.drag-handle')) {
+                                let target = this.__resolveDragTarget(e.target);
+                                if (target) {
+                                    let action = { name: 'drag' };
+                                    i.start(action, e.interactable, target);
+                                }
+                            }
+                        }
+                    });
+
+                this.__droppable = interact('.droppable', { context: context })
+                    .dropzone({
+                        accept: '.draggable',
+                        ondropactivate: e => {
+                            this.set('dragdrop', true);
+
+                            let zone = e.target.parentNode.parentNode;
+                            if (zone != drag.pane) {
+                                if (drop.zones.indexOf(zone) === -1) {
+                                    drop.zones.push(zone);
+                                    zone.dropzone = true; // need validation here...
+                                }
+                            }
+                        },
+                        ondragenter: e => {
+                            
+                            drop.node = e.target;
+                            drop.pane = drop.node.parentNode.parentNode;
+
+                            if (drag.pane !== drop.pane) {
+                                drop.valid = true;
+
+                                let offset = this.__resolveHolderPlacement(drop.node, drop.pane);
+                                drop.node.parentNode.insertBefore(holder, offset);
+
+                                // animate holder
+                                let timer = setTimeout(() => {
+                                    clearTimeout(timer);
+                                    timer = null;
+                                    holder.style.height = drag.z;
+                                }, 0);
+
+                            } else {
+                                drop.valid = false;
+                            }
+                            
+                        },
+                        ondragleave: e => {
+                            drop.valid = false;
+                            holder.style.height = '0';
+                        },
+                        ondropdeactivate: e => {
+                            if (this.dragdrop) {
+                                this.set('dragdrop', false);
+
+                                if (drop.valid) {
+                                    
+                                    //drop.node.parentNode.insertBefore(drag.node, holder);
+
+                                    drag.node.dragActive = false;
+                                    drag.node.show();
+
+                                    // handle dom-repeat
+
+                                    let source = this.getModelForPanel(drag.pane);
+                                    let target = this.getModelForPanel(drop.pane);
+
+                                    if (target) {
+                                        let record = drag.node.record,
+                                            recordIndex = source.panel.kp_data.indexOf(record);
+
+                                        if (recordIndex !== -1) {
+                                            this.splice('worksheetRecord.ks_panels.' + source.index + '.kp_data', recordIndex, 1);
+                                        }
+
+                                        let resolve = this.__resolveDropAction(holder, target.panel.kp_data);
+                                        // record = JSON.parse(JSON.stringify(record));
+
+                                        if (resolve.action == 'push') {
+                                            this.push('worksheetRecord.ks_panels.' + target.index + '.kp_data', record);
+                                        } else {
+                                            this.splice('worksheetRecord.ks_panels.' + target.index + '.kp_data', resolve.offset, 0, record);
+                                        }
+
+                                        // save to database
+                                        record.task.tt_flag = target.panel.kp_title;
+
+                                        this.save(record, true).then(res => {
+                                            if (res.success) {
+                                                this.__reloadSourcePanel(source);
+                                                this.__reloadTargetPanel(target, record);
+                                            }
+                                        });
+                                        
+                                    }
+
+                                    done();
+
+                                } else {
+                                    let delay = setTimeout(() => {
+                                        clearTimeout(delay);
+                                        delay = null;
+
+                                        drag.node.dragActive = false;
+                                        drag.node.show();
+                                        done();
+                                    }, 80);
+                                }
+                            }
+                            
+                        }
+                    });
+
+                function done() {
+
+                    drag.pane.dropzone = false;
+
+                    drag.node = null;
+                    drag.pane = null;
+
+                    drop.node = null;
+                    drop.pane = null;
+
+                    // remove helper
+                    if (drag.helper.parentNode) {
+                        drag.helper.parentNode.removeChild(drag.helper);
+                        drag.helper = null;
+                    }
+
+                    // remove holder
+                    if (holder.parentNode) {
+                        holder.parentNode.removeChild(holder);
+                    }
+
+                    // clear dropzones
+                    drop.zones.forEach(z => {
+                        z.dropzone = false;
+                    });
+
+                    drop.zones = [];
+                }
+            }
+
+            removeDragDrop() {
+                this.clearDroppable();
+                this.clearDraggable();
+            }
+
+            clearDraggable() {
+                if (this.__draggable) {
+                    this.__draggable.unset();
+                    this.__draggable = null;
+                }
+            }
+
+            clearDroppable() {
+                if (this.__droppable) {
+                    this.__droppable.unset();
+                    this.__droppable = null;
+                }
+            }
+
+            __getPanelItems(index) {
+                return this.get('worksheetRecord.ks_panels.' + index + '.kp_data');
+            }
+
+            __reloadSourcePanel(source) {
+                // just reload
+                return this.__loadPanelData(source.panel);
+            }
+
+            __reloadTargetPanel(target, record) {
+                let items = this.__getPanelItems(target.index);
+                let offset = items.indexOf(record);
+                
+                this.set('busy', true);
+
+                this.__loadPanelData(target.panel).then(() => {
+                    // maintenance position
+                    items = this.__getPanelItems(target.index);
+                    
+                    if (offset !== -1 && offset < items.length) {
+                        // find identical item
+                        let found = items.find(e => {
+                            return e.task.tt_title == record.task.tt_title;
+                        });
+
+                        if (found) {
+                            let clone = Object.assign({}, found);
+                            let index = items.indexOf(found);
+
+                            if (offset < index) {
+                                // move up
+                                this.splice('worksheetRecord.ks_panels.' + target.index + '.kp_data', offset, 0, clone);
+                                this.splice('worksheetRecord.ks_panels.' + target.index + '.kp_data', (index + 1), 1);
+                            } else if (offset > index) {
+                                // move down
+                                this.splice('worksheetRecord.ks_panels.' + target.index + '.kp_data', index, 1);
+                                this.splice('worksheetRecord.ks_panels.' + target.index + '.kp_data', offset, 0, clone);
+                            }
+
+                        }        
+                    }
+
+                    this.set('busy', false);
+                });
+            }
+
+            __resolveDragTarget(handle) {
+                let parent = handle.parentNode;
+                let target;
+
+                while(parent) {
+                    if (parent.host) {
+                        target = parent.host;
+                        break;
+                    }
+                    parent = parent.parentNode;
+                }
+
+                return target;
+            }
+
+            __resolveHolderPlacement(node, pane) {
+                let sibling = node.nextElementSibling;
+                let valid = false;
+
+                while(sibling) {
+                    if (this._elementMatches(sibling, '.droppable')) {
+                        valid = sibling;
+                        break;
+                    }
+                    sibling = sibling.nextElementSibling;
+                }
+
+                if (valid) {
+                    return node;
+                } else {
+                    if (pane.__dropfallback === undefined) {
+                        pane.__dropfallback = pane.querySelector('.item-empty');
+                    }
+                    return pane.__dropfallback;
+                }
+            }
+
+            __resolveDropAction(holder, records) {
+                let sibling = holder.nextElementSibling,
+                    resolve = {
+                        action: 'push'
+                    };
+
+                while(sibling) {
+                    if (this._elementMatches(sibling, '.item-empty')) {
+                        resolve.action = 'push';
+                        break;
+                    }
+
+                    if (this._elementMatches(sibling, '.item')) {
+                        resolve.action = 'splice';
+                        resolve.offset = records.indexOf(sibling.record);
+                        break;
+                    }
+
+                    sibling = sibling.nextElementSibling;
+                }
+
+                return resolve;
+            }
+
+        };  
+
+    });
+</script>

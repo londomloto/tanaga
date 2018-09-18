@@ -1,0 +1,15 @@
+<link rel="import" href="../maps-provider.html">
+
+<dom-module id="osm-maps-provider">
+    <template>
+        
+    </template>
+    <script>
+        class OsmMapsProvider extends MapsProvider {
+            static get is() {
+                return 'osm-maps-provider';
+            }
+        }
+        customElements.define(OsmMapsProvider.is, OsmMapsProvider);
+    </script>
+</dom-module>

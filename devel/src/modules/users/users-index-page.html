@@ -1,0 +1,349 @@
+<link rel="import" href="../../../../cores/bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-search/kct-search.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="users-index-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .page-content {
+                background-color: var(--paper-grey-100);
+            }
+            paper-card {
+                cursor: pointer;
+            }
+            .card-header {
+                padding: 16px;
+                background-color: var(--paper-blue-grey-200);
+                background-size: cover;
+                position: relative;
+                text-align: center;
+            }
+            .card-header h3 {
+                font-weight: 400;
+                font-size: 16px;
+                color: #fff;
+            }
+            .card-avatar {
+                display: inline-block;
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background-color: #fff;
+                background-size: cover;
+                @apply --shadow-elevation-2dp;
+                z-index: 3;
+            }
+
+            .card-info { line-height: 1.2rem; font-size: 13px;  }
+            .card-info .label { color: var(--paper-grey-500)  }
+            .card-info .value { color: var(--paper-blue-grey-500); font-weight: 500;  }
+
+            .card-actions paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-role id="role"></kct-role>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block 
+                icon="social:person-outline" 
+                text="Settings" 
+                desc="Application Users" 
+                on-back-tap="__onBackTap">
+
+                <div class="separator"></div>
+                <paper-icon-button on-tap="__onRefreshTap" icon="refresh"></paper-icon-button>
+                <paper-button data-perm="manage@users" class="btn-blue"  style="margin-left: 5px;"  on-tap="__onAddTap">
+                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon>&nbsp;Add User
+                </paper-button>
+            </setting-header-block>
+            <!-- <page-header-block icon="social:person-outline" title="Settings" description="Application Users">
+                <paper-icon-button on-tap="__onRefreshTap" icon="refresh"></paper-icon-button>
+                <div class="separator"></div>
+                <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add User</paper-button>
+                <paper-icon-button on-tap="__onSearchTap" icon="search" slot="secondary-toolbar"></paper-icon-button>
+            </page-header-block> -->
+            
+            <div class="flex scroll-y page-content">
+                <div class="padding">
+                    <kct-column columns="5">
+                        <template is="dom-repeat" items="[[ users ]]">
+
+                            <paper-card on-tap="__onEditTap">
+                                <div class="card-header">
+                                    <div class="card-avatar" style$="background-image: url([[ item.su_avatar_thumb ]]&w=80&h=80)"></div>
+                                    <h3>[[ item.su_fullname ]]</h3>
+                                </div>
+                                
+                                <div class="card-content">
+                                    <div class="card-info">
+                                        <div class="label">Email</div>
+                                        <div class="value">[[ item.su_email ]]</div>
+                                        <div class="label">Access Role</div>
+                                        <div class="value">[[ item.sr_name ]]</div>
+                                        <!-- <div class="label">Phone</div>
+                                        <div class="value">[[ item.su_phone ]]</div> -->
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <div class="text-center">
+                                        <paper-button class="btn-sm" on-tap="__onEditTap">Detail</paper-button>
+                                        <paper-button class="btn-sm" on-tap="__onReinviteTap" hidden$="[[ !item.su_need_reinvite ]]">Re-Invite</paper-button>
+                                        <!-- <paper-button class="btn-sm" on-tap="__onKanbanTap">Worksheet</paper-button> -->
+                                    </div>
+                                </div>
+                            </paper-card>
+                        </template>        
+                    </kct-column>
+                </div>
+            </div>
+
+        </kct-vbox>
+
+        <kct-search id="search" fields="[[ searchFields ]]" on-query="__onSearch"></kct-search>
+
+        <kct-dialog id="kanban-dialog" title="Worksheet" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    h3 { font-weight: 400; font-size: 14px; }
+                    p { font-weight: 300; font-size: 13px; }
+                    .box { 
+                        padding: 8px 0;
+                        margin-bottom: 0;
+                        border-top: 1px solid #dfdfdf;
+                        border-bottom: 1px solid #dfdfdf;
+                    }
+                    .box + .box {
+                        border-top: none;
+                    }
+                    .icon > span {
+                        margin: auto;
+                        display: inline-block;
+                        width: 40px;
+                        height: 40px;
+                        line-height: 38px;
+                        text-align: center;
+                        color: #fff;
+                        background-color: var(--paper-amber-500);
+                        border-radius: 50%;
+                    }
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <template is="dom-repeat" items="[[ kanban ]]">
+                        <div class="box">
+                            <kct-hbox>
+                                <div class="icon">
+                                    <span><iron-icon icon="view-carousel"></iron-icon></span>
+                                </div>
+                                <div class="flex p-l">
+                                    <h3>[[ item.suk_ks_name ]]</h3>
+                                    <p class="text-muted">[[ __computeDescription(item.suk_ks_description) ]]</p>
+                                </div>
+                                <div>
+                                    <paper-toggle-button checked="{{ item.suk_selected }}"></paper-toggle-button>    
+                                </div>
+                            </kct-hbox>
+                        </div>    
+                    </template>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onKanbanSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onKanbanResetTap">Reset</paper-button>
+                    <paper-button on-tap="__onKanbanCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        
+
+    </template>
+    <script>
+        class UsersIndexPage extends KctView {
+            static get is() {
+                return 'users-index-page';
+            }
+
+            static get properties() {
+                return {
+                    users: { type: Array },
+                    kanban: { type: Array },
+                    searchFields: {
+                        type: Array,
+                        value: () => ([
+                            { text: 'Full Name', name: 'su_fullname' },
+                            { text: 'Email Address', name: 'su_email' },
+                            { text: 'Phone Number', name: 'su_phone' }
+                        ])
+                    }
+                }
+            }
+
+            constructor() {
+                super();
+                this.__selectedUser = null;
+            }
+
+            handleRouteParams(setting, action) {
+                if (setting == 'users' && ! action) {
+                    this.__loadUsers();
+                    this.$.role.validate();
+                }
+            }
+
+            __computeDescription(desc) {
+                return desc || 'No description';
+            }
+
+            __loadUsers(data = {}) {
+                let ajax = this.$.ajax;
+                ajax.GET('/users', data).then((res) => {
+                    this.set('users', res.data);
+                });
+            }
+
+            __findRecordIndex(id) {
+                return this.users.findIndex((rec) => { return rec.su_id == id; });
+            }
+
+            __findRecord(id) {
+                return this.users.find((rec) => { return rec.su_id == id; });
+            }
+
+            __loadKanban(user) {
+                let path = '/users/users-kanban?display=setup',
+                    ajax = this.$.ajax;
+
+                if (user.su_sr_id) {
+                    path += '&role=' + user.su_sr_id;
+                }
+
+                if (user.su_id) {
+                    path += '&user=' + user.su_id;
+                }
+
+                ajax.GET(path).then((res) => {
+                    let kanban = res.data;
+                    
+                    kanban.forEach((k) => {
+                        k.suk_selected = k.suk_selected == 1 ? true : false;
+                    });
+
+                    this.set('kanban', kanban);
+                });
+            }
+
+            __onAddTap(e) {
+                this.set('route.path', '/settings/users/add');
+            }
+
+            __onEditTap(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                let user = e.model.item;
+                this.set('route.path', '/settings/users/edit/' + user.su_id);
+            }
+
+            __onKanbanTap(e) {
+                let user = e.model.item;
+                this.__loadKanban(user);
+
+                this.$['kanban-dialog'].title = `${user.su_fullname} - Worksheet`;
+                this.$['kanban-dialog'].open();
+
+                this.set('__selectedUser', user);
+            }
+
+            __onKanbanSaveTap() {
+                this.$['kanban-dialog'].close();
+
+                let data = this.__selectedUser,
+                    ajax = this.$.ajax;
+
+                data.su_kanban = this.kanban;
+
+                ajax.PUT('/users/' + data.su_id, data).then(res => {
+                    if (res.success) {
+                        this.toast('Success', 'User worksheet has been saved');    
+                    }
+                });
+            }
+
+            __onKanbanCloseTap() {
+                this.$['kanban-dialog'].close();
+            }
+
+            __onKanbanResetTap() {
+                this.$['kanban-dialog'].close();
+
+                this.confirm('Confirm', 'Are you sure want to reset to default configuration (role based) ?').then(y => {
+                    if (y) {
+                        let ajax = this.$.ajax,
+                            data = this.__selectedUser;
+                        
+                        data.su_kanban = [];
+
+                        ajax.PUT('/users/' + data.su_id, data).then(res => {
+                            this.toast('Success', 'User worksheet has been saved');  
+                        });
+                    }
+                });
+            }
+
+            __onSearch(e) {
+                this.__loadUsers(e.detail);
+            }
+
+            __onSearchTap(e) {
+                e.stopPropagation();
+                this.$.search.open();
+            }
+
+            __onRefreshTap() {
+                this.__loadUsers();
+            }
+
+            __onReinviteTap(e) {
+                e.stopPropagation();
+                let payload = {
+                    email: e.model.item.su_email
+                };
+
+                this.mask('Reinviting user...');
+
+                this.$.ajax.POST('/users/reinvite', payload).then(res => {
+                    this.unmask();
+                    this.toast('Success', 'User has been re-invited', 'info');
+                });
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(UsersIndexPage.is, UsersIndexPage);
+    </script>
+</dom-module>

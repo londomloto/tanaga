@@ -1,0 +1,25 @@
+<link rel="import" href="mixins.html">
+
+<script>
+    Mixins.Dialog = Polymer.dedupingMixin((superclass) => {
+        return class extends superclass {
+            constructor() {
+                super();
+                this.__owner = null;
+            }
+            _relocate() {
+                let owner = (this.parentNode && this.parentNode.host) || this.parentNode;
+                if (owner.localName != 'body') {
+                    this.__owner = owner;
+                    document.body.appendChild(this);
+                }
+            }
+            _restore() {
+                if (this.__owner) {
+                    this.__owner.appendChild(this);
+                    this.__owner = null;
+                }
+            }
+        };
+    });
+</script>

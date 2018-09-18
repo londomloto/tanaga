@@ -1,0 +1,32 @@
+{
+  "name": "graph-svg",
+  "description": "SVG library",
+  "main": "index.js",
+  "authors": [
+    "londomloto"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "interactive",
+    "workflow",
+    "diagram",
+    "activity",
+    "vector",
+    "graph",
+    "svg"
+  ],
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "graph-lodash": "1.0.0",
+    "graph-jquery": "1.0.0",
+    "graph-interactjs": "1.0.0",
+    "graph-fonts": "1.0.2"
+  }
+}

@@ -1,0 +1,116 @@
+<link rel="import" href="../kct-layouts/kct-vbox.html">
+
+<dom-module id="kct-worksheet-panel">
+    <template>
+        <style>
+            :host {
+                min-height: var(--panel-height, 100%);
+                margin: 0;
+                display: block;
+                float: left;
+                background-color: var(--panel-body-background, var(--paper-grey-200));
+            }
+            :host([hidden]) {
+                display: none;
+            }
+            .panel {
+                width: var(--panel-width, 300px);
+                margin: 0;
+            }
+            .panel:after {
+                content: '';
+                top: 0;
+                bottom: 0;
+                right: 0;
+                border-right: 1px solid #F6F8F7;
+            }
+            .panel-content {
+                min-height: calc(100% - 34px);
+            }
+            .primary-toolbar {
+                height: 34px;
+                line-height: 34px;
+                padding-right: 5px;
+                border-bottom: 2px solid var(--panel-primary-toolbar-background, transparent);
+            }
+            app-toolbar[hidden] {
+                display: none;
+            }
+            .panel-header {
+                display: none;
+            }
+            .panel-content {
+                color: #212121;
+                position: relative;
+            }
+        </style>
+        <div class="panel">
+            <div class="panel-content">
+                <slot></slot>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class KctWorksheetPanel extends Polymer.Element {
+            static get is() {
+                return 'kct-worksheet-panel';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Title', notify: true }, 
+                    subtitle: { type: String, notify: true },
+                    width: { type: String, value: '300px' }, 
+                    height: { type: String, value: '100%' },
+                    accent: { type: String, value: 'transparent' },
+                    hideHeader: { type: Boolean, value: false },
+                    hidePrimary: { type: Boolean, value: false }, 
+                    dropzone: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+            static get observers() {
+                return [
+                    '__accentChanged(accent)',
+                    '__sizeChanged(width, height)'
+                ];
+            }
+
+            disconnectedCallback() {
+                this.dispatchEvent(new CustomEvent('disconnect'));
+                super.disconnectedCallback();
+            }
+
+            __accentChanged(accent) {
+                if ( ! accent) {
+                    accent = 'transparent';
+                }
+                
+                this.updateStyles({
+                    '--panel-primary-toolbar-background': accent
+                });
+            }
+            __sizeChanged(width, height) {
+                let style = {},
+                    valid = false;
+
+                if (width !== undefined) {
+                    width = isNaN(width) ? width : width + 'px';
+                    style['--panel-width'] = width;
+                    valid = true;
+                }
+
+                if (height !== undefined) {
+                    height = isNaN(height) ? height : height + 'px';
+                    style['--panel-height'] = height;
+                    valid = true;
+                }
+
+                if (valid) {
+                    this.updateStyles(style);
+                    
+                }
+            }
+        }
+        customElements.define(KctWorksheetPanel.is, KctWorksheetPanel);
+    </script>
+</dom-module>

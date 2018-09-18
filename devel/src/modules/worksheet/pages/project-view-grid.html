@@ -1,0 +1,236 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+
+<dom-module id="project-view-grid">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #grid {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-subscriber 
+            on-task-save="__onTaskSave" 
+            on-task-remove="__onTaskRemove"></kct-event-subscriber>
+
+        <kct-grid 
+            id="grid" 
+            url="/kanban/grid" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            row-height="50" 
+            hide-header>
+            <template preserve-content>
+                <style>
+                    .item-title { color: var(--paper-cyan-500);  }
+                    .item-meta { font-size: 11px; color: #999;   }
+                    .item-badge {
+                        padding: 3px 10px;
+                        color: #fff;
+                        font-size: 11px;
+                        border-radius: 3px;
+                        display: inline-block;
+                        text-align: center;
+                        text-decoration: none;
+                    }
+                    .item-badge iron-icon {
+                        --iron-icon-width: 12px !important;
+                        --iron-icon-height: 12px !important;
+                    }
+                </style>
+            </template>        
+        </kct-grid>
+        
+    </template>
+    <script>
+        class ProjectViewGrid extends KctView {
+            static get is() {
+                return 'project-view-grid';
+            }
+
+            static get properties() {
+                return {
+                    busy: { type: Boolean, value: false, notify: true },
+                    project: { type: String },
+                    projectRecord: { type: Object },
+                    params: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber', width: 44 },
+                            {
+                                type: 'action',
+                                width: 50,
+                                align: 'center',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return '<kct-grid-action accent="pink" icon="image:edit" on-tap="__onEditTap" icon-only rounded></kct-grid-action>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Description', 
+                                width: 367,
+                                sortable: false,
+                                dataIndex: 'tt_title',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <div class="item-title">${e.data.tt_title}</div>
+                                            <div class="item-meta">By <b>${e.data.creator_su_fullname}</b> ${e.data.tt_created_dt_formatted}</div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Due Date',
+                                sortable: false,
+                                dataIndex: 'tt_due_date',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return e.data.tt_due_date_formatted;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Status',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let div = '';
+                                        e.data.statuses.forEach(s => {
+                                            div += `<a 
+                                                on-tap="__onTaskStatusTap" 
+                                                title="Update task" 
+                                                data-status="${s.tts_id}" 
+                                                href="javascript:;" 
+                                                class="item-badge" 
+                                                style="background-color: ${s.status_color};">${s.status_text}</a>`;
+                                        });
+                                        return div;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__projectChanged(project)',
+                    '__paramsChanged(params.*)'
+                ];
+            }
+
+            handleRouteParams(project, action, type) {
+                if (project === undefined  || project == 'tour' || project == 'create') return;
+                if (action != 'view') return;
+                if (type != 'list') return;
+
+                if (this.$.grid) {
+                    let resizing = setTimeout(() => {
+                        clearTimeout(resizing);
+                        resizing = null;
+                        this.$.grid.resize();
+                        this.set('project', project);
+                    }, 10);
+                }
+            }
+
+            handleResizing() {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            reload() {
+                return this.__loadGrid();
+            }
+
+            __paramsChanged(changed) {
+                if (changed.path == 'params') {
+                    this.reload();
+                }
+            }
+
+            __projectChanged(project) {
+                if (project) {
+                    this.__loadProject();
+                    this.__loadGrid();
+                }
+            }
+
+            __loadProject() {
+
+                this.set('projectRecord', null);
+                
+                if ( ! this.project) return;
+                
+                this.$.ajax.GET('/projects/load/' + this.project ).then(res => {
+                    this.set('projectRecord', res.data);
+                    this.__loadGrid();
+                });
+            }
+
+            __loadGrid() {
+                this.set('busy', true);
+
+                if ( ! this.projectRecord) {
+                    this.set('busy', false);
+                    return Promise.resolve();
+                }
+
+                let grid = this.$.grid;
+                let params = Object.assign({}, this.params);
+                
+                params.project = this.projectRecord.sp_id;
+
+                grid.params = params;
+
+                return grid.load().then(() => {
+                    this.set('busy', false);
+                    return;
+                });
+            }
+
+            __onTaskSave(e) {
+                this.reload();
+            }
+
+            __onTaskRemove() {
+                this.reload();
+            }
+
+            __onTaskStatusTap(args) {
+                let btn = (args.event.path || [])[0];
+                let status = btn && btn.dataset.status;
+                if (status) {
+                    this.set('route.data.back', '/worksheet/' + this.project + '/view/list');
+                    this.set('route.path', '/worksheet/' + this.project + '/task/update/' + status);
+                }
+            }
+
+            __onEditTap(e) {
+                let data  = e.data;
+                if (data.statuses && data.statuses.length) {
+                    let status = data.statuses[0];
+                    this.set('route.data.back', '/worksheet/' + this.project + '/view/list');
+                    this.set('route.path', '/worksheet/' + this.project + '/task/update/' + status.tts_id);
+                }
+            }
+        }
+
+        customElements.define(ProjectViewGrid.is, ProjectViewGrid);
+    </script>
+</dom-module>

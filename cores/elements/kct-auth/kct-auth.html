@@ -1,0 +1,217 @@
+<link rel="import" href="../../mixins/storage.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/location.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-auth">
+    <template>
+        <kct-ajax id="ajax" config="[[ config ]]" auth="[[ name ]]"></kct-ajax>
+    </template>
+    <script>
+        class KctAuth extends Mixins(Polymer.Element).use(
+            Mixins.Resolver, 
+            Mixins.Storage,
+            Mixins.Location
+        ) {
+            static get is() {
+                return 'kct-auth';
+            }
+
+            static get properties() {
+                return {
+                    name: { type: String, notify: true },
+                    user: {
+                        type: Object,
+                        notify: true,
+                        value: () => ({
+                            su_id: null,
+                            su_email: null,
+                            su_fullname: null,
+                            su_avatar: null,
+                            su_avatar_url: null,
+                            su_avatar_thumb: null,
+                            su_access_token: null
+                        })
+                    },
+                    config: { type: Object },
+                    storageKey: { type: String },
+                    autoValidate: { type: Boolean, value: false },
+                    validationUrl: { type: String, value: '/auth/validate' },
+                    accessUrl: { type: String, value: '/auth/access' },
+                    loginUrl: { type: String, value: '/auth/login' },
+                    errors: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__configChanged(config.*)',
+                    '__nameChanged(name)',
+                    '__userChanged(user.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__silent = false;
+                this.__errors = '';
+            }
+
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+            }
+
+            authenticate() {
+                return this.validate().then(auth => {
+                    return auth.success;
+                });
+            }
+
+            validate() {
+                let defer = this._defer();
+                let token;
+
+                // check from params
+                if ((token = this._param('access_token'))) {
+                    let payload = {
+                        token: token,
+                        client: 'browser'
+                    };
+
+                    this.$.ajax.POST(this.accessUrl, payload).then(res => {
+                        let success = res.success;
+                        
+                        if (success) {
+                            this.set('user', res.data);
+                        }
+
+                        this.__fireEvent('validate', { success: success, user: this.user });
+                        defer.resolve({ success: success, user: this.user });
+                    });
+                } else {
+                    token = this.user && this.user.su_access_token;
+
+                    if (token) {
+                        this.$.ajax.GET(this.validationUrl).then(res => {
+                            let success = res.success;
+
+                            if ( ! success) {
+                                this.__invalidate();
+                            }
+
+                            this.__fireEvent('validate', { success: success, user: this.user});
+                            defer.resolve({ success: success, user: this.user });
+                        });
+
+                    } else {
+                        this.__fireEvent('validate', { success: false, user: this.user });
+                        defer.resolve({ success: false, user: this.user });
+                    }
+                }
+
+                return defer.promise;
+            }
+
+            login(email, password, captcha = '', remember = false) {
+
+                let url = this.loginUrl;
+                let session = this.config.app_session || '';
+
+                if (session) {
+                    url += (url.indexOf('?') !== -1 ? '&' : '?') + 'session=' +session;
+                }
+                
+                let payload = {
+                    email: email,
+                    password: password, 
+                    captcha: captcha,
+                    remember: remember,
+                    client: 'browser'
+                };
+
+                return this.$.ajax.POST(url, payload).then(res => {
+                    if (res.success) {
+                        let user = res.data;
+                        this.set('user', user);
+                        return user;
+                    } else {
+                        this.set('errors', res.message);
+                        return null;
+                    }
+                });
+            }
+
+            logout() {
+                this.__invalidate(true);
+                return Promise.resolve();
+            }
+
+            __invalidate(purge = false) {
+                // clear user data
+                let user;
+
+                if (purge) {
+                    user = {};
+                    Object.keys(this.user).forEach(k => {
+                        user[k] = null;
+                    });
+                } else {
+                    user = Object.assign({}, this.user);
+                    user.su_access_token = null;
+                }
+
+                this.set('user', user);
+            }
+
+            __configChanged() {
+                if ( ! this.name) {
+                    this.set('name', this.config.app_name);
+                }
+            }
+
+            __nameChanged(name) {
+                if ( ! name) return;
+
+                // setup storage key
+                let storageKey = this._getStorageKey(name, this.constructor.is);
+                this.set('storageKey', storageKey);
+
+                let data = Object.assign({}, this.constructor.properties.user.value());
+                this._initStorage(this.storageKey, data);
+
+                // load from storage
+                data = this._getStorageItem(storageKey);
+                
+                this.__silent = true;
+                this.set('user', data);
+                this.__silent = false;
+
+                this.__fireEvent('load');
+
+                if (this.autoValidate) {
+                    this.validate();
+                }
+            }
+
+            __userChanged(changed) {
+                if (this.__silent) return;
+                if (this.storageKey) {
+                    this._saveStorage(this.storageKey, this.user);
+                }
+            }
+
+            __fireEvent(type, data = {}) {
+
+                let evt = new CustomEvent(type, {
+                    detail: data
+                });
+
+                this.dispatchEvent(evt);
+            }
+        }
+
+
+        customElements.define(KctAuth.is, KctAuth);
+    </script>
+</dom-module>

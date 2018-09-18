@@ -1,0 +1,240 @@
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/location.html">
+<link rel="import" href="../../mixins/language.html">
+<link rel="import" href="../kct-toast/kct-toast.html">
+<link rel="import" href="../kct-message/kct-confirm.html">
+<link rel="import" href="../kct-message/kct-alert.html">
+<link rel="import" href="../kct-layouts/kct-hbox.html">
+
+<dom-module id="kct-view">
+
+    <script>
+
+        class KctView extends Mixins(Polymer.Element).use(
+            Mixins.Location, 
+            Mixins.Resolver,
+            Mixins.Language
+        ) {
+            
+            static get is() {
+                return 'kct-view';
+            }
+
+            static get properties() {
+                return {
+                    name: { type: String, notify: true },
+                    title: { type: String, notify: true },
+                    state: { type: Object, notify: true },
+                    accent: { type: String, notify: true },
+                    menus: { 
+                        type: Array, 
+                        notify: true, 
+                        value: () => {
+                            return [];
+                        }
+                    },
+                    opened: { type: Boolean, value: false, reflectToAttribute: true }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '_heightChanged(height)',
+                    '_nameChanged(name)',
+                    '_stateParamsChanged(state.params)',
+                    '_stateActiveChanged(state.active)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.render();
+                });
+            }
+
+            mask(message = 'Loading...') {
+                let masker = this.$.masker;
+
+                if ( ! masker) {
+                    
+                    let maskerTemplate = document.createElement('template');
+
+                    maskerTemplate.innerHTML = `
+                        <style>
+                            .masker-overlay { 
+                                position: absolute;
+                                left: 0;
+                                top: 2px;
+                                bottom: 0;
+                                right: 0;
+                                background: rgba(0,0,0,0.05);
+                            }
+                            .masker-card {
+                                position: relative;
+                                left: 50%;
+                                top: 50%;
+                            }
+                            .masker-text {
+                                padding-left: 1rem; 
+                                padding-top: 3px;
+                            }
+                        </style>
+                        <div id="masker" class="masker-overlay">
+                            <paper-card id="masker-card" class="masker-card">
+                                <div class="card-content">
+                                    <kct-hbox>
+                                        <div class="masker-spin">
+                                            <paper-spinner active></paper-spinner>
+                                        </div>
+                                        <div class="masker-text flex">[[ maskerMessage ]]</div>
+                                    </kct-hbox>
+                                </div>
+                            </paper-card>
+                        </div>
+                    `;
+
+                    let maskerInstance = this._stampTemplate(maskerTemplate);
+
+                    this.shadowRoot.appendChild(maskerInstance);
+                    this.$.masker = masker = maskerInstance.$.masker;
+                }
+
+                masker.style.display = 'block';
+
+                this.set('maskerMessage', message);
+
+                let card = masker.children[0],
+                    width = card.offsetWidth,
+                    height = card.offsetHeight,
+                    marginLeft = -(width / 2) + 'px',
+                    marginTop = -(height / 2) + 'px';
+
+                card.style.marginTop = marginTop;
+                card.style.marginLeft = marginLeft;
+            }
+
+            unmask() {
+                if (this.$.masker) {
+                    this.$.masker.style.display = 'none';
+                }
+            }
+
+            render() {}
+            
+            activate() {}
+
+            handleRouteEnter() {}
+            handleRouteLeave() {} 
+            handleRouteParams(...params) {}
+            handleResizing(width, height) {}
+            
+            close() {}
+
+            toast(title, message, type = 'info') {
+                let toast = document.createElement('kct-toast');
+                
+                toast.duration = 3000;
+                toast.type = type;
+                toast.title = title;
+                toast.message = message;
+
+                document.body.appendChild(toast);
+                toast.open();
+            }
+
+            alert(title, message) {
+                let def = this._defer(),
+                    dialog = document.createElement('kct-alert');
+
+                dialog.title = title;
+                dialog.message = message;
+                dialog.addEventListener('close', () => {
+                    def.resolve();
+                    document.body.removeChild(dialog);
+                });
+
+                document.body.appendChild(dialog);
+                dialog.open();
+
+                return def.promise;
+            }
+
+            confirm(title, message) {
+                let def = this._defer(),
+                    dialog = document.createElement('kct-confirm');
+
+                dialog.title = title;
+                dialog.message = message;
+
+                dialog.addEventListener('close', e => {
+                    let value = e.detail.value,
+                        action = value == 'yes' ? true : false;
+                    def.resolve(action);
+                    document.body.removeChild(dialog);
+                });
+
+                document.body.appendChild(dialog);
+                dialog.open();
+
+                return def.promise;
+            }
+
+            _nameChanged(name) {
+                if (name) {
+                    this._resolve('title').then((title) => {
+                        if ( ! title) {
+                            title = this.localName
+                                .replace(/\-page/, '')
+                                .replace(/-/g, ' ')
+                                .replace(/\w\S*/g, (str) => {
+                                    return str.charAt(0).toUpperCase() + str.substr(1).toLowerCase();
+                                });
+                            this.set('title', title);
+                        }
+                    });
+                }
+            }
+
+            _stateParamsChanged(params) {
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.handleRouteParams.apply(this, params);
+                });
+            }
+
+            _stateActiveChanged(active) {
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    if (active) {
+                        this.handleRouteEnter(); 
+                    } else {
+                        this.handleRouteLeave();
+                    }
+                });   
+            }
+
+            _heightChanged(height) {
+                this.style.height = height + 'px';
+            }
+
+            _resolveUrl(url) {
+                if (/^https?/.test(url)) {
+                    return url;
+                }
+
+                let base = this.constructor.importPath ? Polymer.ResolveUrl.resolveUrl(this.constructor.importPath) : '';
+                
+                // if (/\/modules\//.test(base)) {
+                //     base = base.replace(/\/modules\//, '/src/modules/');
+                // }
+                
+                return Polymer.ResolveUrl.resolveUrl(url, base);
+            }
+
+        }
+
+        customElements.define(KctView.is, KctView);
+    </script>
+</dom-module>

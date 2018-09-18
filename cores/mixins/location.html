@@ -1,0 +1,74 @@
+<link rel="import" href="mixins.html">
+<script>
+    Mixins.Location = Polymer.dedupingMixin((superclass) => {
+        return class extends superclass {
+
+            _protocol() {
+                return window.location.protocol;
+            }
+
+            _hostname(port = true) {
+                return port ? window.location.host : window.location.hostname;
+            }
+
+            _baseuri(trail = true) {
+                let meta = document.querySelector('meta[name="application-base"]');
+                let base = meta.content;
+
+                base = '';
+                
+                if (base) {
+                    return base;
+                } else {
+                    let tester = new RegExp(document.querySelector('meta[name="application-test"]').content, 'g');
+                    let path = window.location.pathname;
+                    let part = path.match(/([^/]+)/g);
+
+                    if (tester.test(path)) {
+                        base = '/' + part[0] + '/' + part[1] + (trail ? '/' : '');
+                    } else {
+                        base = '/' + part[0] + (trail ? '/' : '');
+                    }
+                    meta.content = base;
+                    tester = null;
+                }
+
+                return base;
+            }
+
+            _param(name) {
+                name = (name || '').replace(/[\[\]]/g, '\\$&');
+                let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+                let result = regex.exec(window.location.href);
+
+                regex = null;
+
+                if ( ! result) return null;
+                if ( ! result[2]) return '';
+
+                return decodeURIComponent(result[2].replace(/\+/g, ' '));
+            }
+
+            _siteurl(path) {
+                let http, host, base;
+                http = this._protocol();
+
+                if (this.config) {
+                    host = this.config.app_host;
+                    base = this.config.app_base;
+                }
+
+                host = host || this._hostname();
+                base = base || this._baseuri();
+
+                path = path.replace(/^\//, '');
+                return http + '//' + host + base + path;
+            }
+
+            _import(path, done, fail) {
+                path = this.resolveUrl(path);
+                Polymer.importHref(path, done, fail);
+            }
+        };
+    });
+</script>

@@ -1,0 +1,54 @@
+<dom-module id="ponpes-edit">
+    <template>
+        <style include="theme-helper"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="Pesantren" desc="[[ title ]]" on-back-tap="__onBackTap">
+                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
+            </module-header-block>
+            <div class="flex scroll-y">
+                
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class PonpesEdit extends KctView {
+            static get is() {
+                return 'ponpes-edit';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Editor Pesantren' }
+                };
+            }
+            handleRouteParams(menu) {
+                if (['create', 'update'].indexOf(menu) === -1) return;
+
+                if (menu == 'create') {
+                    this.set('title', 'Tambah Record');
+                }
+
+                this.resetForm();
+            }
+            resetForm() {
+
+            }
+            saveForm() {
+
+            }
+            back() {
+                this.set('route.path', '/ponpes');
+            }
+            __onSaveTap() {
+                this.saveForm();
+                this.back();
+            }
+            __onBackTap() {
+                this.back();
+            }
+        }
+        customElements.define(PonpesEdit.is, PonpesEdit);
+    </script>
+</dom-module>

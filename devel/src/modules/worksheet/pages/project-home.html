@@ -1,0 +1,67 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="project-home">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #layout-switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>
+        
+        <kct-pages id="layout-switcher" attr-for-selected="name" selected="[[ layout ]]" lazy-load>
+            <project-view import="project-view.html" name="view" route="{{ route }}" state="[[ state ]]" config="{{ config }}" opened="[[ opened ]]"></project-view>
+            <project-task import="project-task.html" name="task" route="{{ route }}" state="[[ state ]]" user="[[ user ]]"></project-task>
+            <project-info import="project-info.html" name="info" route="{{ route }}" state="[[ state ]]"></project-info>
+        </kct-pages>
+
+    </template>
+    <script>
+        class ProjectHome extends KctView {
+            static get is() {
+                return 'project-home';
+            }
+
+            static get properties() {
+                return {
+                    layout: { type: String }
+                };
+            }
+
+            handleRouteParams(project, action) {
+                if (project === undefined  || project == 'tour' || project == 'create') return;
+
+                if (action == 'task') {
+                    this.set('layout', 'task');
+                } else if (action == 'setting') {
+                    this.set('layout', 'info');
+                } else {
+                    if (action === undefined) {
+                        
+                        let redir = setTimeout(() => {
+                            clearTimeout(redir);
+                            redir = null;
+                            this.set('route.path', '/worksheet/' + project + '/view/kanban');
+                        }, 10);
+                        
+                    } else {
+                        this.set('layout', 'view');
+                    }
+                }
+            }
+
+            handleResizing(width, height) {
+                let layoutItem = this.$['layout-switcher'].selectedItem;
+                if (layoutItem && layoutItem.handleResizing) {
+                    layoutItem.handleResizing(width, height);
+                }
+            }
+        }
+
+        customElements.define(ProjectHome.is, ProjectHome);
+    </script>
+</dom-module>

@@ -1,0 +1,61 @@
+<link rel="import" href="mixins.html">
+<script>
+    {
+        let resolvedValues = {};
+
+        Mixins.Theme = Polymer.dedupingMixin((superclass) => {
+
+            return class extends superclass {
+
+                _cssval(variable) {
+                    if (variable) {
+                        if (resolvedValues[variable] === undefined) {
+                            let token = variable.replace(/var\(|\)/g, '').replace(/\s+/g, ''),
+                                style = getComputedStyle(document.documentElement),
+                                value = style.getPropertyValue(token);
+
+                            if (value) {
+                                value = value.replace(/^\s+/g, '');
+                            } else {
+                                value = variable;
+                            }
+
+                            resolvedValues[variable] = value;
+                        }
+
+                        return resolvedValues[variable];
+                    }
+                    return '';
+                }
+
+                _accent(random = false) {
+                    let colors = [
+                        'var(--paper-red-500)',
+                        'var(--paper-pink-500)',
+                        'var(--paper-purple-500)',
+                        'var(--paper-indigo-500)',
+                        'var(--paper-blue-500)',
+                        'var(--paper-cyan-500)',
+                        'var(--paper-teal-500)',
+                        'var(--paper-green-500)',
+                        'var(--paper-amber-500)',
+                        'var(--paper-orange-500)',
+                        'var(--paper-brown-500)'
+                    ];
+
+                    let index = Math.floor(Math.random() * colors.length);
+                    return colors[index];
+                }
+
+                _icons() {
+                    return [
+                        'social:public',
+                        'dashboard',
+                        'view-carousel'
+                    ];
+                }
+            };
+        });
+    }
+    
+</script>

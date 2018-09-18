@@ -1,0 +1,13 @@
+<script>
+    class MixinsProvider {
+        constructor(superclass) {
+            this.superclass = superclass;
+        }
+        
+        use(...mixins) {
+            return mixins.reduce((c, mixin) => mixin(c), this.superclass);
+        }
+    }
+
+    const Mixins = (superclass) => new MixinsProvider(superclass);
+</script>

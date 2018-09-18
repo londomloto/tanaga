@@ -1,0 +1,691 @@
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../vendors/crypto-js/crypto-js.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/storage.html">
+<link rel="import" href="../../mixins/location.html">
+<link rel="import" href="../kct-config/kct-config.html">
+<link rel="import" href="../kct-router/kct-router.html">
+<link rel="import" href="../kct-mask/spinner-mask.html">
+<link rel="import" href="../kct-toast/kct-toast.html">
+
+<dom-module id="kct-ajax">
+    <script>
+
+        class KctAjax extends Mixins(Polymer.Element).use(
+            Mixins.Resolver,
+            Mixins.Storage,
+            Mixins.Location
+        ) {
+
+            static get is() { 
+                return 'kct-ajax'; 
+            }
+
+            static get properties() {
+
+                return {
+                    auth: { type: String },
+                    host: { type: String },
+                    base: { type: String },
+                    config: { type: Object },
+                    secure: { type: Boolean, value: false, reflectToAttribute: true },
+                    version: { type: String, value: 'api/v2' },
+                    loginUrl: { type: String, value: 'login' },
+                    novalidate: { type: Boolean, value: false }
+                }
+
+            }
+
+            static get uniqid() {
+                if ( ! KctAjax.__uniqid) {
+                    KctAjax.__uniqid = CryptoJS.lib.WordArray.random(80).toString();
+                }
+                return KctAjax.__uniqid;
+            }
+
+            static get fingerprint() {
+                let fp = [];
+
+                // plugins
+                if (navigator.plugins) {
+                    for (let i = 0, j = navigator.plugins.length; i < j; i++) {
+                        let p = navigator.plugins[i];
+                        fp.push(p.name);
+                        fp.push(p.filename);
+                        fp.push(p.description);
+                        fp.push(p.version);
+                    }
+                }
+
+                // useragent
+                fp.push(navigator.userAgent);
+
+                // screen
+                fp.push(screen.availHeight);
+                fp.push(screen.availWidth);
+                fp.push(screen.colorDepth);
+                fp.push(screen.height);
+                fp.push(screen.pixelDepth);
+                fp.push(screen.width);
+
+                // canvas
+                try {
+                    let canvas = document.getElementById('glcanvas');
+
+                    if ( ! canvas) {
+                        canvas = document.createElement('canvas');
+                        canvas.id = 'glcanvas';
+                        canvas.style.display = 'none';
+                        document.body.appendChild(canvas);
+                    }
+
+                    let gl = canvas.getContext("experimental-webgl");
+
+                    gl.viewportWidth = canvas.width;
+                    gl.viewportHeight = canvas.height;
+
+                    fp.push(gl.getParameter(gl.VERSION));
+                    fp.push(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
+                    fp.push(gl.getParameter(gl.VENDOR));
+                    fp.push(gl.getParameter(gl.RENDERER));
+                    fp.push(gl.getSupportedExtensions().join());
+
+                    document.body.removeChild(canvas);
+                } catch (e) {
+                    fp.push(e);
+                }
+
+                // uniqueid
+                fp.push(KctAjax.uniqid);
+                    
+                return fp.join();
+            }
+
+            constructor() {
+                super();
+                this.__computedUrls = {};
+            }
+
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+
+                // detect https
+                let protocol = window.location.protocol;
+                
+                if (protocol == 'https:') {
+                    this.set('secure', true);
+                }
+            }
+
+            GET(path, data, options) {
+                return this.__resolveUrl(path).then(url => {
+                    return this.__sendApiRequest({
+                        url: url,
+                        data: data,
+                        method: 'GET',
+                        options: options
+                    });    
+                });
+            }
+
+            POST(path, data, options) {
+                return this.__resolveUrl(path).then(url => {
+                    return this.__sendApiRequest({
+                        url: url,
+                        data: data,
+                        method: 'POST',
+                        options: options
+                    });
+                });
+            }
+
+            PUT(path, data, options) {
+                return this.__resolveUrl(path).then(url => {
+                    return this.__sendApiRequest({
+                        url: url,
+                        data: data,
+                        method: 'PUT',
+                        options: options
+                    });
+                });
+            }
+
+            DELETE(path, data, options) {
+                return this.__resolveUrl(path).then(url => {
+                    return this.__sendApiRequest({
+                        url: url,
+                        data: data,
+                        method: 'DELETE',
+                        options: options
+                    });
+                });
+            }
+
+            OPTIONS(path) {
+                return this.__resolveUrl(path).then(url => {
+                    return this.__sendApiRequest({
+                        url: url,
+                        data: data,
+                        method: 'OPTIONS',
+                        options: options
+                    }); 
+                });
+            }
+
+            UPLOAD(path, data = {}) {
+                if ( ! data.files) {
+                    return Promise.reject('No file(s) to upload');
+                }
+
+                let d = this._defer();
+
+                this.__resolveUrl(path).then(url => {
+                    // create mask indicator
+                    let mask = document.createElement('spinner-mask');
+                    document.body.appendChild(mask);
+                    mask.text = 'Uploading...';
+                    mask.open();
+
+                    // create ajax
+                    let xhr = new XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            let pct = parseInt((e.loaded / e.total) * 100, 10);
+                            mask.text = 'Uploading...' + pct + '%';
+                        }
+                    });
+
+                    xhr.onreadystatechange = () => {
+                        if (xhr.readyState === 4) {
+                            let status = xhr.status,
+                                success = (status >= 200 && status <= 300) || status == 304 || status == 1223 || ! status;
+
+                            mask.close();
+
+                            if (success) {
+                                try {
+                                    let res = JSON.parse((xhr.responseText || '').replace(/^\{\}&&/,''));
+
+                                    if ( ! this.novalidate) {
+                                        this.__validateResponse(res);
+                                    }
+
+                                    d.resolve(res);
+                                } catch(e) {};
+                            }
+                        }
+                    };
+
+                    let fd = new FormData();
+
+                    for (let key in data) {
+                        if (key != 'files') {
+                            let val = data[key];
+                            // request asep
+                            if (typeof val == 'object') {
+                                val = JSON.stringify(val);
+                            }
+                            fd.append(key, val);
+                        } else {
+                            for (let item of data.files) {
+                                if (item.file instanceof Blob) {
+                                    fd.append(item.name, item.file);
+                                } else {
+                                    fd.append(item.name, item.file.files[0]);    
+                                }
+                            }
+                        }
+                    }
+
+                    xhr.open('POST', url, true);
+
+                    this.__resolveToken().then((token) => {
+                        if (token) {
+                            xhr.setRequestHeader('Authorization','Bearer ' + token);
+                            xhr.send(fd);
+                        }
+                    });
+                });
+                
+
+                return d.promise;
+            }
+
+            DOWNLOAD(path, data, options) {
+                let def = this._defer();
+
+                Promise.all([
+                    this.__resolveUrl(path),
+                    this.__resolveToken()
+                ]).then(values => {
+                    // create mask indicator
+                    let mask = document.createElement('spinner-mask');
+                    document.body.appendChild(mask);
+
+                    mask.text = 'Downloading...';
+                    mask.open();
+
+                    options = Object.assign({
+                        method: 'POST',
+                        headers: {}
+                    }, options);
+
+                    let [url, token] = values;
+
+                    let xhr = document.createElement('iron-ajax');
+                    
+                    xhr.url = url;
+                    xhr.method = options.method;
+                    xhr.handleAs = 'arraybuffer';
+                    xhr.contentType = 'application/json';
+
+                    if (data) {
+                        if (options.method == 'GET') {
+                            xhr.params = {};
+                            Object.keys(data).forEach(k => {
+                                let v = data[k];
+                                if (typeof v == 'object') {
+                                    v = JSON.stringify(v);
+                                }
+                                xhr.params[k] = v;
+                            });
+                        } else {
+                            xhr.body = data;
+                        }    
+                    }
+
+                    let headers = options.headers;
+
+                    if (token) {
+                        headers['Authorization'] = 'Bearer ' + token;
+                    }
+
+                    xhr.headers = headers;
+
+                    let req = xhr.generateRequest();
+
+                    req.completes.then(
+                        () => {
+                            const NAV = window.navigator;
+                            const URL = window.URL || window.webkitURL;
+
+                            let filename = '';
+                            let disposition = req.xhr.getResponseHeader('Content-Disposition');
+                            let response = req.response;
+                            let result = { 
+                                success: true,
+                                data: {
+                                    name: '',
+                                    type: ''
+                                }
+                            };
+
+                            if (disposition && disposition.indexOf('attachment') !== -1) {
+                                let nameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
+                                    matches = nameRegex.exec(disposition);
+
+                                if (matches && matches[1]) {
+                                    filename = matches[1].replace(/['"]/g, '');
+                                }
+
+                                nameRegex = null;
+                            }
+
+                            let type = req.xhr.getResponseHeader('Content-Type');
+
+                            type = type.split(/;/)[0];
+
+                            result.data.name = filename;
+                            result.data.type = type;
+
+                            let blob = typeof File === 'function' 
+                                ? new File([response], filename, { type: type }) 
+                                : new Blob([response], { type: type });
+
+                            if (typeof NAV.msSaveBlob !== 'undefined') {
+                                NAV.msSaveBlob(blob, filename);
+                                blob = null;
+                            } else {
+                                let href = URL.createObjectURL(blob);
+                                blob = null;
+
+                                // disable router
+                                KctRouter.disable();
+
+                                if (filename) {
+                                    let a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+
+                                    if ('download' in a) {
+                                        document.body.appendChild(a);
+                                        
+                                        a.style.display = 'none';
+                                        a.download = filename;
+                                        a.href = href;
+                                        a.click();
+                                        
+                                        document.body.removeChild(a);
+                                        
+                                    } else {
+                                        window.open(href, '_blank');
+                                    }
+                                } else {
+                                    if (type == 'application/json') {
+                                        try {
+
+                                            // convert arraybuffer to string
+                                            let buff = new Uint8Array(response);
+                                            let size = buff.length;
+                                            let text = '';
+                                            let salt = Math.pow(2, 16) - 1;
+
+                                            for (let i = 0; i < size; i+=salt) {
+                                                if (i + salt > size) {
+                                                    salt = size - i;
+                                                }
+                                                text += String.fromCharCode.apply(null, buff.subarray(i, i + salt));
+                                            }
+
+                                            if (text) {
+                                                result = JSON.parse(text);
+                                                this.__validateResponse(result);
+                                            }
+
+                                            buff = null;
+                                        } catch(ex){
+
+                                        }
+                                    } else {
+                                        window.open(href, '_blank');
+                                    }
+                                }
+                                
+                                // enable router
+                                KctRouter.enable();
+
+                                // cleanup
+                                let timer = setTimeout(() => {
+                                    clearTimeout(timer);
+                                    timer = null;
+
+                                    URL.revokeObjectURL(href);
+                                }, 100);
+                            }
+
+                            mask.close();
+
+                            def.resolve(result);
+
+                        },
+                        (err) => {
+                            this.__showError(
+                                "Download Error",
+                                "An error occurred while downloading file"
+                            );
+                            
+                            def.reject(err);
+                            mask.close();
+                        }
+                    );
+
+                });
+                
+                return def.promise;
+            }
+
+            __resolveUrl(path) {
+                let url = this.__computedUrls[path];
+                
+                if (url !== undefined) {
+                    return Promise.resolve(url);
+                }
+
+                path = (path || '');
+
+                if (/^https?/.test(path)) {
+                    this.__computedUrls[path] = path;
+                    return Promise.resolve(path);
+                }
+
+                return this._resolve(
+                    'host',
+                    'base',
+                    'version',
+                    'secure',
+                    'config'
+                ).then(values => {
+
+                    let [host, base, version, secure, config] = values;
+                    let url = secure ? 'https://' : 'http://';
+
+                    if ( ! host) {
+                        host = config ? config.app_host : this._hostname();
+                        this.set('host', host);
+                    }
+
+                    if ( ! base) {
+                        base = config ? config.app_base : this._baseuri();
+                        this.set('base', base);
+                    }
+                    
+                    url += host;
+
+                    let segments = base.match(/([^/]+)/g);
+
+                    if (segments && segments.length > 1) {
+                        url += '/' + segments[0];
+                        base = '/' + segments[1] + '/';
+                    }
+                    
+                    url += '/' + version;
+                    url += base;
+                    url += path.replace(/^\//, '');
+
+                    this.__computedUrls[path] = url;
+                    return url;
+                });
+            }
+
+            __resolveAuth() {
+                return this._resolve('auth').then(auth => {
+                    if (auth) {
+                        return auth;
+                    } else {
+                        return this._resolve('config').then(config => {
+                            if (config && config.app_name) {
+                                auth = config.app_name;
+                                this.set('auth', auth);
+                                return auth;
+                            } else {
+                                let kc = customElements.get('kct-config');
+                                if (kc) {
+                                    let instance = kc.instance();
+                                    return instance._resolve('name').then((name) => {
+                                        auth = instance.config.app_name;
+                                        this.set('auth', auth);
+                                        return auth;
+                                    });
+                                } else {
+                                    return null;
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+            __resolveToken() {
+                return this.__resolveAuth().then(auth => {
+                    let token;
+                    if (auth) {
+                        let storageKey = this._getStorageKey(auth, 'kct-auth');
+                        if (storageKey) {
+                            token = this._getStorageItem(storageKey, 'su_access_token');
+                        }
+                    }
+                    return token;
+                });
+            }
+
+            __resolveLanguage() {
+                return this._resolve('config').then(config => {
+                    return (config && config.app_language) || 'en';
+                });
+            }
+
+            __sendApiRequest(config) {
+                let xhr = document.createElement('iron-ajax');
+                let d = this._defer();
+
+                config = Object.assign({}, {
+                    method: 'GET',
+                    contentType: 'application/json',
+                    handleAs: 'json'
+                }, config || {});
+
+                xhr.url = config.url;
+                xhr.method = config.method;
+                xhr.contentType = config.contentType;
+
+                if (config.data) {
+                    if (config.method == 'GET') {
+                        xhr.params = {};
+                        Object.keys(config.data).forEach(k => {
+                            let v = config.data[k];
+                            if (typeof v == 'object') {
+                                v = JSON.stringify(v);
+                            }
+                            xhr.params[k] = v;
+                        });
+                    } else {
+                        xhr.body = config.data;    
+                    }
+                }
+
+                if (config.options) {
+                    if (config.options.headers) {
+                        xhr.headers = config.options.headers;
+                    }
+                }
+
+                KctAjax.executeInterceptor('request');
+
+                // add fingerprint
+                // ajax.headers['X-Fingerprint'] = CryptoJS.SHA256(this.fingerprint);
+
+                Promise.all([
+                    this.__resolveToken(),
+                    this.__resolveLanguage()
+                ]).then(values => {
+                    let [token, language] = values;
+
+                    xhr.headers = xhr.headers || {};
+
+                    if (token) {
+                        xhr.headers['Authorization'] = 'Bearer ' + token;
+                    }
+
+                    if (language) {
+                        xhr.headers['X-Language'] = language;
+                    }
+
+                    let req = xhr.generateRequest();
+
+                    req.completes.then(() => {
+                        let response = req.response;
+                        
+                        if ( ! this.novalidate) {
+                            this.__validateResponse(response);
+                        }
+
+                        d.resolve(response);
+                        KctAjax.executeInterceptor('response', response);
+
+                        req = null;
+                        xhr = null;
+                    });
+                });
+
+                return d.promise;
+            }
+
+            __validateResponse(res) {
+                res = res || {};
+
+                if (res.success === undefined) {
+                    this.__showError(
+                        'Invalid response format', 
+                        'Valid format required for ajax response: { "success": Boolean, "data": Object }',
+                        "Yes, I'm understand!"
+                    );
+                } else {
+                    // if ( ! res.success && res.status !== undefined) {
+                    //     let message = res.message || "It's look like your access token has been expired";
+                    //     switch(res.status) {
+                    //         case 401:
+                    //             this.__showError(
+                    //                 "User doesn't authenticated",
+                    //                 message,
+                    //                 "Yes, I want to re-login!"
+                    //             ).then(() => {
+                    //                 location.href = this.loginUrl;
+                    //             });
+                    //             break;
+                    //         case 404:
+                    //             this.__showError(
+                    //                 "Not Found",
+                    //                 message
+                    //             );
+                    //             break;
+                    //     }
+                    // }
+                }
+                
+            }
+
+            __showError(title, message, button, type = 'warn') {
+                let d = this._defer();
+                let toast = document.createElement('kct-toast');
+                
+                toast.type = type;
+                toast.title = title;
+                toast.message = message;
+                toast.button = button;
+
+                toast.addEventListener('close', e => {
+                    d.resolve();
+                });
+
+                document.body.appendChild(toast);
+                toast.open();
+
+                return d.promise;
+            }
+        }
+
+        KctAjax.__interceptor = {
+            request: () => {},
+            response: () => {}
+        };
+
+        KctAjax.executeInterceptor = function(phase, data) {
+            KctAjax.__interceptor[phase](data);
+        };
+
+        KctAjax.interceptor = function(interceptor) {
+            interceptor = interceptor || {};
+            
+            if ( ! interceptor.request) {
+                interceptor.request = () => {};
+            }
+            
+            if ( ! interceptor.response) {
+                interceptor.response = () => {};
+            }
+
+            KctAjax.__interceptor = interceptor;
+        };
+
+        customElements.define(KctAjax.is, KctAjax);
+    </script>
+</dom-module>

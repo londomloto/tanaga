@@ -1,0 +1,123 @@
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="mixins/chart.html">
+<link rel="import" href="styles/chart-styles.html">
+
+<dom-module id="kct-chart-bar">
+    <template>
+        <style include="chart-styles"></style>
+        <div class="panel vbox">
+            <div class="toolbar" hidden$="[[ !showToolbar ]]">
+                <slot name="toolbar"></slot>
+                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>        
+            </div>
+            <div id="chart"></div>
+        </div>
+    </template>
+    <script>
+        class KctChartBar extends Mixins(Polymer.Element).use(Mixins.Chart) {
+            static get is() {
+                return 'kct-chart-bar';
+            }
+            static get properties() {
+                return {
+                    labelY: { type: String },
+                    labelX: { type: String },
+                    categories: { type: Array },
+                    series: { type: Array }
+                };
+            }
+            static get observers() {
+                return [
+                    '__categoriesChanged(categories.*)',
+                    '__seriesChanged(series.*)'
+                ];
+            }
+            ready() {
+                super.ready();
+                this.__setup();
+            }
+            __setup() {
+                let options = Highcharts.merge(this.styles, {
+                    chart: {
+                        type: 'column',
+                        renderTo: this.$.chart,
+                        reflow: false
+                    },
+                    exporting: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        crosshair: true,
+                        categories: []
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: this.labelY
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                        pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                            '<td style="padding:0"><b>{point.y:.1f}</b></td></tr>',
+                        footerFormat: '</table>',
+                        shared: true,
+                        useHTML: true
+                    },
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0
+                        }
+                    },
+                    series: []
+                });
+
+                if (this.title) {
+                    options.title.text = this.title;
+                }
+
+                if (this.subtitle) {
+                    options.subtitle.text = this.subtitle;
+                }
+
+                this.chart = new Highcharts.Chart(options);
+            }
+
+            
+
+            __updateCategories() {
+                if ( ! this.chart) return;
+                let categories = (this.categories || []).slice();
+                this.chart.xAxis[0].setCategories(categories);
+            }
+
+            __updateSeries() {
+                if ( ! this.chart) return;
+                let series = (this.series || []).slice();
+
+                // remove series
+                for (let i = this.chart.series.length - 1; i >= 0; i--) {
+                    this.chart.series[i].remove();
+                }
+
+                series.forEach(s => {
+                    this.chart.addSeries(s);
+                });
+
+                this.chart.update({
+                    series: series
+                });
+            }
+
+            __categoriesChanged() {
+                this.__updateCategories();
+            }
+
+            __seriesChanged() {
+                this.__updateSeries();
+            }
+        }
+        customElements.define(KctChartBar.is, KctChartBar);
+    </script>
+</dom-module>

@@ -1,0 +1,15 @@
+<link rel="import" href="../maps-provider.html">
+
+<dom-module id="bing-maps-provider">
+    <template>
+        
+    </template>
+    <script>
+        class BingMapsProvider extends MapsProvider {
+            static get is() {
+                return 'bing-maps-provider';
+            }
+        }
+        customElements.define(BingMapsProvider.is, BingMapsProvider);
+    </script>
+</dom-module>

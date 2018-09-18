@@ -1,0 +1,25 @@
+<dom-module id="maps-layers-service">
+    <template>
+        <style include="theme-helper"></style>
+        <div class="container p-a">
+            <div class="layer-header">
+                <slot name="layer-header">
+                    <h2 class="f-300">Maps Layers</h2>
+                </slot>
+            </div>
+            
+            <div class="layer-body">
+                <slot name="layer-body"></slot>
+            </div>
+        </div>
+    </template>    
+    <script>
+        class MapsLayersService extends Polymer.Element {
+            static get is() {
+                return 'maps-layers-service';
+            }
+        }
+
+        customElements.define(MapsLayersService.is, MapsLayersService);
+    </script>
+</dom-module>

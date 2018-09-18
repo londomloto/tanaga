@@ -1,0 +1,152 @@
+<link rel="import" href="../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="kct-search-date-input.html">
+
+<dom-module id="kct-search-date">
+    <template>
+        <style>
+            :host {
+                /*display: inline-block;*/
+                display: none;
+                width: 150px;
+            }
+
+            :host(.iron-selected) {
+                display: block;
+            }
+
+            :host([hidden]) {
+                display: none !important;
+            }
+
+            :host([opened]) {
+                pointer-events: auto;
+            }
+
+            [part="text-field"] {
+                min-width: 100%;
+                max-width: 100%;
+            }
+
+            [part="overlay"] {
+                height: 100vh;
+                width: 420px;
+            }
+
+            [part="clear-button"],
+            [part="toggle-button"] {
+                font-family: 'vaadin-date-picker-icons';
+            }
+
+            [part="clear-button"]::before {
+                content: "\e901";
+            }
+
+            [part="toggle-button"]::before {
+                content: "\e902";
+            }
+
+            :host([disabled]) [part="clear-button"],
+            :host([disabled]) [part="toggle-button"],
+            :host([readonly]) [part="clear-button"],
+            :host([readonly]) [part="toggle-button"],
+            :host(:not([has-value])) [part="clear-button"] {
+                display: none;
+            }
+        </style>
+
+        <kct-search-date-input id="input"
+            role="application"
+            autocomplete="off"
+            on-focus="_focus"
+            value="{{_userInputValue}}"
+            invalid="[[invalid]]"
+            label="[[label]]"
+            name="[[name]]"
+            placeholder="[[placeholder]]"
+            required="[[required]]"
+            disabled="[[disabled]]"
+            readonly="[[readonly]]"
+            error-message="[[errorMessage]]"
+            aria-label$="[[label]]"
+            part="text-field">
+            
+            <slot name="prefix" slot="prefix"></slot>
+
+            <!-- <div part="clear-button" slot="suffix" on-tap="_clear" role="button" aria-label$="[[i18n.clear]]"></div> -->
+            <!-- <div part="toggle-button" slot="suffix" on-tap="_toggle" role="button" aria-label$="[[i18n.calendar]]" aria-expanded$="[[_getAriaExpanded(opened)]]"></div> -->
+        </kct-search-date-input>
+
+        <iron-dropdown
+            id="dropdown"
+            fullscreen$=[[_fullscreen]]
+            allow-outside-scroll
+            on-iron-overlay-opened="_onOverlayOpened"
+            on-iron-overlay-closed="_onOverlayClosed"
+            on-iron-overlay-canceled="_preventCancelOnComponentAccess"
+            opened="{{opened}}"
+            no-auto-focus>
+            <vaadin-date-picker-overlay
+                id="overlay" i18n="[[i18n]]"
+                fullscreen$="[[_fullscreen]]"
+                label="[[label]]"
+                selected-date="{{_selectedDate}}"
+                slot="dropdown-content"
+                focused-date="{{_focusedDate}}"
+                show-week-numbers="[[showWeekNumbers]]"
+                min-date="[[_minDate]]"
+                max-date="[[_maxDate]]"
+                role="dialog"
+                part="overlay"></vaadin-date-picker-overlay>
+        </iron-dropdown>
+
+        <iron-media-query
+            query="[[_fullscreenMediaQuery]]"
+            query-matches="{{_fullscreen}}">
+        </iron-media-query>
+
+    </template>
+    <script>
+        {
+            let BaseClass = customElements.get('vaadin-date-picker');
+
+            class KctSearchDate extends BaseClass {
+                static get is() {
+                    return 'kct-search-date';
+                }
+
+                static get observers() {
+                    return [
+                        '__valueChanged(value)'
+                    ];
+                }
+
+                constructor() {
+                    super();
+                    this.__init = true;
+                }
+
+                load() {
+                    return Promise.resolve();
+                }
+                
+                clear() {
+                    this.value = '';
+                    this.close();
+                    this.validate();
+                }
+
+                __valueChanged(value) {
+                    if (this.__init) {
+                        this.__init = false;
+                        return;
+                    }
+
+                    this.dispatchEvent(new CustomEvent('change'));
+                }
+            }
+
+            customElements.define(KctSearchDate.is, KctSearchDate);
+        }
+    </script>
+</dom-module>

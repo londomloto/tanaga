@@ -1,0 +1,306 @@
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../helpers/text-helper.html">
+
+<dom-module id="kct-input-number">
+    <template>
+        <style>
+            .add-on {
+                font-size: 11px;
+                text-align: right;
+                position: relative;
+                top: -6px;
+                height: 14px;
+            }
+            [hidden] {
+                display: none;
+            }
+            .add-on[hidden] {
+                display: block;
+                visibility: hidden;
+            }
+        </style>
+        <paper-input 
+            id="input" 
+            label="[[ label ]]"
+            value="{{ displayValue }}" 
+            allowed-pattern="[0-9.,]" 
+            no-label-float$="[[ noLabelFloat ]]" 
+            on-keypress="__onInputKeypress" 
+            on-change="__onInputChange"
+            on-invalid-changed="__onInputInvalidChange"  
+            required$="[[ required ]]" 
+            auto-validate$="[[ autoValidate ]]" 
+            error-message$="[[ errorMessage ]]">
+            <div slot="prefix"><slot name="prefix"></slot></div>
+            <div slot="suffix"><slot name="suffix"></slot></div>
+        </paper-input>
+        <!-- <div hidden$="[[ hideHelper ]]">
+            <div class="add-on" hidden$="[[ !__typing ]]">[[ __helper ]]</div>    
+        </div> -->
+    </template>
+    <script>
+        class KctInputNumber extends Polymer.Element {
+            static get is() {
+                return 'kct-input-number';
+            }
+
+            static get properties() {
+                return {
+                    mask: { type: String, value: '#' },
+                    label: { type: String },
+                    value: { type: Number, notify: true },
+                    displayValue: { type: String },
+                    decimalSeparator: { type: String, value: '.' },
+                    thousandSeparator: { type: String, value: ',' },
+                    decimalPrecision: { type: Number, value: 2 },
+                    invalid: { type: Boolean, notify: true, value: false },
+                    required: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false, reflectToAttribute: true },
+                    errorMessage: { type: String, reflectToAttribute: true },
+                    noLabelFloat: { type: Boolean, value: false },
+                    hideHelper: { type: Boolean, value: false }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__maskChanged(mask)',
+                    '__valueChanged(value)',
+                    '__displayValueChanged(displayValue)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__formatter = null;
+                this.__cleaner = null;
+                this.__typing = false;
+                this.__helper = '';
+            }
+
+            validate() {
+                let valid = this.$.input.validate();
+                this.set('invalid', !valid);
+                return valid;
+            }
+
+            __compile() {
+                let mask = this.mask,
+                    originalMask = mask,
+                    cached = KctInputNumber.formatter[originalMask];
+
+                if ( ! cached) {
+                    let comma = this.thousandSeparator,
+                        decimalSeparator = this.decimalSeparator,
+                        hasComma,
+                        splitFormat,
+                        extraChars,
+                        precision = 0,
+                        multiplier,
+                        trimTrailingZeroes,
+                        code;
+
+                    if (decimalSeparator != '.') {
+                        if ( ! KctInputNumber.regexes.I18Ncleaner) {
+                            KctInputNumber.regexes.I18Ncleaner = new RegExp('[^\\d\\' + this.decimalSeparator + ']', 'g');
+                        }
+                        hasComma = mask.indexOf(comma) != -1;
+                        splitFormat = mask.replace(KctInputNumber.regexes.I18Ncleaner, '').split(decimalSeparator);
+                    } else {
+                        hasComma = mask.indexOf(',') != -1;
+                        splitFormat = mask.replace(KctInputNumber.regexes.cleaner, '').split('.');
+                    }
+
+                    extraChars = mask.replace(KctInputNumber.regexes.masker, '');
+                    
+                    if (splitFormat.length > 2) {
+                        throw new Error('Invalid number format, should have no more than 1 decimal');
+                    } else if (splitFormat.length === 2) {
+                        precision = splitFormat[1].length;
+                        trimTrailingZeroes = KctInputNumber.regexes.hashes.test(splitFormat[1]);
+                    }
+
+                    code = `let decimalSeparator = '${this.decimalSeparator}', neg, fnum, parts`;
+
+                    if (hasComma) {
+                        code += `, thousandSeparator, thousands = [], j, n, i`
+                    }
+
+                    if (extraChars) {
+                        code += `, mask = '${mask}', pattern=/[\\d,\\.#]+/`;
+                    }
+
+                    if (trimTrailingZeroes) {
+                        code += `, trailingZeroes=/\\.?0+$/`;
+                    }
+
+                    code += `;`;
+
+                    code += `
+                        return function(v) {
+                            if ( typeof v !== 'number' && isNaN(+v)) return '';
+                            neg = v < 0;
+                            fnum = Math.abs(v).toFixed(${precision});`;
+
+                    if (hasComma) {
+                        if (precision) {
+                            code += `
+                            parts = fnum.split('.');
+                            fnum = parts[0];
+                            `;
+                        }
+
+                        code += `
+                            if ( v >= 1000 ) {
+                                thousandSeparator = '${this.thousandSeparator}';
+                                thousands.length = 0;
+                                j = fnum.length;
+                                n = fnum.length % 3 || 3;
+
+                                for(i = 0; i < j; i += n) {
+                                    if (i !== 0) {
+                                        n = 3;
+                                    }
+                                    thousands[thousands.length] = fnum.substr(i, n);
+                                }
+                                fnum = thousands.join(thousandSeparator);
+                            }
+                        `;
+
+                        if (precision) {
+                            code += `
+                            fnum += '${decimalSeparator}' + parts[1];
+                            `;
+                        }
+
+                    } else if (precision) {
+                        code += `
+                            if (decimalSeparator !== '.') {
+                                parts = fnum.split('.');
+                                fnum = parts[0] + '${decimalSeparator}' + parts[1];
+                            }
+                        `;
+                    }
+
+                    if (trimTrailingZeroes) {
+                        code += `
+                        fnum = fnum.replace(trailingZeroes, '');
+                        `;
+                    }
+
+                    let fnum = precision ? '0.' + TextHelper.repeat('0', precision) : '0';
+
+                    code += `
+                            if (neg && fnum !== '${fnum}') fnum= '-' + fnum;
+                    `;
+
+                    code += `
+                            return `;
+
+                    if (extraChars) {
+                        code += `mask.replace(pattern, fnum);`;
+                    } else {
+                        code += `fnum;`;
+                    }
+
+                    code += `
+                        };
+                    `;
+
+                    let factory = Function.prototype.constructor.apply(Function.prototype, [code]),
+                        handler = factory();
+
+                    cached = KctInputNumber.formatter[originalMask] = {
+                        handler: handler,
+                        precision: precision
+                    };
+                }
+
+                this.__formatter = cached.handler;
+                this.set('decimalPrecision', cached.precision);
+            }
+
+            __maskChanged(mask) {
+                if (mask) {
+                    this.__compile();
+                }
+            }
+
+            __valueChanged(value) {
+                let display = '';
+
+                if (value === null) {
+                    display = '';
+                } else if (this.__formatter) {
+                    display = this.__formatter(value);
+                }
+
+                this.set('displayValue', display);
+            }
+
+            __displayValueChanged(display) {
+                let value = this.__fixPrecision(this.__parseValue(display));
+                let helper = '';
+
+                if (this.__formatter) {
+                    helper = this.__formatter(value);
+                }
+
+                this.set('__helper', helper);
+            }
+
+            __parseValue(display) {
+                if ( ! this.__cleaner) {
+                    this.__cleaner = new RegExp('\\' + this.thousandSeparator, 'g');
+                }
+
+                let value = String(display).replace(this.__cleaner, '').replace(this.decimalSeparator, '.');
+
+                value = parseFloat(value);
+                return isNaN(value) ? null : value;
+            }
+
+            __fixPrecision(value) {
+                let nan = isNaN(value),
+                    precision = this.decimalPrecision;
+
+                if (nan || ! value) {
+                    return nan ? '' : value;
+                } else if (precision <= 0) {
+                    precision = 0;
+                }
+
+                return parseFloat(parseFloat(value).toFixed(precision));
+            }
+
+            __onInputInvalidChange(e) {
+                this.set('invalid', e.target.invalid);
+            }
+
+            __onInputKeypress(e) {
+                this.set('__typing', true);
+            }
+
+            __onInputChange(e) {
+                let display = e.target.value,
+                    value = this.__fixPrecision(this.__parseValue(display));
+                
+                this.set('value', value);
+                this.set('__typing', false);
+            }
+        }
+
+        // statics
+        
+        KctInputNumber.regexes = {
+            hashes: /^#+$/,
+            masker: /[\d,\.#]+/,
+            cleaner: /[^\d\.#]/g,
+            I18Ncleaner: null
+        };
+
+        KctInputNumber.formatter = {};
+
+        customElements.define(KctInputNumber.is, KctInputNumber);
+    </script>
+</dom-module>

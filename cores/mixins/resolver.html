@@ -1,0 +1,84 @@
+<link rel="import" href="../bower_components/promise-polyfill/promise-polyfill.html">
+<link rel="import" href="mixins.html">
+<script>
+    Mixins.Resolver = Polymer.dedupingMixin((superclass) => {
+
+        const Resolver = class extends superclass {
+            
+            _debounce(name, handler, wait) {
+                name = '__debounce' + name;
+
+                this[name] = Polymer.Debouncer.debounce(
+                    this[name],
+                    Polymer.Async.timeOut.after(wait),
+                    handler
+                );
+                
+                Polymer.enqueueDebouncer(this[name]);
+                return this[name];
+            }
+
+            _defer() {
+                let promise, resolve, reject;
+
+                promise = new Promise((a, b) => {
+                    resolve = a;
+                    reject = b;
+                });
+
+                return {
+                    resolve: resolve,
+                    reject: reject,
+                    promise: promise
+                };
+            }
+
+            /**
+             * Resolve prop
+             */
+            _resolve(...props) {
+                let def = this._defer();
+
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    let promises = props.map(p => {
+                        let d = this._defer(),
+                            v = this.get(p);
+
+                        if (v !== undefined) {
+                            d.resolve(v);
+                        } else {
+                            d.count = 0;
+                            d.timer = setInterval(() => {
+                                let v = this.get(p);
+                                if (v !== undefined) {
+                                    clearInterval(d.timer);
+                                    d.timer = undefined;
+                                    d.count = undefined;
+                                    d.resolve(v);
+                                } else {
+                                    d.count++;
+                                    if (d.count >= 5) {
+                                        clearInterval(d.timer);
+                                        d.timer = undefined;
+                                        d.count = undefined;
+                                        d.resolve();
+                                    }
+                                }
+                            }, 10);
+                        }
+
+                        return d.promise;
+                    });
+
+                    Promise.all(promises).then(values => {
+                        def.resolve(values.length === 1 ? values[0] : values);
+                    });
+                });
+
+                return def.promise;
+            }
+        }
+
+        return Resolver;
+    });
+</script>

@@ -1,0 +1,32 @@
+<link rel="import" href="mixins.html">
+<script>
+    Mixins.Types = Polymer.dedupingMixin((superclass) => {
+        return class extends superclass {
+            _isArray(v) {
+                if (Array.isArray) {
+                    return Array.isArray(v);
+                } else {
+                    return v && typeof v === 'object' && v.constructor === Array;
+                }
+            }
+
+            _isObject(v) {
+                return v && typeof v === 'object' && v.constructor === Object;
+            }
+
+            _isFunction(v) {
+                return typeof v === 'function';
+            }
+
+            _isRegex(v) {
+                return v && typeof v === 'object' && v.constructor === RegExp;
+            }
+
+            _isString(v) {
+                return typeof v === 'string' || v instanceof String;
+            }
+
+        };
+    });
+    
+</script>

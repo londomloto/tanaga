@@ -1,0 +1,22 @@
+phpMussel°
+=== Complex extended signatures database (ClamAV) ===
+
+=== Derived from ClamAV container database (CDB) files ===
+$container:zipfile;FN:Order\.Pdf_______________________________________________________________\.exe$; X-1435085
+$container:zipfile;FN:Courrt.{1,15}\.scr$; Toa-1
+$container:zipfile;FN:shipment.{0,50}\.exe\.doc$; Toa-2
+$container:rarfile;FN:invoice.*\.exe$; Toa-3
+
+=== Archive metadata signatures ===
+$crc:11e437b3;$str_len:26624; Dldr-zippwd-6
+$crc:75eca36e;$str_len:2377; Dldr.Small-1675-zippwd
+$crc:ba9f27fb;$str_len:21008; Dumador-31-zippwd-1
+$crc:e249e94f;$str_len:44544; Peed-zippwd
+$crc:19bce3de;$str_len:58368; Zbot-zippwd
+$crc:cb762251;$str_len:55311; Bagle-zippwd-27
+$crc:4cd5f4d6;$str_len:57935; Bagle-zippwd-28
+$crc:7cea1eb6;$str_len:57935; Bagle-zippwd-29
+$crc:db7ecbe9;$str_len:57935; Bagle-zippwd-30
+$crc:808ad272;$str_len:50176; Banwarum.B-zippwd
+$crc:7b3fcf13;$str_len:75776; Kimazo.A-zippwd
+$crc:5f6f7a3f;$str_len:72767; Padowor.A-zippwd

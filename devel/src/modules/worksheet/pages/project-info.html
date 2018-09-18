@@ -1,0 +1,584 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
+<link rel="import" href="../blocks/header-block.html">
+<link rel="import" href="../plugins/user-invitation.html">
+
+<dom-module id="project-info">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            h3 { min-width: 300px; }
+            .main {
+                /*background-color: #fff;*/
+            }
+            .setting-block {
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 3px;
+                margin-bottom: 15px;
+                @apply --shadow-elevation-2dp;
+            }
+
+            .setting-block h3 {
+                font-size: 15px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+            .setting-block[hidden] {
+                display: none;
+            }
+            .member-item,
+            .role-item {
+                float: left;
+                margin: 0 15px 15px 0;
+                min-width: 200px;
+            }
+            .member-item > .icon,
+            .role-item > .icon {
+                float: left;
+                width: 50px;
+                height: 50px;
+                line-height: 48px;
+                text-align: center;
+                background-color: var(--paper-grey-200);
+                color: var(--paper-cyan-500);
+            }
+            .role-item > .icon iron-icon {
+                --iron-icon-width: 28px;
+                --iron-icon-height: 28px;
+            }
+            .member-item > .text,
+            .member-item > .form {
+                margin-left: 60px;
+                font-weight: 500;
+            }
+            .role-item > .text {
+                margin-left: 60px;
+                font-weight: 500;
+                position: relative;
+                top: 5px;
+            }
+            .member-item .meta,
+            .role-item .meta {
+                font-weight: 400;
+                font-size: 12px;
+                color: #999;
+            }
+            .member-item .tool,
+            .role-item .tool {
+                font-weight: 400;
+                font-size: 13px;
+            }
+
+            .member-item .tool a {
+                margin-right: 10px;
+            }
+            
+            .member-item-add > .icon {
+                cursor: pointer;
+            }
+            .member-item-add:hover > .icon {
+                background-color: var(--paper-cyan-500);
+                color: #fff;
+            }
+            .member-item-add > .icon iron-icon {
+                pointer-events: none;
+            }
+            #combo-user {
+                width: 300px;
+            }
+            .form-control label {
+                font-size: 12px;
+                color: #777;
+            }
+            paper-radio-group.hbox { 
+                @apply --layout-horizontal;  
+            }
+            paper-radio-button.flex { 
+                padding: 8px 0 0 0;
+                @apply --layout-flex;  
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-publisher id="event-publisher"></kct-event-publisher>
+
+        <kct-vbox>
+            <header-block text="Project Setting" icon="settings" on-back-tap="__onBackTap">
+                <h3 slot="header-value">[[ __computeProjectTitle(projectRecord.sp_title) ]]</h3>
+            </header-block>
+            <div class="flex main padding scroll-y">
+
+                <div class="setting-block">
+                    <h3 class="title">General project settings</h3>
+                    <div class="m-t">
+                        <div class="form-control">
+                            <paper-input label="Project Name" value="{{ projectRecord.sp_title }}"></paper-input>
+                        </div>
+                        <div class="form-control">
+                            <paper-input label="Description" value="{{ projectRecord.sp_desc }}"></paper-input>
+                        </div>
+                        <div class="m-t">
+                            <paper-button on-tap="__onSaveTap" class="btn-cyan">Save Changes</paper-button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-block">
+                    <h3 class="title">Project members</h3>
+                    <div class="p-t">
+                        <template is="dom-repeat" items="[[ members ]]">
+                            <div class="member-item">
+                                <div class="icon">
+                                    <img src$="[[ item.su_avatar_thumb ]]&w=50&h=50">
+                                </div>
+                                <div class="text">
+                                    <div class="name">[[ item.su_fullname ]]</div>
+                                    <div class="meta">[[ item.sr_name ]]</div>
+                                    <div class="tool">
+                                        <a on-tap="__onReinviteTap" href="javascript:;" hidden$="[[ !item.su_need_reinvite ]]">Re-Invite</a>
+                                        <a on-tap="__onRemoveMemberTap" href="javascript:;">Remove</a>
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </template>
+                        <div class="member-item member-item-add">
+                            <div class="icon" on-tap="__onAddMemberTap">
+                                <iron-icon icon="add"></iron-icon>
+                            </div>
+                            <div class="form" hidden$="[[ __hideComboUser ]]">
+                                <kct-combobox 
+                                    id="combo-user" 
+                                    url="/users" 
+                                    page-size="10" 
+                                    width="160" 
+                                    placeholder="Select or search user..." 
+                                    item-label-path="su_fullname" 
+                                    item-value-path="su_id" 
+                                    on-change="__onComboUserChange" 
+                                    hide-clear 
+                                    no-label-float>
+
+                                    <paper-button on-tap="__onInviteUserTap" slot="toolbar"><iron-icon icon="mail"></iron-icon>&nbsp;Invite Member</paper-button>
+                                    <paper-icon-button on-tap="__onComboUserCloseTap" icon="close" slot="toolbar"></paper-icon-button>
+
+                                    <template>
+                                        <style>
+                                            .icon {
+                                                position: relative;
+                                                width: 32x;
+                                                height: 32px;
+                                                border-radius: 50%;
+                                                overflow: hidden;
+                                                float: left;
+                                            }
+                                            .text {
+                                                margin-left: 40px;
+                                                font-size: 13px;
+                                            }
+                                            .meta {
+                                                font-size: 12px;
+                                                color: #999;
+                                            }
+                                            .clearfix {
+                                                clear: both;
+                                            }
+                                        </style>
+                                        <div>
+                                            <div class="icon">
+                                                <img src$="[[ item.su_avatar_thumb ]]&w=32&h=32">
+                                            </div>
+                                            <div class="text">
+                                                <div>[[ item.su_fullname ]]</div>
+                                                <div class="meta">[[ item.sr_name ]]</div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </template>
+                                </kct-combobox>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+
+                <div class="setting-block" style="display: none;">
+                    <h3 class="title">Worksheet Setting</h3>
+                    <div class="m-t">
+                        <template is="dom-repeat" items="[[ roles ]]">
+                            <div class="role-item">
+                                <div class="icon">
+                                    <iron-icon icon="hardware:security"></iron-icon>
+                                </div>
+                                <div class="text">
+                                    <div class="name">Role [[ item.sr_name ]]</div>
+                                    <div class="tool">
+                                        <a on-tap="__onSetupRoleTap" href="javascript:;">Setup</a>
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </template>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+
+                <div class="setting-block">
+                    <h3 class="title">Remove project</h3>
+                    <p>Removing the project will delete its repository and all related resources including issues, merge requests etc.</p>
+                    <div class="m-t">
+                        <paper-button on-tap="__onRemoveProjectTap" class="btn-red">Remove Project</paper-button>
+                    </div>
+                </div>
+
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="setup" title$="Worksheet Setting - [[ __selectedRole.sr_name ]]" width="600" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    .dialog-header,
+                    .dialog-body {
+                        background-color: var(--paper-grey-100);
+                    }
+                    .panel {
+                        padding: 15px;
+                        background-color: #fff;
+                        @apply --shadow-elevation-2dp;
+                        margin-bottom: 10px;
+                        border-radius: 2px;
+                    }
+                    .panel h3 {
+                        font-size: 14px;
+                        font-weight: 500;
+                    }
+                    .group {
+                        --paper-radio-group-item-padding: 8px 0;
+                        @apply --layout-horizontal;
+                    }
+                    .radio {
+                        font-size: 13px;
+                        color: #666;
+                        @apply --layout-flex;
+                    }
+                    .checkbox {
+                        display: block;
+                        font-size: 13px;
+                        height: 36px;
+                    }
+                    .label {
+                        margin: 8px 0 0 0;
+                        font-size: 13px;
+                    }
+                    div[hidden] {
+                        display: none;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <template is="dom-repeat" items="[[ panels ]]" as="panel">
+                        <div class="panel">
+                            <h3>Panel [[ panel.panel_title ]]</h3>
+                            <div>
+                                <paper-radio-group on-paper-radio-group-changed="__onSetupDisplayChange" selected="{{ panel.panel_display }}" attr-for-selected="name" class="group">
+                                    <paper-radio-button name="show" class="radio">Show</paper-radio-button>
+                                    <paper-radio-button name="hide" class="radio">Hide</paper-radio-button>
+                                    <paper-radio-button name="custom" class="radio">Custom</paper-radio-button>
+                                </paper-radio-group>
+                                <div hidden$="[[ !panel.panel_custom ]]">
+                                    <div class="label">Choose statuses to be shown:</div>
+                                    <template is="dom-repeat" items="[[ panel.panel_statuses ]]">
+                                        <kct-checkbox value="{{ item.srs_checked }}" class="checkbox">Status [[ item.srs_label ]] ([[ item.srs_source_label ]] &rarr; [[ item.srs_target_label ]])</kct-checkbox>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </template>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSetupSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onSetupCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <user-invitation id="invitation" on-invited="__onUserInvited"></user-invitation>
+
+    </template>
+    <script>
+        class ProjectInfo extends KctView {
+            static get is() {
+                return 'project-info';
+            }
+
+            static get properties() {
+                return {
+                    project: { type: String },
+                    members: { type: Array },
+                    panels: { type: Array },
+                    roles: { type: Array },
+                    projectRecord: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__membersChanged(members.*)',
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__hideComboUser = true;
+            }
+
+            handleRouteParams(project, action) {
+                if (project === undefined  || project == 'tour' || project == 'create') return;
+                if (action != 'setting') return;
+
+                this.set('project', project);
+                this.__loadProject();
+            }
+
+            __membersChanged(changed) {
+                if (changed.path == 'members' || changed.path == 'members.splices') {
+                    this.__fetchRoles();
+                }
+            }
+
+            __computeProjectTitle(title) {
+                return title || 'Loading...';
+            }
+
+            __loadProject() {
+                if ( ! this.project) return;
+
+                this.set('projectRecord', {});
+                
+                this.$.ajax.GET('/projects/load/' + this.project).then(res => {
+                    this.set('projectRecord', res.data);
+                    this.__loadMembers();
+                });
+            }
+
+            __loadMembers() {
+                this.set('members', []);
+
+                if ( ! this.projectRecord) {
+                    return;
+                }
+
+                this.$.ajax.GET('/projects/projects-users', { project: this.projectRecord.sp_id }).then(res => {
+                    this.set('members', res.data);
+                });
+                
+            }
+
+            __fetchRoles() {
+                let mapped = {};
+                let roles = [];
+
+                (this.members || []).forEach(m => {
+                    if (mapped[m.sr_id] == undefined) {
+                        mapped[m.sr_id] = true;
+                        roles.push({
+                            sr_id: m.sr_id,
+                            sr_name: m.sr_name,
+                            sr_description: m.sr_description
+                        });
+                    }
+                });
+
+                this.set('roles', roles);
+            }
+
+            __goback() {
+                this.set('route.path', '/worksheet');
+            }
+
+            __onSaveTap() {
+                let data = this.projectRecord;
+                if (data.sp_id) {
+                    this.$.ajax.PUT('/projects/' + data.sp_id, data).then((res) => {
+                        this.toast('Success', 'Project has been saved', 'warn');
+
+                        if (res.success) {
+                            // name has been changed? update URL
+                            if (this.project != res.data.sp_name) {
+                                this.set('project', res.data.sp_name);
+                                this.set('route.addr', '/worksheet/' + this.project + '/setting');
+                            }
+
+                            this.$['event-publisher'].publish('project-saved');
+
+                        }
+                    });
+                }
+            }
+
+            __onRemoveProjectTap() {
+                let data = this.projectRecord;
+                if ( ! data) return;
+
+                this.confirm('Confirm', 'Are you sure want to remove this project?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/projects/' + data.sp_id).then(() => {
+                            this.$['event-publisher'].publish('project-removed');
+                            this.__goback();
+                        });
+                    }
+                });
+                
+            }
+
+            __onAddMemberTap() {
+                this.set('__hideComboUser', false);
+                this.$['combo-user'].value = '';
+                this.$['combo-user'].load().then(() => {
+                    this.$['combo-user'].open();
+                });
+            }
+
+            __onRemoveMemberTap(e) {
+                let index = e.model.index,
+                    member = e.model.item;
+
+                if (index !== -1) {
+                    if (member.spu_id) {
+                        this.confirm('Confirm', 'Are you sure want to remove this user from project?').then(y => {
+                            if (y) {
+                                this.splice('members', index, 1);
+                                this.$.ajax.DELETE('/projects/projects-users/' + member.spu_id);
+                            }
+                        });    
+                    }
+                    
+                }
+            }
+
+            __onReinviteTap(e) {
+                let payload = {
+                    email: e.model.item.su_email
+                };
+
+                this.$.ajax.POST('/users/reinvite', payload).then(res => {
+                    this.toast('Success', 'User has been reinvited', 'info');
+                });
+            }
+
+            __addUser(user) {
+                let index = (this.members || []).findIndex(item => {
+                    return item.su_id == user.su_id;
+                });
+
+                if (index === -1) {
+                    let data = {
+                        spu_sp_id: this.projectRecord.sp_id,
+                        spu_su_id: user.su_id
+                    };
+
+                    this.$.ajax.POST('/projects/projects-users', data).then(res => {
+                        if (res.success) {
+                            let member = Object.assign({}, user);
+                            member.spu_id = res.data.spu_id;
+                            
+                            this.push('members', member);        
+                        }
+                    })
+                }
+            }
+
+            __onComboUserChange(e) {
+                let combo = e.target,
+                    value = combo.value,
+                    user = combo.getModelForValue(value);
+
+                if (user) {
+                    this.__addUser(user);
+                    this.set('__hideComboUser', true);
+                }
+            }
+
+            __onComboUserCloseTap() {
+                this.$['combo-user'].close();
+                this.set('__hideComboUser', true);
+            }
+
+            __onInviteUserTap() {
+                this.$['combo-user'].close();
+                this.set('__hideComboUser', true);
+                
+                this.$.invitation.open();
+            }
+
+            __onUserInvited(e) {
+                let user = e.detail.user;
+                this.__addUser(user);
+                this.$.invitation.close();
+            }
+
+            __onSetupRoleTap(e) {
+                this.$.setup.open();
+
+                let role = e.model.item;
+
+                this.set('__selectedRole', role);
+
+                this.$.ajax.GET('/roles/roles-panels', {
+                    display: 'setup',
+                    project: this.projectRecord.sp_id,
+                    role: role.sr_id
+                }).then(res => {
+                    this.set('panels', res.data);
+                });
+            }
+
+            __onSetupSaveTap() {
+                this.$.setup.close();
+
+                let payload = {
+                    project: this.projectRecord.sp_id,
+                    role: this.__selectedRole.sr_id,
+                    panels: this.panels
+                };
+
+                this.$.ajax.POST('/roles/roles-panels/save', payload).then(() => {
+                    this.toast('Success', 'Setting has been saved');
+                });
+            }
+
+            __onSetupCloseTap() {
+                this.$.setup.close();
+            }
+
+            __onSetupDisplayChange(e) {
+                let panel = e.model.panel,
+                    index = e.model.index;
+
+                if (panel.panel_display == 'custom') {
+                    this.set('panels.' + index + '.panel_custom', true);
+                } else {
+                    this.set('panels.' + index + '.panel_custom', false);
+                }
+            }
+
+            __onBackTap() {
+                this.__goback();
+            }
+        }
+
+        customElements.define(ProjectInfo.is, ProjectInfo);
+    </script>
+</dom-module>

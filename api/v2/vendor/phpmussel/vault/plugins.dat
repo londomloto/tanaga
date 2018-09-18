@@ -1,0 +1,70 @@
+---
+plugin-legacy:
+ Name: Legacy plugin for phpMussel.
+ Extended Description: Provides backwards-compatibility for v0 users using <code>phpMusselR()</code> and <code>phpMussel()</code>, by redeclaring these deprecated functions as wrappers for their newer, closure counterparts. Non-v0 users don't need this plugin and shouldn't use it.
+ Minimum Required: 1.0.0-DEV
+ Minimum Required PHP: 5.4.0
+ Remote: https://raw.githubusercontent.com/phpMussel/extras/master/plugins/plugins.dat
+ Uninstallable: true
+ Provisional: true
+ Reannotate: plugins.dat
+plugin-notifications:
+ Name: Notifications plugin for phpMussel.
+ Extended Description: Receive email notifications from phpMussel whenever a file upload is blocked (requires PHP "mail" function to be correctly configured).
+ Minimum Required: 1.0.0-DEV
+ Minimum Required PHP: 5.4.0
+ Remote: https://raw.githubusercontent.com/phpMussel/extras/master/plugins/plugins.dat
+ Uninstallable: true
+ Provisional: true
+ Reannotate: plugins.dat
+plugin-resultAsJson:
+ Name: resultAsJson plugin.
+ Extended Description: Plugin for phpMussel to receive the detection data as JSON response.<br /><em>Info: <a href="https://github.com/mtrefzer/plugin-resultAsJson">mtrefzer/plugin-resultAsJson</a><br />Author: Michael Trefzer (mtrefzer)</em>
+ Version: 1.0.1
+ Minimum Required: 1.0.0-DEV
+ Minimum Required PHP: 5.4.0
+ Remote: https://raw.githubusercontent.com/phpMussel/extras/master/plugins/plugins.dat
+ Uninstallable: true
+ Provisional: true
+ Files:
+  From:
+   - https://raw.githubusercontent.com/mtrefzer/plugin-resultAsJson/master/resultAsJson/plugin.php
+  To:
+   - plugins/resultAsJson/plugin.php
+ Reannotate: plugins.dat
+plugin-log2mysql:
+ Name: log2mysql plugin.
+ Extended Description: Plugin for phpMussel to log to a MySQL database.<br /><em>Info: <a href="https://github.com/mtrefzer/plugin-log2mysql">mtrefzer/plugin-log2mysql</a><br />Author: Michael Trefzer (mtrefzer)</em>
+ Version: 1.0.0
+ Minimum Required: 1.0.0-DEV
+ Minimum Required PHP: 5.4.0
+ Remote: https://raw.githubusercontent.com/phpMussel/extras/master/plugins/plugins.dat
+ Uninstallable: true
+ Provisional: true
+ Files:
+  From:
+   - https://raw.githubusercontent.com/mtrefzer/plugin-log2mysql/master/log2mysql/plugin.php
+  To:
+   - plugins/log2mysql/plugin.php
+ Reannotate: plugins.dat
+Chart.js:
+ Name: Chart.js
+ Extended Description:
+  en: Enables the front-end to generate pie charts.<br /><a href="https://github.com/chartjs/Chart.js">Chart.js</a> made available under the <a href="https://opensource.org/licenses/MIT">MIT license</a>.
+ Version: 2.7.1
+ Minimum Required: 1.2.0-DEV
+ Remote: https://raw.githubusercontent.com/phpMussel/extras/master/plugins/plugins.dat
+ Uninstallable: true
+ Provisional: true
+ Files:
+  From:
+   - https://raw.githubusercontent.com/Maikuolan/Chart.js-Common-Module/master/Chart.min.js
+   - https://raw.githubusercontent.com/Maikuolan/Chart.js-Common-Module/master/_chartjs.html
+  To:
+   - fe_assets/Chart.min.js
+   - fe_assets/_chartjs.html
+  Checksum:
+   - 3b2fd01c6f541703143a6e67d20d72e6:157843
+   - bcb49fc1e80ffccd449023916a077d44:1356
+ Reannotate: plugins.dat
+

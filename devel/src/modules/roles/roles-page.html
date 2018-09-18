@@ -1,0 +1,56 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="roles-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                display: block;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" lazy-load>
+            <roles-index-page  import="roles-index-page.html"  name="index"  route="{{ route }}" state="[[ state ]]"></roles-index-page>
+        </kct-pages>
+
+    </template>
+    <script>
+        class RolesPage extends KctView {
+            static get is() {
+                return 'roles-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String, value: 'index' }
+                }
+            }
+            
+            /**
+             * @Override
+             */
+            handleRouteParams(setting, action, id) {
+                
+                if (setting != 'roles') {
+                    return;
+                }
+                
+                switch(action) {
+                    case 'add':
+                    case 'edit':
+                        this.set('page', 'editor');
+                        break;
+                    default:
+                        this.set('page', 'index');
+                }
+            }
+        }
+
+        customElements.define(RolesPage.is, RolesPage);
+    </script>
+</dom-module>

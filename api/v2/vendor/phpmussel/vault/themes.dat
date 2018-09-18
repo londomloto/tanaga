@@ -1,0 +1,57 @@
+---
+theme/rbi:
+ Name: Theme: Red-Blue Inverted
+ Extended Description: Exactly the same as the default theme, but with some of the colours swapped around. No big changes.<br /><em>Author: Caleb M (Maikuolan)</em>
+ Minimum Required: 1.0.0-DEV
+ Remote: https://raw.githubusercontent.com/phpMussel/themes/master/FE/themes.dat
+ Uninstallable: true
+ Reannotate: themes.dat
+theme/slate:
+ Name: Theme: Slate
+ Extended Description: Simple layout; Gentle, darker colours.<br /><em>Author: Caleb M (Maikuolan)</em>
+ Minimum Required: 1.0.0-DEV
+ Remote: https://raw.githubusercontent.com/phpMussel/themes/master/FE/themes.dat
+ Uninstallable: true
+ Reannotate: themes.dat
+theme/bluemetal:
+ Name: Theme: Blue Metal
+ Extended Description: Simple blue/black colour scheme with gentle tones.<br /><em>Author: Caleb M (Maikuolan), based on previous work by Daniel R.</em>
+ Version: 2018.158.017
+ Minimum Required: 1.0.0-DEV
+ Remote: https://raw.githubusercontent.com/phpMussel/themes/master/FE/themes.dat
+ Uninstallable: true
+ Files:
+  From:
+   - https://raw.githubusercontent.com/phpMussel/themes/master/FE/template_bluemetal.html
+   - https://raw.githubusercontent.com/phpMussel/themes/master/FE/bluemetal/_login.html
+   - https://raw.githubusercontent.com/phpMussel/themes/master/FE/bluemetal/frontend.css
+   - https://raw.githubusercontent.com/phpMussel/themes/master/FE/bluemetal/frontend.html
+   - https://raw.githubusercontent.com/phpMussel/themes/master/FE/bluemetal/pips.php
+  To:
+   - template_bluemetal.html
+   - fe_assets/bluemetal/_login.html
+   - fe_assets/bluemetal/frontend.css
+   - fe_assets/bluemetal/frontend.html
+   - fe_assets/bluemetal/pips.php
+  Checksum:
+   - 5779b17a73332de9dbac7bc4cf036db8:2213
+   - 73685f5f0e8a36dacbfcd8ecbc45daac:523
+   - e8c27d194820e49732c70e4eb94c72f7:3592
+   - 7f583faedce11aa6fd8abf88c86e45ad:1033
+   - 562f111a9da85c5f88ae8c51fc569f1b:900
+ Reannotate: themes.dat
+theme/moss:
+ Name: Theme: Moss
+ Extended Description: Inspired by the colours of nature.<br /><em>Author: Caleb M (Maikuolan)</em>
+ Minimum Required: 1.0.0-DEV
+ Remote: https://raw.githubusercontent.com/phpMussel/themes/master/FE/themes.dat
+ Uninstallable: true
+ Reannotate: themes.dat
+theme/fullmoon:
+ Name: Theme: Full Moon
+ Extended Description: Darker, semi-transparent colours; Navigation shifted to the top; No special fonts; Full moon backdrop.<br /><em>Author: Caleb M (Maikuolan)</em>
+ Minimum Required: 1.0.0-DEV
+ Remote: https://raw.githubusercontent.com/phpMussel/themes/master/FE/themes.dat
+ Uninstallable: true
+ Reannotate: themes.dat
+

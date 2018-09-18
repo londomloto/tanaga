@@ -1,0 +1,527 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+
+<link rel="import" href="../blocks/header-block.html">
+<link rel="import" href="../blocks/activity-block.html">
+<link rel="import" href="../blocks/taskform-block.html">
+<link rel="import" href="../blocks/taskprop-block.html">
+
+<dom-module id="project-task">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .action-button {
+                min-width: 100px;
+                border-radius: 3px;
+                border: 1px solid #e0e0e0;
+                position: relative;
+            }
+            .action-button.info iron-icon { color: var(--paper-blue-500);  }
+            .action-button.success iron-icon { color: var(--paper-green-500);  }
+            .action-button.danger iron-icon { color: var(--paper-red-500);  }
+            .action-button iron-icon {
+                position: relative;
+                top: -1px;
+            }
+            #workspace {
+                background-color: #f9f9f9;
+                position: relative;
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+            #header h3 {
+                /*min-width: 300px;*/
+            }
+            
+            activity-block[hidden] {
+                display: none;
+            }
+
+            .workspace-wrapper {
+                min-height: 100%;
+            }
+
+            .workspace-body {
+                background-color: #fff;
+                padding: 30px;
+                box-shadow: 0 4px 4px rgba(0,0,0,.4);
+            }
+
+            .workspace-body-content {
+                background-color: #fff;
+            }
+
+            .workspace-side {
+                width: 320px;
+            }
+
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        
+        <kct-vbox>
+            <header-block id="header" on-back-tap="__onBackTap" text="Active Project">
+                <h3 slot="header-value">[[ __projectTitle ]]</h3>
+
+                <!-- <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="action-button info" slot="right-toolbar" style="margin-left: 8px;">
+                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(recordAction) ]]
+                </paper-button>
+                
+                <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSendTap" class="action-button success" slot="right-toolbar" hidden$="[[ __hideSaveAndSend(recordAction) ]]">
+                    <iron-icon icon="send"></iron-icon>&nbsp;Save &amp; Send
+                </paper-button>
+
+                <paper-button on-tap="__onCancelTap" class="action-button danger" slot="right-toolbar">
+                    <iron-icon icon="close"></iron-icon>&nbsp;Cancel
+                </paper-button> -->
+
+            </header-block>
+            <div id="workspace" class="flex">
+                
+                <kct-hbox class="workspace-wrapper">
+                    <div class="flex workspace-body">
+                        <taskform-block 
+                            id="form" 
+                            project="[[ projectRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            action="[[ recordAction ]]" 
+                            form="[[ formRecord ]]" 
+                            user="[[ user ]]" 
+                            invalid="{{ formInvalid }}" 
+                            on-beforesave="__onFormBeforeSave"
+                            on-aftersave="__onFormAfterSave" 
+                            on-cancel="__onFormCancel" 
+                            on-remove="__onFormRemove" 
+                            loading="[[ loading ]]"></taskform-block>
+
+                        <activity-block 
+                            id="activity" 
+                            record="{{ taskRecord }}" 
+                            hidden$="[[ __phantom ]]" 
+                            loading="[[ loading ]]"></activity-block> 
+                    </div>
+                    <div class="workspace-side">
+                        <taskprop-block 
+                            id="taskprop" 
+                            project="[[ projectRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}" 
+                            loading="[[ loading ]]" 
+                            on-aftersave="__onPropAfterSave"></taskprop-block>
+                    </div>
+                </kct-hbox>
+
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class ProjectTask extends KctView {
+            static get is() {
+                return 'project-task';
+            }
+
+            static get properties() {
+                return {
+                    recordId: { type: Number },
+                    recordAction: { type: String },
+                    returnAction: { type: String },
+                    project: { type: String },
+                    projectRecord: { type: Object },
+                    workspaces: { type: Array },
+                    workspaceRecord: { type: Object },
+                    formRecord: { type: Object },
+                    taskRecord: { type: Object },
+                    loading: { type: Boolean, value: false }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__projectRecordChanged(projectRecord.*)',
+                    '__recordActionChanged(recordAction)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__phantom = true;
+                this.__projectTitle = 'Loading...';
+            }
+
+            handleRouteParams(project, action, type, id) {
+                if (project === undefined  || project == 'tour' || project == 'create') return;
+                if (action != 'task') return;
+
+                let returnAction = '/worksheet/' + project + '/view/kanban';
+
+                this.set('taskRecord', null);
+
+                // has back data?
+                if (this.route.data) {
+                    if (this.route.data.back) {
+                        returnAction = this.route.data.back;    
+                    }
+
+                    if (this.route.data.task) {
+                        this.set('taskRecord', this.route.data.task);
+                        this.set('route.data.task', null);
+                    }
+                }
+
+                this.set('returnAction', returnAction);
+                this.set('recordAction', type);
+                this.set('recordId', id);
+                
+
+                this.set('project', project);
+                this.set('loading', true);
+                this.__loadProject();
+
+                this.$.taskprop.stopEditing();
+            }
+
+            __loadProject() {
+                if ( ! this.project) return;
+
+                this.set('__projectTitle', 'Loading...');
+
+                this.$.ajax.GET('/projects/load/' + this.project ).then(res => {
+                    this.set('projectRecord', res.data);
+                    this.__loadWorkspaces();
+                });
+            }
+
+            __computeProjectTitle(title) {
+                return title || 'Loading...';
+            }
+
+            __computeSaveLabel() {
+                return this.recordAction == 'create' ? 'Create' : 'Save';
+            }
+
+            __hideActivity() {
+                return this.recordAction == 'create' ? true : false;
+            }
+
+            __hideSaveAndSend() {
+                return this.recordAction == 'create' ? true : false;
+            }
+
+            __projectRecordChanged(changed) {
+                if (this.projectRecord) {
+                    this.set('__projectTitle', this.projectRecord.sp_title);
+                }
+            }
+
+            __recordActionChanged(action) {
+                this.set('__phantom', action != 'update');
+            }
+
+            __loadWorkspaces() {
+                if ( ! this.projectRecord) return;
+                let sheet = this.projectRecord.sp_worksheet_id;
+
+                this.set('workspaces', []);
+
+                this.$.ajax.GET('/kanban/kanban-workspaces?kanban=' + sheet).then(res => {
+                    this.set('workspaces', res.data);
+                    this.set('workspaceRecord', {});
+
+                    if (this.recordAction == 'create') {
+                        this.__handleCreate();
+                    } else {
+                        this.__handleUpdate();
+                    }
+                });
+            }
+
+            __handleCreate() {
+                let workspace = this.workspaces[0],
+                    user = this.user && this.user.su_id,
+                    role = this.user && this.user.su_sr_id;
+
+                if (workspace) {
+
+                    this.set('workspaceRecord', workspace);
+
+                    let form = workspace.forms.find(f => {
+                        if (f.bf_init) {
+                            let users = f.bf_users.map(u => u.bfu_su_id),
+                                roles = f.bf_roles.map(r => r.bfr_sr_id),
+                                grant = false;
+
+                            if ( ! users.length && ! roles.length) {
+                                grant = true;
+                            } else {
+                                if (users.indexOf(user) !== -1) {
+                                    grant = true;
+                                }
+                                
+                                if ( ! grant) {
+                                    if (roles.indexOf(role) !== -1) {
+                                        grant = true;
+                                    }
+                                }
+                            }
+
+                            return grant;
+                        }
+                        return false;
+                    });
+
+                    this.set('formRecord', form);
+                    
+                    this.set('taskRecord', {
+                        task: {},
+                        labels: [],
+                        users: []
+                    });
+
+                    if (form) {
+                        this.$.form.render().then(() => {
+                            this.set('loading', false);
+                            this.$.activity.initialize();
+                        });
+                    } else {
+                        // this.toast('Warning', `This document doesn't have form`, 'warn');
+                        this.set('loading', false);
+                    }
+                } else {
+                    this.set('taskRecord', {});
+                }
+            }
+
+            __handleUpdate() {
+                if ( ! this.recordId) return;
+
+                if (this.taskRecord) {
+                    handle.bind(this)(this.taskRecord);
+                } else {
+                    let payload = {
+                        params: {
+                            tts_id: this.recordId
+                        }
+                    };
+
+                    this.$.ajax.GET('/kanban', payload).then(res => {
+                        let record = res.data.length ? res.data[0] : null;
+                        handle.bind(this)(record);
+                    });
+                }
+
+                function handle(record) {
+                    if ( ! record) {
+                        
+                        this.set('taskRecord', {});
+
+                        this.toast('Warning', 'Record not found', 'warn');
+                        this.set('route.path', this.returnAction);
+                        return;
+                    }
+
+                    let user = this.user && this.user.su_id;
+                    let role = this.user && this.user.su_sr_id;
+
+                    if ( ! record) {
+                        this.toast('Warning', 'Record not found', 'warn');
+                        this.set('route.path', this.returnAction);
+                        return;
+                    }
+                    
+                    this.set('taskRecord', record);
+
+                    let workspace = (this.workspaces || []).find(item => {
+                        return item.worker == record.status.tts_worker;
+                    });
+
+                    if (workspace) {
+                        this.set('workspaceRecord', workspace);
+
+                        let form = workspace.forms.find(f => {
+                            if (f.bf_activity == record.status.tts_target) {
+
+                                let users = f.bf_users.map(u => u.bfu_su_id),
+                                    roles = f.bf_roles.map(r => r.bfr_sr_id),
+                                    grant = false;
+
+                                if ( ! users.length && ! roles.length) {
+                                    grant = true;
+                                } else {
+                                    if (users.indexOf(user) !== -1) {
+                                        grant = true;
+                                    }
+                                    
+                                    if ( ! grant) {
+                                        if (roles.indexOf(role) !== -1) {
+                                            grant = true;
+                                        }
+                                    }
+                                }
+
+                                return grant;
+                            }
+
+                            return false;
+                        });
+
+                        this.set('formRecord', form);
+
+                        if (form) {
+                            this.$.form.render().then(() => {
+                                this.set('loading', false);
+                                this.$.activity.initialize();
+                            });
+                        } else {
+                            // this.toast('Warning', `This document doesn't have form`, 'warn');
+                            this.set('loading', false);
+                        }
+                    } else {
+                        this.set('loading', false);
+                    }
+                }
+
+            }
+
+            save(send = false, back = false) {
+                if ( ! this.workspaceRecord.worker) return;
+                if ( ! this.projectRecord) return;
+
+                let record = this.taskRecord;
+                record.data.tt_sp_id = this.projectRecord.sp_id;
+
+                if (this.recordAction == 'create') {
+                    send = true;
+                }
+
+                let payload = {
+                    worker: this.workspaceRecord.worker,
+                    record: record,
+                    send: send
+                };
+
+                this.mask('Saving...');
+
+                if (this.recordAction == 'create') {
+                    this.$.ajax.POST('/kanban', payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.PUT('/kanban/' + record.data.tt_id, payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.unmask();
+
+                    // let back = send || (this.recordAction == 'create');
+                    if (back) {
+                        this.set('route.path', this.returnAction);    
+                    }
+
+                    if (res.success) {
+                        if ( ! back) {
+                            this.toast('Success', 'Data has been saved', 'info');
+                            this.$.activity.initialize();
+                        }
+                        
+                        this.$.publisher.publish('task-save', {
+                            send: send,
+                            back: back
+                        });
+                    }
+                }
+            }
+
+            __onSaveTap() {
+                this.save();
+            }
+
+            __onFormBeforeSave() {
+                this.mask('Saving...');
+            }
+
+            __onFormAfterSave(e) {
+                this.unmask();
+
+                if (e.detail.response.success) {
+                    if (e.detail.back) {
+                        this.set('route.path', this.returnAction);    
+                    } else {
+                        this.toast('Success', 'Data has been saved', 'info');
+                        this.$.activity.initialize();
+                    }
+
+                    this.$.publisher.publish('task-save', {
+                        recordAction: this.recordAction,
+                        affected: e.detail.response.data.affected,
+                        send: e.detail.send,
+                        back: e.detail.back
+                    });
+                }
+            }
+
+            __onFormCancel(e) {
+                let back = e.detail.back;
+                if (back) {
+                    this.set('route.path', this.returnAction);
+                }
+            }
+
+            __onFormRemove(e) {
+                let back = e.detail.back;
+
+                if (back) {
+                    this.set('route.path', this.returnAction);
+                    this.$.publisher.publish('task-remove');
+                }
+            }
+
+            __onPropAfterSave(e) {
+                this.$.activity.initialize();
+
+                let send = e.detail.send,
+                    back = e.detail.back,
+                    resp = e.detail.response;
+                    
+                this.$.publisher.publish('task-save', {
+                    send: send,
+                    back: back,
+                    response: resp
+                });
+
+                if (back) {
+                    this.set('route.path', this.returnAction);
+                }
+                
+            }
+
+            __onSendTap() {
+                this.save(true);
+            }
+
+            __onCancelTap() {
+                this.set('route.path', this.returnAction);
+            }
+
+            __onBackTap() {
+                this.set('route.data.back', null);
+                this.set('route.path', this.returnAction);
+            }
+        }
+
+        customElements.define(ProjectTask.is, ProjectTask);
+    </script>
+</dom-module>

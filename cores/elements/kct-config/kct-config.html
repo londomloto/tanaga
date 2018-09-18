@@ -1,0 +1,119 @@
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/location.html">
+<link rel="import" href="../../mixins/storage.html">
+
+<dom-module id="kct-config">
+    <script>
+        
+        class KctConfig extends Mixins(Polymer.Element).use(
+            Mixins.Resolver, 
+            Mixins.Location, 
+            Mixins.Storage
+        ) {
+            static get is() {
+                return 'kct-config';
+            }
+            static get properties() {
+                return {
+                    name: { type: String },
+                    config: { 
+                        type: Object, 
+                        notify: true,
+                        value: () => ({
+                            app_id: '',
+                            app_name: '',
+                            app_title: 'Worksaurus',
+                            app_version: '2.0.0',
+                            app_description: 'Worksaurus progressive web framework',
+                            app_keywords: '',
+                            app_author: 'Kreasindo Cipta Teknologi',
+                            app_host: '',
+                            app_base: '',
+                            app_site: '',
+                            app_language: 'en'
+                        })
+                    },
+                    storageKey: { type: String }
+                };
+            }
+            static get observers() {
+                return [
+                    '__nameChanged(name)',
+                    '__configChanged(config.*)'
+                ];
+            }
+
+            static instance() {
+                return KctConfig.__instance;
+            }
+
+            constructor() {
+                super();
+                this.__silent = false;
+
+                if ( ! KctConfig.__instance) {
+                    KctConfig.__instance = this;
+                }
+            }
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+
+                // check name
+                let name = this.get('name');
+
+                if ( ! name) {
+                    name = this._baseuri().replace(/^\/|\/$/g, '');
+                    name = name + '@' + this._hostname();
+                    this.set('name', name);
+                }
+            }
+            __nameChanged(name) {
+                if ( ! name) return;
+
+                // setup storage key
+                let storageKey = this._getStorageKey(this.name);
+                this.set('storageKey', storageKey);
+
+                // sync temporer data to storage
+                let data = Object.assign({}, this.constructor.properties.config.value());
+                
+                data.app_name = name;
+                data.app_host = data.app_host || this._hostname();
+                data.app_base = data.app_base || this._baseuri();
+
+                if ( ! data.app_site) {
+                    let protocol = this._protocol();
+                    data.app_site = protocol + '//' + data.app_host + data.app_base;
+                }
+
+                this._initStorage(this.storageKey, data);
+
+                this.__silent = true;
+                this.set('config', this._getStorageItem(this.storageKey));
+                this.__silent = false;
+
+                this.__fireEvent('load');
+
+            }
+
+            __configChanged(changed) {
+                if (this.__silent) return;
+
+                if (this.storageKey) {
+                    this._saveStorage(this.storageKey, this.config);
+                }
+            }
+
+            __fireEvent(type, data = {}) {
+                let evt = new CustomEvent(type, {
+                    detail: data
+                });
+                
+                this.dispatchEvent(evt);
+            }   
+        }
+
+        customElements.define(KctConfig.is, KctConfig);
+    </script>
+</dom-module>

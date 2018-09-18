@@ -1,0 +1,180 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../../cores/bower_components/vaadin-charts/vaadin-pie-chart.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dropdown/kct-dropdown-checkbox.html">
+
+<dom-module id="status-board">
+    <template>
+        <style>
+            :host {
+                display: block;
+                height: 100%;
+            }
+            paper-card {
+                display: block;
+                height: 100%;
+            }
+            :host([flat]) paper-card {
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .card-header {
+                padding: 3px;
+                /*border-bottom: 1px solid #dfdfdf;*/
+                /*background-color: var(--paper-grey-100);*/
+                
+            }
+            .card-title {
+                line-height: 40px;
+            }
+            h3 {
+                font-weight: 500;
+                font-size: 12px;
+                text-transform: uppercase;
+                color: var(--paper-blue-grey-600);
+                margin: 0 0 0 10px;
+            }
+            .card-content {
+                height: 100%;
+                padding: 0;
+            }
+            .tool {
+                float: right;
+                --button-trigger: {
+                    color: var(--paper-blue-grey-300);
+                };
+            }
+            paper-icon-button.tool {
+                color: var(--paper-blue-grey-300);
+            }
+            .clear {
+                clear: both;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-card>
+            <div class="card-content">
+                <kct-vbox>
+                    <kct-hbox class="card-header">
+                        <div class="flex card-title">
+                            <h3>[[ title ]]</h3>
+                        </div>
+                        <div class="flex">
+                            <kct-dropdown-checkbox 
+                                class="tool" 
+                                url="/projects?display=granted" 
+                                params='{"sort":[{"property":"sp_title","direction":"ASC"}]}' 
+                                values="{{ projectSelection }}"
+                                icon="view-carousel" 
+                                page-size="5" 
+                                item-label-path="sp_title" 
+                                item-value-path="sp_id" 
+                                horizontal-align="right" 
+                                on-load="__onProjectLoad" 
+                                autoload>
+                                <template preserve-content>
+                                    <style>
+                                        .item { padding: 10px; 0;  }
+                                        .text { font-size: 13px; font-weight: 500; }
+                                        .desc { font-size: 11px; color: #999; }
+                                    </style>
+                                    <div class="item">
+                                        <div class="text">[[ item.sp_title ]]</div>
+                                        <div class="desc">Created by [[ item.sp_creator_fullname ]] at <br>[[ item.sp_created_date_formatted ]]</div>
+                                    </div>
+                                </template>
+                            </kct-dropdown-checkbox>
+                            <paper-icon-button on-tap="__onPrintTap" class="tool"  icon="print"></paper-icon-button>
+                            <div class="clear"></div>
+                        </div>    
+                    </kct-hbox>
+                    
+                    <div class="flex card-body">
+                        <template is="dom-repeat" items="[[ charts ]]" as="chart">
+                            <vaadin-pie-chart>
+                                <chart-title chart-style='{"display": "none"}'>[[ chart.config.title ]]</chart-title>
+                                <subtitle chart-style='{"display": "none"}'>[[ chart.config.subtitle ]]</subtitle>
+                                <exporting enabled="false"></exporting>
+                                <plot-options>
+                                    <pie shadow="false"></pie>
+                                </plot-options>
+                                <tooltip point-format="<b>{point.y} item(s)</b>"></tooltip>
+                                <template is="dom-repeat" items="[[ chart.series ]]" as="serie">
+                                    <data-series name="[[ serie.name ]]" data="[[ serie.data ]]" size="180" inner-size="120">
+                                        <data-labels distance="10" format="{point.name}<br>{point.percentage:.1f} %"></data-labels>
+                                    </data-series>
+                                </template>
+                            </vaadin-pie-chart>
+                        </template>
+                    </div>
+                </kct-vbox>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class StatusBoard extends Polymer.Element {
+            static get is() {
+                return 'status-board';
+            }
+            static get properties() {
+                return {
+                    title: { type: String },
+                    projectSelection: { type: Array },
+                    charts: { type: Array, value: () => ([]) }
+                };
+            }
+            static get observers() {
+                return [
+                    '__dependenciesChanged(projectSelection.splices)'
+                ];
+            }
+
+            __dependenciesChanged() {
+                this.__rendering = Polymer.Debouncer.debounce(
+                    this.__rendering,
+                    Polymer.Async.timeOut.after(300),
+                    this.render.bind(this)
+                );
+                Polymer.enqueueDebouncer(this.__rendering);
+            }
+
+            print() {
+                let vc = this.shadowRoot.querySelector('vaadin-pie-chart');
+                if (vc) {
+                    vc.chart.exportChart()
+                }
+            }
+
+            render() {
+                let projects = (this.projectSelection || []);
+
+                let payload = { 
+                    projects: projects
+                };
+
+                this.set('charts', []);
+
+                // load data
+                this.$.ajax.GET('/dashboard/statuses', payload).then(res => {
+                    this.set('charts', [res.data]);
+                });
+
+            }
+
+            __onPrintTap() {
+                this.print();
+            }
+
+            __onProjectLoad(e) {
+                let tool = e.target;
+                tool.autoCheck();
+            }
+        }
+
+        customElements.define(StatusBoard.is, StatusBoard);
+    </script>
+</dom-module>

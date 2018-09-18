@@ -1,0 +1,92 @@
+<link rel="import" href="../../../cores/bower_components/promise-polyfill/promise-polyfill.html">
+<link rel="import" href="../../../cores/mixins/resolver.html">
+<link rel="import" href="../../../cores/mixins/location.html">
+
+<dom-module id="base-layout">
+    <script>
+        
+        class BaseLayout extends Mixins(Polymer.Element).use(
+            Mixins.Location, 
+            Mixins.Resolver
+        ) {
+
+            static get is() { return 'base-layout'; }
+
+            static get properties() {
+                return {
+                    name: { type: String, value: 'base' }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '_layoutChanged(state.layout)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__oldLayout = null;
+            }
+            
+            _resolvePageFromState(state) {
+                let d = this._defer();
+                let module, type, file, base, part, dots;
+
+                // base = this._baseuri().replace(/^\/|\/$/g, '');
+                // part = base.split(/\//);
+
+                module = state.module;
+                
+                if (state.page) {
+                    type = state.page.replace(/\.html?$/, '');
+                } else {
+                    if (module) {
+                        type = module + '-page';
+                    } else {
+                        type = 'index-page';
+                    }
+                }
+
+                // if (part && part.length > 1) {
+                //     dots = '../../../../../';
+                // } else {
+                //     dots = '../../../../';
+                // }
+                
+                if (module) {
+                    name = module + '-' + type;
+                    // file = this.resolveUrl('../../../modules/' + module + '/' + type + '.html');
+                    // file = this.resolveUrl(dots + base + '/src/modules/' + module + '/' + type + '.html');
+                    file = this.resolveUrl('../modules/' + module + '/' + type + '.html');
+                } else {
+                    name = type;
+                    // file = this.resolveUrl('../../../modules/' + type + '.html');
+                    // file = this.resolveUrl(dots + base + '/src/modules/' + type + '.html');
+                    file = this.resolveUrl('../modules/' + type + '.html');
+                }
+
+                d.resolve({ 
+                    name: name,
+                    file: file,
+                    type: type
+                });
+
+                return d.promise;
+            }
+
+            _layoutChanged(layout) {
+                if (layout == this.name && layout != this.__oldLayout) {
+                    Polymer.RenderStatus.afterNextRender(this, () => {
+                        this._layoutActive();
+                    });
+                }
+                this.__oldLayout = layout;
+            }
+
+            _layoutActive() {}
+        }
+
+        customElements.define(BaseLayout.is, BaseLayout);
+    </script>
+</dom-module>

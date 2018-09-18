@@ -1,0 +1,99 @@
+<link rel="import" href="mixins.html">
+<script>
+    Mixins.SVG = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            _base64ToBlob(dataString) {
+                var byteString = window.atob(dataString.split(',')[1]),
+                    mimeString = dataString.split(',')[0].split(':')[1].split(';')[0],
+                    buffer = new ArrayBuffer(byteString.length),
+                    intArray = new Uint8Array(buffer);
+                
+                for (var i = 0, ii = byteString.length; i < ii; i++) {
+                    intArray[i] = byteString.charCodeAt(i);
+                }
+                
+                return new Blob([buffer], {type: mimeString});
+            }   
+
+            _svgRepair(xml) {
+                let enc = encodeURIComponent(xml);
+                enc = enc.replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                    var c = String.fromCharCode('0x'+p1);
+                    return c === '%' ? '%25' : c;
+                });
+                return decodeURIComponent(enc);
+            }
+
+            _svgURI(xml) {
+                return 'data:image/svg+xml;base64,' + window.btoa(xml);
+            }
+
+            _svgToFile(svg, options = {}) {
+                let d = {};
+
+                d.promise = new Promise(res => {
+                    d.resolve = res;
+                });
+
+                let xml = this._svgRepair(svg);
+                let uri = this._svgURI(xml);
+
+                let image = new Image();
+                
+                image.onload = () => {
+                    
+                    let width, height;
+                    let canvas, context, data;
+
+                    if (options.width !== undefined) {
+                        width = +options.width;
+                    } else {
+                        width = image.width || 500;
+                    }
+
+                    if (options.height !== undefined) {
+                        height = +options.height;
+                    } else {
+                        height = image.height || 500;
+                    }
+
+                    canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    context = canvas.getContext('2d');
+                    context.fillStyle = '#ffffff';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+
+                    context.drawImage(image, 0, 0);
+
+                    try {
+                        data = canvas.toDataURL('image/jpeg', 1);
+                    } catch(e) {
+                        data = false;
+                    }
+
+                    canvas = context = null;
+                    image = null;
+
+                    if (data) {
+                        let file = this._base64ToBlob(data);
+                        d.resolve(file);
+                    } else {
+                        d.resolve(null);
+                    }
+                };
+
+                image.src = uri;
+
+                return d.promise;
+            }
+
+
+
+        }
+
+    });
+</script>

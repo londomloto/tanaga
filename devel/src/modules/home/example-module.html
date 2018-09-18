@@ -1,0 +1,16 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+
+<dom-module id="example-module">
+    <template>
+        <paper-input value="{{ record.name }}"></paper-input>
+    </template>
+    <script>
+        class ExampleModule extends Polymer.Element {
+            static get is() {
+                return 'example-module';
+            }
+        }
+
+        customElements.define(ExampleModule.is, ExampleModule);
+    </script>
+</dom-module>

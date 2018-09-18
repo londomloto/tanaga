@@ -1,0 +1,577 @@
+<link rel="import" href="../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="kct-search-overlay.html">
+
+<dom-module id="kct-search-combo">
+    
+    <template>
+        <style include="vaadin-combo-box-shared-styles">
+            
+            :host {
+                display:block;
+                padding:8px 0;
+            }
+            :host>#overlay {
+                display:none;
+            }
+            paper-input-container {
+                position:relative;
+                padding:0;
+            }
+            paper-icon-button.clear-button,
+            paper-icon-button.toggle-button,
+            :host::slotted(paper-icon-button[slot="toggle-button"]),
+            :host::slotted(paper-icon-button[slot="clear-button"]) {
+                line-height:18px !important;
+                width:32px;
+                height:32px;
+                padding:4px;
+                text-align:center;
+                color:rgba(0,0,0,.38);
+                cursor:pointer;
+                margin-top:-1px;
+                --paper-icon-button-ink-color:rgba(0,0,0,.54);
+            }
+            :host::slotted(paper-input-container) paper-icon-button[slot="toggle-button"],
+            :host::slotted(paper-input-container) paper-icon-button[slot="clear-button"] {
+                line-height:18px !important;
+                width:32px;
+                height:32px;
+                padding:4px;
+                text-align:center;
+                color:rgba(0,0,0,.38);
+                cursor:pointer;
+                margin-top:-1px;
+                --paper-icon-button-ink-color:rgba(0,0,0,.54);
+            }
+            paper-input-container paper-icon-button:hover,
+            paper-input-container::slotted(paper-icon-button:hover),
+            :host([opened]) paper-input-container paper-icon-button,
+            :host([opened]) paper-input-container::slotted(paper-icon-button) {
+                color:rgba(0,0,0,.54);
+            }
+            :host::slotted(paper-input-container) paper-icon-button:hover,
+            :host([opened])::slotted(paper-input-container) paper-icon-button {
+                color:rgba(0,0,0,.54);
+            }
+            :host([opened]) paper-input-container::slotted(paper-icon-button:hover),
+            :host([opened]) paper-input-container paper-icon-button:hover {
+                color:rgba(0,0,0,.86);
+            }
+            :host([opened])::slotted(paper-input-container) paper-icon-button:hover {
+                color:rgba(0,0,0,.86);
+            }
+            :host([opened]) paper-input-container {
+                z-index:20;
+            }
+            :host [slot=suffix] {
+                display:flex;
+            }
+            input::-ms-clear {
+                display:none;
+            }
+            input {
+                position:relative;
+                outline:none;
+                box-shadow:none;
+                padding:0;
+                width:100%;
+                max-width:100%;
+                background:transparent;
+                border:none;
+                color:var(--paper-input-container-input-color,var(--primary-text-color));
+                -webkit-appearance:none;
+                text-align:inherit;
+                vertical-align:bottom;
+                min-width: 0;
+                @apply --paper-font-subhead;
+                @apply --paper-input-container-input;
+            }
+
+            /** custom */
+            :host([hide-trigger]) [slot=suffix] {
+                display: none;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-input-container
+            id="inputContainer"
+            disabled$="[[disabled]]"
+            no-label-float="[[noLabelFloat]]"
+            always-float-label="[[_computeAlwaysFloatLabel(alwaysFloatLabel,placeholder)]]"
+            auto-validate$="[[autoValidate]]"
+            invalid="[[invalid]]">
+
+            <label id="label" slot="label"
+                on-down="_preventDefault"
+                hidden$="[[!label]]"
+                aria-hidden="true"
+                on-tap="_openAsync"
+                for="input">[[label]]</label>
+
+            <slot name="prefix" slot="prefix"></slot>
+
+            <iron-input slot="input" id="ironinput"
+                bind-value="{{_inputElementValue}}"
+                allowed-pattern="[[allowedPattern]]"
+                prevent-invalid-input="[[preventInvalidInput]]"
+                invalid="{{invalid}}"
+                on-change="_stopPropagation"
+                label="[[label]]">
+                <input id="input"
+                    type="text"
+                    role="combobox"
+                    autocomplete="off"
+                    autocapitalize="none"
+                    aria-label$="[[label]]"
+                    aria-expanded$="[[_getAriaExpanded(opened)]]"
+                    aria-autocomplete="list"
+                    disabled$="[[disabled]]"
+                    pattern$="[[pattern]]"
+                    required$="[[required]]"
+                    autofocus$="[[autofocus]]"
+                    inputmode$="[[inputmode]]"
+                    name$="[[name]]"
+                    placeholder$="[[placeholder]]"
+                    readonly$="[[readonly]]"
+                    size$="[[size]]"
+                    on-input="_inputValueChanged"
+                    on-blur="_onBlur"
+                    on-change="_stopPropagation"
+                    key-event-target>
+            </iron-input>
+
+            <slot name="suffix" slot="suffix"></slot>
+
+            <div slot="suffix" suffix>
+                <span>
+                    <slot name="clear-button">
+                        <paper-icon-button id="clearIcon"
+                            tabindex="-1"
+                            aria-label="Clear"
+                            icon="vaadin-combo-box:clear"
+                            class="clear-button small">
+                        </paper-icon-button>
+                    </slot>
+                </span>
+                <span>
+                    <slot name="toggle-button">
+                        <paper-icon-button id="toggleIcon"
+                            tabindex="-1"
+                            icon="vaadin-combo-box:arrow-drop-down"
+                            aria-label="Toggle"
+                            aria-expanded$="[[_getAriaExpanded(opened)]]"
+                            class="toggle-button rotate-on-open">
+                        </paper-icon-button>
+                    </slot>
+                </span>
+            </div>
+
+            <template is="dom-if" if="[[errorMessage]]">
+                <paper-input-error slot="add-on">[[errorMessage]]</paper-input-error>
+            </template>
+        </paper-input-container>
+
+        <kct-search-overlay id="overlay"
+            opened$=[[opened]]
+            position-target="[[_getPositionTarget()]]"
+            _focused-index="[[_focusedIndex]]"
+            _item-label-path="[[itemLabelPath]]"
+            on-down="_onOverlayDown"
+            loading="[[loading]]"
+            on-mousedown="_preventDefault" 
+            on-pagination="__onPagination" 
+            paging="[[ paging ]]"
+            vertical-offset="4" 
+            paging-enabled$="[[ paging.enabled ]]">
+        </kct-search-overlay>
+
+    </template>
+
+    <script>
+        {
+            let BaseClass = customElements.get('vaadin-combo-box');
+
+            class KctCombobox extends BaseClass {
+                static get is() {
+                    return 'kct-search-combo';
+                }
+
+                static get properties() {
+                    return {
+                        url: { type: String },
+                        payload: { type: Object, value: () => ({}) },
+                        params: { type: Object },
+                        paging: {
+                            type: Object,
+                            notify: true,
+                            value: () => ({
+                                enabled: false,
+                                start: 0,
+                                limit: 0,
+                                total: 0
+                            })
+                        },
+                        pageSize: { type: Number },
+                        autoload: { type: Boolean, value: false },
+                        delay: { type: Number, value: 300  },
+                        hideTrigger: { type: Boolean, value: false },
+                        itemQueryPath: { type: String }
+                    }
+                }
+
+                static get observers() {
+                    return [
+                        '__proxyChanged(url, pageSize)',
+                        '__paramsChanged(params.*)'
+                    ];
+                }
+
+                constructor() {
+                    super();
+                    this.__init = true;
+                }
+
+                ready() {
+                    super.ready();
+
+                    this._ensureAttribute('allow-custom-value', true);
+                    this._ensureAttribute('no-label-float', true);
+                    this._ensureAttribute('hide-trigger', true);
+                    this._ensureAttribute('class', 'popup');
+                }
+
+                load(config = {}) {
+                        
+                    if (this.__init) {
+                       this.__init = false;
+                       if ( ! this.autoload) {
+                            return Promise.resolve();
+                       }
+                    }
+
+                    if ( ! this.url) {
+                        return Promise.resolve();
+                    }
+
+                    // make config immutable
+                    let options = Object.assign({}, config);
+
+                    if (options.params) {
+                        // save params
+                        this.__setPayload({
+                            params: options.params
+                        });
+                    }
+
+                    let payload = Object.assign({}, this.payload);
+
+                    if (this.filter == '' && this.value == '') {
+                        payload.query = '';
+                    }
+                    
+                    if (payload.start === undefined) {
+                        payload.start = this.paging.start;
+                    } else {
+                        this.set('paging.start', payload.start);
+                    }
+
+                    if (payload.limit === undefined) {
+                        payload.limit = this.paging.limit;
+                    } else {
+                        this.set('paging.limit', payload.limit);
+                    }
+
+                    // save
+                    this.__setPayload(payload);
+
+                    if ( ! this.paging.enabled) {
+                        delete payload.start;
+                        delete payload.limit;
+
+                        if ( ! this.paging.enabled) {
+                            if ( ! this.__loaded) {
+                                this.__loaded = true;
+                            } else {
+                                this.__trigger('beforeload', { options: payload });
+                                return Promise.resolve();
+                            }
+                        }
+                    }
+
+                    this.__trigger('beforeload', { options: payload });
+
+                    if (payload.fields) {
+                        if (typeof payload.fields == 'object') {
+                            payload.fields = JSON.stringify(payload.fields);
+                        }
+                    }
+
+                    if(payload.params) {
+                        if (typeof payload.params == 'object') {
+                            payload.params = JSON.stringify(payload.params);
+                        }
+                    }
+
+                    return this.$.ajax.GET(this.url, payload).then(res => {
+                        let items = res.data;
+                        this.set('items', items);
+
+                        this.__setPaging({ total: res.total });
+                        this.__trigger('load');
+
+                        if ( ! this.paging.enabled) {
+                            this.__items = items.slice();
+                        }
+                    });
+                }
+
+                getModelForValue(value) {
+                    let model;
+                    if (this.items) {
+                        model = this.filteredItems.find(item => item[this.itemValuePath] == value);
+                    }
+                    return model;
+                }
+
+                getQueryField() {
+                    return this.itemQueryPath || this.itemLabelPath;
+                }
+
+                clear() {
+                    this._clear();
+                }
+
+                _clear() {
+                    this.selectedItem = null;
+
+                    if (this.allowCustomValue) {
+                        this.value = '';
+                        this._inputElementValue = '';
+                    }
+
+                    if (this.opened) {
+                        this.close();
+                    } else {
+                        this._detectAndDispatchChange();
+                    }
+                }
+
+                _filterChanged (filter, itemValuePath, itemLabelPath) {
+
+                    if (filter === undefined || itemValuePath === undefined || itemLabelPath === undefined) {
+                        return;
+                    }
+
+                    let reload = false;
+
+                    if (this.items) {
+                        this.filteredItems = this._filterItems(this.items, filter);
+                        reload = this.filteredItems.length == 0;
+                    }  else {
+                        reload = true;
+                    }
+
+                    if (reload) {
+                        this.__setPayload({ 
+                            query: filter,
+                            start: 0,
+                            fields: [ this.getQueryField() ]
+                        }, true);
+                    }
+                }
+
+                _onTap(e) {
+                    super._onTap(e);
+
+                    let path = Polymer.dom(e).path;
+                    
+                    if (path.indexOf(this._clearElement) !== -1) {
+                        this.__setPayload({ 
+                            start: 0, 
+                            query: '',
+                            fields: [ this.getQueryField() ]
+                        }, true);
+                    }
+                }
+
+                _valueChanged (value) {
+                    if (this._isValidValue(value)) {
+
+                        if (this._getItemValue(this.selectedItem) !== value) {
+                            var valueIndex = this._indexOfValue(value, this.filteredItems);
+
+                            if (valueIndex >= 0) {
+                                this.selectedItem = this.filteredItems[valueIndex];
+                            } else {
+                                this.selectedItem = null;
+
+                                if (value) {
+                                    this.__setPayload({ 
+                                        start: 0,  
+                                        fields: [ this.itemValuePath ],
+                                        query: value
+                                    });
+
+                                    this.load().then(() => {
+                                        let valueIndex = this._indexOfValue(value, this.filteredItems);
+                                        if (valueIndex >= 0) {
+                                            this.selectedItem = this.filteredItems[valueIndex];    
+                                        } else {
+                                            this.selectedItem = null;
+
+                                            if (this.allowCustomValue) {
+                                                this._inputElementValue = value;
+                                            }
+
+                                            this._setHasValue(this.value !== '');
+                                            this._lastCommittedValue = undefined;
+
+                                            this.__setPayload({ 
+                                                start: 0,  
+                                                fields: [ this.getQueryField() ],
+                                                query: ''
+                                            }, true);
+                                        }
+                                    });
+                                }
+
+                            }
+
+                        } else {
+                            var item = this.selectedItem;
+                        }
+
+                        if ( ! item && this.allowCustomValue) {
+                            this._inputElementValue = value;
+                        }
+
+                        this._setHasValue(this.value !== '');
+                    } else {
+                        this.selectedItem = null;
+                    }
+
+                    this._lastCommittedValue = undefined;
+                }
+
+                __trigger(name, data = {}) {
+                    this.dispatchEvent(new CustomEvent(name, {
+                        detail: data
+                    }));
+                }
+
+                __setPayload(data, reload = false) {
+                    let payload = Object.assign({}, this.payload);
+
+                    Object.keys(data).forEach(k => {
+                        payload[k] = data[k];
+                    });
+
+                    this.set('payload', payload);
+
+                    if (reload) {
+                        this.__request();
+                    }
+                }
+
+                __setPaging(data) {
+                    let paging = Object.assign({}, this.paging);
+                    
+                    Object.keys(data).forEach(k => {
+                        paging[k] = data[k];
+                    });
+
+                    this.set('paging', paging);
+                }
+
+                __request() {
+
+                    this.__requesting = Polymer.Debouncer.debounce(
+                        this.__requesting,
+                        Polymer.Async.timeOut.after(this.delay),
+                        () => {
+                            this.load();
+                        }
+                    );
+
+                    Polymer.enqueueDebouncer(this.__requesting);
+                }
+
+                __proxyChanged(url, pageSize) {
+
+                    this.__loaded = false;
+
+                    if (pageSize !== undefined) {
+                        this.__setPaging({ enabled: true, limit: pageSize });
+                        this.__setPayload({ limit: pageSize });
+                    } else {
+                        this.__setPaging({ enabled: false });
+                    }
+                    
+                    if (this.autoload) {
+                        this.__request();
+                    }
+
+                }
+
+                __paramsChanged(changed) {
+                    if (changed.path == 'params') {
+                        this.__setPayload({
+                            params: this.params
+                        }, true);
+                    }
+                }
+
+                __onPagination(e) {
+                    let action = e.detail.action,
+                        paging = this.paging,
+                        total  = isNaN(+paging.total) ? 0 : +paging.total,
+                        pages  = isNaN(+paging.pages) ? 0 : +paging.pages,
+                        limit  = isNaN(+paging.limit) ? 0 : +paging.limit,
+                        start  = isNaN(+paging.start) ? 0 : +paging.start;
+
+                    switch(action) {
+                        case 'first':
+                            start = 0;
+
+                            break   
+                        case 'prev':
+                            start -= limit;
+
+                            if (start <= 0) {
+                                start = 0;
+                            }
+
+                            break
+                        case 'next':
+
+                            start += limit;
+
+                            if (start >= total) {
+                                start = total - limit;
+                            }
+
+                            break
+                        case 'last':
+
+                            start = total - limit;
+
+                            if (start < 0) {
+                                start = 0;
+                            }
+
+                            break
+                    }
+
+                    this.__setPayload({ start: start });
+                    this.load();
+                }
+            }
+
+            customElements.define(KctCombobox.is, KctCombobox);
+        }
+    </script>
+</dom-module>

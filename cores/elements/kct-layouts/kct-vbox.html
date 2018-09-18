@@ -1,0 +1,29 @@
+<dom-module id="kct-vbox">
+    <template>
+        <style>
+            :host { 
+                display: block; 
+                height: 100%;
+                @apply --layout-vertical; 
+            }
+
+            ::slotted(.flex) { @apply --layout-flex; }
+            ::slotted(.flex-2) { @apply --layout-flex-2; }
+            ::slotted(.flex-3) { @apply --layout-flex-3; }
+        </style>
+        <slot></slot>
+    </template>
+    <script>
+        class KctVbox extends Polymer.Element {
+            static get is() {
+                return 'kct-vbox';
+            }
+            static get properties() {
+                return {
+                    fit: { type: Boolean, value: false }
+                }
+            }
+        }
+        customElements.define(KctVbox.is, KctVbox);
+    </script>
+</dom-module>

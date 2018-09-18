@@ -1,0 +1,77 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-socket/kct-socket-manager.html">
+<link rel="import" href="../../../../cores/vendors/hopscotch/hopscotch.html">
+
+<dom-module id="worksheet-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
+            <project-tour import="pages/project-tour.html" name="tour" route="{{ route }}" state="[[ state ]]"></project-tour>
+            <project-list import="pages/project-list.html" name="list" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" config="{{ config }}"></project-list>
+            <project-form import="pages/project-form.html" name="form" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" config="{{ config }}"></project-form>
+            <project-home import="pages/project-home.html" name="home" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" config="{{ config }}"></project-home>
+        </kct-pages>
+
+    </template>
+    <script>
+        class WorksheetPage extends KctView {
+            static get is() {
+                return 'worksheet-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Worksheet', notify: true },
+                    page: { type: String }
+                };
+            }
+
+            handleRouteParams(project) {
+                let page;
+
+                if (project === undefined) {
+                    page = 'list';
+                } else {
+                    if (project == 'tour') {
+                        page = 'tour';
+                    } else if (project == 'create') {
+                        page = 'form';
+                    } else {
+                        page = 'home';
+                    }
+                }
+
+                this.set('page', page);
+            }
+            
+            handleRouteLeave() {
+                this.__stopTour();
+            }
+
+            handleResizing(width, height) {
+                let pageItem = this.$['switcher'].selectedItem;
+
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.handleResizing(width, height);
+                }
+            }
+
+            __stopTour() {
+                hopscotch.endTour(true);
+            }
+        }
+
+        customElements.define(WorksheetPage.is, WorksheetPage);
+    </script>
+</dom-module>

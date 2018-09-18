@@ -1,0 +1,205 @@
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-file-button">
+    <template>
+        <style>
+            :host {
+                display: block;
+                padding: 8px 0;
+            }
+            .container {
+                position: relative;
+                @apply --layout-horizontal;
+            }
+            .container > .flex {
+                position: relative;
+                @apply --layout-flex;
+            }
+            .button-browse {
+                margin: 0 5px 0 0;
+                background-color: var(--button-browse-background, var(--paper-blue-500));
+                color: var(--button-browse-color, #FFFFFF);
+                font-weight: 400;
+                padding: 0.5em 0.57em;
+                @apply --button-browse;
+            }
+            .button-browse iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+            }
+            .button-clear {
+                width: 28px;
+                height: 28px;
+                padding: 4px;
+                position: absolute;
+                top: 50%;
+                margin-top: -14px;
+                right: 0;
+                color: #777;
+            }
+            #browser {
+                display: none;
+            }
+            .add-ons {
+                min-width: 28px;
+
+            }
+            .button-value {
+                --paper-input-container: {
+                    padding: 0;
+                };
+                --paper-input-container-input: {
+                    padding: 6px 0   6px 0;
+                };
+            }
+            .button-progress {
+                --paper-progress-height: 2px;
+                --paper-progress-active-color: var(--paper-blue-500);
+
+                display: block;
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <input id="browser" type="file" on-change="__onBrowserChange">
+
+        <div class="container">
+            <div>
+                <paper-button class="button-browse" on-tap="__onBrowseTap"><iron-icon icon="file-upload"></iron-icon>&nbsp;[[ label ]]</paper-button>
+            </div>
+            <div class="flex">
+                <paper-input class="button-value" value="[[ value ]]" readonly no-label-float></paper-input>
+                <paper-progress value="[[ progress ]]" hidden$="[[ !uploading ]]" class="button-progress"></paper-progress>
+            </div>
+            <div class="add-ons">
+                <paper-icon-button on-tap="__onClearTap" hidden$="[[ __hideClear(value, uploading) ]]" class="button-clear" icon="clear"></paper-icon-button>
+                
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class KctFileButton extends Polymer.Element {
+            static get is() {
+                return 'kct-file-button';
+            }
+            static get properties() {
+                return {
+                    label: { type: String, value: 'Browse' },
+                    value: { type: String, value: '', notify: true },
+                    file: { type: Object, notify: true },
+                    progress: { type: Number, value: 0 },
+                    uploading: { type: Boolean, value: false }
+                }
+            }
+            clear() {
+                this.set('value', '');
+                this.set('file', null);
+                this.$.browser.value = '';
+            }
+            upload(path, payload = {}) {
+
+                if ( ! this.file) {
+                    return Promise.resolve({ 
+                        success: false,
+                        message: 'No file to upload'
+                    });
+                }
+
+                let defer = {};
+                
+                defer.promise = new Promise(res => {
+                    defer.resolve = res;
+                });
+
+                this.set('progress', 0);
+                this.set('uploading', true);
+
+                this.$.ajax.__resolveUrl(path).then(url => {
+                    
+                    // create custom ajax
+                    let xhr = new XMLHttpRequest();
+
+                    xhr.upload.addEventListener('progress', e => {
+                        if (e.lengthComputable) {
+                            let progress = parseInt((e.loaded / e.total) * 100, 10);
+                            this.set('progress', progress);
+                        }
+                    });
+
+                    xhr.onreadystatechange = _ => {
+                        if (xhr.readyState === 4) {
+                            
+                            this.set('progress', 100);
+                            this.set('uploading', false);
+
+                            let status = xhr.status;
+                            let success = (status >= 200 && status <= 300) || status == 304 || status == 1223 || ! status;
+                            
+                            if (success) {
+                                try {
+                                    let response = JSON.parse((xhr.responseText || '').replace(/^\{\}&&/,''));
+                                    defer.resolve(response);
+                                } catch(e) {};
+                            }
+                        }
+                    };
+
+                    let fd = new FormData();
+
+                    for(let key in payload) {
+                        let val = payload[key];
+                        if (typeof val === 'object') {
+                            val = JSON.stringify(val);
+                        }
+                        fd.append(key, val);
+                    }
+
+                    fd.append('userfile', this.file);
+
+                    xhr.open('POST', url, true);
+                    
+                    this.$.ajax.__resolveToken().then(token => {
+                        if (token) {
+                            xhr.setRequestHeader('Authorization','Bearer ' + token);
+                        }
+                        xhr.send(fd);
+                    });
+                });
+
+                return defer.promise;
+            }
+            __hideClear(value, uploading) {
+                let show = true;
+
+                show = show && !!value;
+                show = show && !uploading;
+
+                return !show;
+            }
+            __onBrowseTap() {
+                this.$.browser.click();
+            }
+            __onBrowserChange() {
+                let file = this.$.browser.files[0];
+                this.set('value', file.name);
+                this.set('file', file);
+
+                // reset value
+                this.$.browser.value = '';
+            }
+            __onClearTap() {
+                this.clear();
+            }
+        }
+        customElements.define(KctFileButton.is, KctFileButton);
+    </script>
+</dom-module>

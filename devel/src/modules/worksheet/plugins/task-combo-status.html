@@ -1,0 +1,135 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="task-combo-status">
+    <template>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-combobox 
+            id="combo" 
+            items="[[ statuses ]]" 
+            placeholder="Search or select status..." 
+            item-label-path="text" 
+            item-value-path="text" 
+            no-label-float 
+            hide-clear>     
+            <!-- <paper-icon-button slot="toolbar" icon="close" on-tap="__onComboCloseTap"></paper-icon-button> -->
+            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+            <template>
+                <style>
+                    :host {
+                        --kct-combobox-item-padding: 5px 16px;
+                    }
+                    iron-icon {
+                        --iron-icon-width: 18px;
+                        --iron-icon-height: 18px;
+                        position: relative;
+                        top: -1px;
+                    }
+                    span { font-size: 13px; font-weight: 500;  }
+                </style>
+                <div>
+                    <iron-icon icon="bookmark-border"></iron-icon>&nbsp;
+                    <span>[[ item.text ]]</span>
+                </div>
+            </template>
+        </kct-combobox>
+
+    </template>
+    <script>
+        class TaskComboStatus extends Polymer.Element {
+            static get is() {
+                return 'task-combo-status';
+            }
+
+            static get properties() {
+                return {
+                    workspace: { type: Object },
+                    status: { type: Number },
+                    statuses: { type: Array, value: () => ([]) }
+                };
+            }
+
+            open() {
+                this.$.combo.value = '';
+                this.load().then(() => {
+                    this.$.combo.open();
+                });
+            }
+
+            close() {
+                this.$.combo.close();
+            }
+
+            clear() {
+                this.$.combo.value = '';
+            }
+
+            getSelectedStatus() {
+                let value = this.$.combo.value;
+                return this.$.combo.getModelForValue(value);
+            }
+
+            load(status) {
+                this.set('statuses', []);
+
+                if (status === undefined) {
+                    status = this.status;
+                }
+
+                let worker = this.workspace.worker;
+
+                return this.$.ajax.GET('/bpmn/statuses/' + worker).then(res => {
+                    
+                    let statuses = [];
+
+                    if (res.data && res.data.length) {
+                        if (status) {
+                            let curr, next;
+
+                            curr = res.data.find(item => {
+                                return item.id == status;
+                            });
+
+                            if (curr && curr.next) {
+                                (curr.next || []).forEach(stat => {
+                                    if (stat.text) {
+                                        statuses.push({
+                                            id: stat.id,
+                                            text: stat.text
+                                        });    
+                                    }
+                                });
+                            }
+                        } else {
+                            let stat = res.data[0];
+
+                            if (stat.text) {
+                                statuses.push({
+                                    id: stat.id,
+                                    text: stat.text
+                                });    
+                            }
+                            
+                        }
+                    }
+
+                    this.set('statuses', statuses);
+
+                });
+            }
+
+            __onComboCloseTap() {
+                this.close();
+                this.dispatchEvent(new CustomEvent('action'));
+            }
+        }
+
+        customElements.define(TaskComboStatus.is, TaskComboStatus);
+    </script>
+</dom-module>

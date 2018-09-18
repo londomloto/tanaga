@@ -1,0 +1,141 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="user-invitation">
+    <template>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-dialog id="dialog" title="Invitation" width="400">
+            <template preserve-content>
+                <style include="theme-helper">
+                    paper-input {
+                        --paper-input-container-input: { 
+                            font-weight: 500;
+                        };
+                    }
+                    .message {
+                        padding: 10px;
+                        background-color: var(--paper-yellow-100);
+                        border: 1px solid var(--paper-yellow-200);
+                        font-size: 13px;
+                        border-radius: 2px;
+                    }
+                </style>
+                <div slot="dialog-body">
+
+                    <div class="message" hidden$="[[ __hideMessage(message) ]]">[[ message ]]</div>
+
+                    <paper-input 
+                        id="email"
+                        label="Email address"  
+                        value="{{ email }}" 
+                        tabindex="0"  
+                        autofocus 
+                        always-float-label></paper-input>
+
+                    <vaadin-combo-box 
+                        label="Default role" 
+                        items="[[ roles ]]" 
+                        value="{{ role }}" 
+                        item-label-path="sr_name" 
+                        item-value-path="sr_id" 
+                        always-float-label></vaadin-combo-box>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button id="btn-invite" on-tap="__onInviteTap" disabled$="[[ invalid ]]">Invite</paper-button>
+                    <paper-button on-tap="__onCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+    </template>
+    <script>
+        class UserInvitation extends Polymer.Element {
+            static get is() {
+                return 'user-invitation';
+            }
+            static get properties() {
+                return {
+                    email: { type: String },
+                    role: { type: String },
+                    invalid: { type: Boolean, value: true },
+                    message: { type: String, value: '' },
+                    roles: { type: Array, value: () => ([]) }
+                };
+            }
+            static get observers() {
+                return [
+                    '__validationChanged(email, role)',
+                    '__emailChanged(email)'
+                ];
+            }
+            open() {
+                
+                this.set('email', '');
+                this.set('role', '');
+
+                this.__loadDependencies().then(() => {
+                    this.set('email', '');
+                    this.$.dialog.open();
+                });
+            }
+            close() {
+                this.$.dialog.close();
+            }
+            __loadDependencies() {
+                return this.$.ajax.GET('/roles').then(res => {
+                    this.set('roles', res.data);
+                });
+            }
+            __hideMessage(message) {
+                return !(!!message);
+            }
+            __emailChanged(email) {
+                this.set('message', '');
+            }
+            __validationChanged(email, role) {
+                let valid = true;
+                
+                valid = valid && email;
+                valid = valid && role;
+
+                this.set('invalid', !valid);
+            }
+            __onInviteTap() {
+                if (this.email) {
+                    let payload = {
+                        email: this.email,
+                        role: this.role
+                    };
+
+                    this.$['btn-invite'].disabled = true;
+                    this.$.dialog.title = 'Please Wait...';
+
+                    this.$.ajax.POST('/users/invite', payload).then(res => {
+                        this.$['btn-invite'].disabled = false;
+                        this.$.dialog.title = 'Invitation';
+
+                        if (res.success) {
+                            let e = new CustomEvent('invited', {
+                                detail: {
+                                    user: res.data
+                                }
+                            });
+                            this.dispatchEvent(e);
+                        } else {
+                            this.set('message', res.message);
+                        }
+                    });
+                }
+            }
+            __onCloseTap() {
+                this.close();
+            }
+        }
+
+        customElements.define(UserInvitation.is, UserInvitation);
+    </script>
+</dom-module>

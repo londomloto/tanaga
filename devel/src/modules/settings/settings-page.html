@@ -1,0 +1,99 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="settings-index-page.html">
+<link rel="import" href="settings-group-page.html">
+
+<dom-module id="settings-page">
+    <template>
+        <style>
+            :host { 
+                display: block;  
+                height: var(--setting-page-height, 584px);
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" on-itemactivate="__onPageActivate">
+            <settings-index-page name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]"></settings-index-page>
+            <settings-group-page name="group" route="{{ route }}" config="{{ config }}" state="[[ state ]]" user="[[ user ]]"></settings-group-page>
+        </kct-pages>
+
+    </template>
+    <script>
+
+        class SettingsPage extends KctView {    
+            static get is() {
+                return 'settings-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Pengaturan' },
+                    page: { type: String, value: 'index' },
+                    height: { type: Number },
+                    width: { type: Number }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__stateChanged(state.*)'
+                ];
+            }
+
+            handleResizing(width, height) {
+                this.set('height', height);
+                this.set('width', width);
+
+                this.updateStyles({
+                    '--setting-page-height': height + 'px'
+                });
+
+                let pageNode = this.$.pages.selectedItem;
+
+                if (pageNode && pageNode.handleResizing) {
+                    pageNode.handleResizing(width, height);
+                }
+            }
+
+            __stateChanged(changed) {
+                let module = this.state.module;
+
+                if (module == 'settings') {
+                    if (this.state.setting) {
+                        if (this.get('page') != 'group') {
+                            (this.set('page', 'group'));  
+                        }
+                    } else {
+                        this.set('page', 'index');
+                    }
+                }
+            }
+
+            __onPageActivate(e) {
+                let pageNode = e.detail.activeItem;
+
+                if (pageNode) {
+                    if (pageNode.activate) {
+                        pageNode.activate();
+                    }
+
+                    let timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        timer = null;
+
+                        if ( ! pageNode.__resized && pageNode.handleResizing) {
+                            pageNode.__resized = true;
+                            pageNode.handleResizing(this.width, this.height);
+                        }
+                    }, 1);
+                }
+            }
+        }
+
+        customElements.define(SettingsPage.is, SettingsPage);
+    </script>
+</dom-module>

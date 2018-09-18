@@ -1,0 +1,295 @@
+<link rel="import" href="../../../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../maps-provider.html">
+
+<dom-module id="mapbox-maps-provider">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            #map, #mask {
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1;
+            }
+            #mask {
+                display: none;
+                z-index: 2;
+                background-color: rgba(0,0,0,.2);
+            }
+            #mask.open {
+                display: block;
+            }
+            #mask > paper-spinner {
+                position: absolute;
+                padding: 8px;
+                background-color: #fff;
+                border-radius: 50%;
+                top: 50%;
+                margin-top: -22px;
+                left: 50%;
+                margin-left: -22px;
+            }
+            .marker {
+                display: block;
+                position: absolute;
+                color: var(--app-danger);
+                --iron-icon-width: 48px;
+                --iron-icon-height: 48px;
+            }
+        </style>
+        <div id="map"></div>
+        <div id="mask" class="open">
+            <paper-spinner active></paper-spinner>
+        </div>
+    </template>
+    <script>
+        class MapboxMapsProvider extends MapsProvider {
+            static get is() {
+                return 'mapbox-maps-provider';
+            }
+
+            static get properties() {
+                return {
+                    mapApiKey: { type: String, value: 'pk.eyJ1IjoibG9uZG9tbG90byIsImEiOiJjajJnZXRueHEwMDAwMzNwbTUzOTE4eG51In0.yxZyXfx-yQHf7NTlKR6t_g' },
+                    mapStyle: { type: String, value: 'mapbox://styles/mapbox/streets-v9' }
+                }
+            }
+
+            constructor() {
+                super();
+
+                this.__mapboxResizeHandler = this.__onMapBoxResize.bind(this);
+                this.__mapboxDragEndHandler = this.__onMapBoxDragEnd.bind(this);
+                this.__mapboxZoomEndHandler = this.__onMapBoxZoomEnd.bind(this);
+                this.__mapboxPointingHandler = this.__onMapBoxPointing.bind(this);
+
+                this.__mapbox = null;
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                this.load();
+            }
+
+            disconnectedCallback() {
+                if (this.__mapbox) {
+                    this.__removeMapListeners();    
+                }
+                super.disconnectedCallback();
+            }
+
+            get api() {
+                return mapboxgl;
+            }
+
+            get map() {
+                return this.__mapbox;
+            }
+
+            load() {
+                if (this.__mapbox) {
+                    return Promise.resolve();
+                }
+                return this.__load();
+            }
+
+            mask() {
+                this.$.mask.querySelector('paper-spinner').active = true;
+                this.$.mask.classList.add('open');
+            }
+
+            unmask() {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+                    this.$.mask.querySelector('paper-spinner').active = false;
+                    this.$.mask.classList.remove('open');
+                }, 1000);
+            }
+
+            resize() {
+                if (this.__mapbox) {
+                    let center = Object.assign({}, this.center);
+                    this.__mapbox.resize();
+                    this.setProperties({
+                        'center.latitude': center.latitude,
+                        'center.longitude': center.longitude
+                    });
+                }
+            }
+
+            pointing() {
+                this.__pointing = this._defer();
+                return this.__pointing.promise;
+            }
+
+            __load() {
+                this.mask();
+
+                let libs, link, file, load;
+
+                load = this._defer();
+                file = this.resolveUrl('mapbox-gl.js');
+                libs = document.head.querySelector('script[src="' + file + '"]');
+
+                if ( ! libs) {
+                    libs = document.createElement('script');
+                    libs.src = file;
+
+                    libs.addEventListener('load', () => {
+                        this.__initMap();
+                        this.unmask();
+                        load.resolve();
+                    });
+
+                    document.head.appendChild(libs);
+
+                    file = this.resolveUrl('mapbox-gl.css');
+                    
+                    link = document.createElement('link');
+                    link.type = 'text/css';
+                    link.rel = 'stylesheet';
+                    link.href = file;
+
+                    document.head.appendChild(link);
+                } else {
+                    this.__initMap();
+                    this.unmask();
+                    load.resolve();
+                }
+                
+                return load.promise;
+            }
+
+            __initMap() {
+                if (this.__mapbox) {
+                    return;
+                }
+
+                mapboxgl.accessToken = this.mapApiKey;
+
+                this.__mapbox = new mapboxgl.Map({
+                    container: this.$.map,
+                    style: this.mapStyle,
+                    zoom: this.zoom,
+                    pitch: this.tilt ? 45 : 0
+                });
+
+                this.__addMapListeners();
+                this.__updateCenter();
+
+                if (this.markers.length) {
+                    this.markers.forEach((marker) => {
+                        this.__renderMarker(marker);
+                    })
+                }
+            }
+
+            __updateCenter() {
+                if (this.__debounce) {
+                    this.__debounce.cancel();
+                }
+
+                this.__debounce = Polymer.Debouncer.debounce(
+                    this.__debounce,
+                    Polymer.Async.timeOut.after(300),
+                    () => {
+                        if (this.__mapbox) {
+                            let lat = this.center.latitude,
+                                lon = this.center.longitude;
+
+                            let ncenter = new mapboxgl.LngLat(lon, lat),
+                                ocenter = this.__mapbox.getCenter();
+
+                            if ( ! ocenter) {
+                                this.__mapbox.setCenter(ncenter);
+                            } else {
+                                if (ocenter.lng != ncenter.lng && ocenter.lat != ncenter.lat) {
+                                    this.__mapbox.panTo(ncenter);
+                                }
+                            }
+                        }
+                    }
+                );
+
+                Polymer.enqueueDebouncer(this.__debounce);
+                
+            }
+
+            __renderMarker(marker = {}) {
+                if ( ! this.__mapbox) {
+                    return;
+                }
+
+                if (marker.mapbox || ! marker.longitude || ! marker.latitude) {
+                    return;    
+                }
+
+                let icon = document.createElement('iron-icon');
+
+                icon.icon = marker.icon || 'maps:place';
+                icon.className = 'marker' + (marker.cls ? ' ' + marker.cls : '');
+
+                let instance = new mapboxgl.Marker(icon, {
+                    offset: marker.offset ? [marker.offset.x || 0, marker.offset.y || 0] : [-24, -48]
+                });
+
+                instance.setLngLat([marker.longitude, marker.latitude]);
+                instance.addTo(this.__mapbox);
+                
+                marker.mapbox = instance;
+            }
+
+            __removeMarker(marker) {
+                if (marker.mapbox) {
+                    marker.mapbox.remove();
+                    delete marker.mapbox;
+                }
+            }
+
+            __addMapListeners() {
+                this.__mapbox.on('dragend', this.__mapboxDragEndHandler);
+                this.__mapbox.on('zoomend', this.__mapboxZoomEndHandler);
+                this.__mapbox.on('resize', this.__mapboxResizeHandler);
+                this.__mapbox.on('mousedown', this.__mapboxPointingHandler);
+            }
+
+            __removeMapListeners() {
+                this.__mapbox.off('dragend', this.__mapboxDragEndHandler);
+                this.__mapbox.off('zoomend', this.__mapboxZoomEndHandler);
+                this.__mapbox.off('resize', this.__mapboxResizeHandler);
+                this.__mapbox.off('mousedown', this.__mapboxPointingHandler);
+            }
+
+            __onMapBoxDragEnd() {
+                let center = this.__mapbox.getCenter();
+                this.setProperties({
+                    'center.latitude': center.lat,
+                    'center.longitude': center.lng
+                });
+            }
+
+            __onMapBoxZoomEnd() {
+                this.set('zoom', this.__mapbox.getZoom());
+            }
+
+            __onMapBoxResize() {
+                this.__updateCenter();
+            }
+
+            __onMapBoxPointing(e) {
+                if (this.__pointing) {
+                    this.__pointing.resolve({
+                        longitude: e.lngLat.lng,
+                        latitude: e.lngLat.lat
+                    });
+                }
+            }
+        }
+        customElements.define(MapboxMapsProvider.is, MapboxMapsProvider);
+    </script>
+</dom-module>

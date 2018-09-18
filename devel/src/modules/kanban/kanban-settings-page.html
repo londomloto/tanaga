@@ -1,0 +1,81 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="kanban-settings-index-page.html">
+<link rel="import" href="kanban-settings-editor-page.html">
+
+<dom-module id="kanban-settings-page">
+    <template>
+        <style>
+            :host { 
+                display: block; 
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" attr-for-selected="name" selected="[[ page ]]">
+            <kanban-settings-index-page  name="index"  route="{{ route }}" state="[[ state ]]"></kanban-settings-index-page>
+            <kanban-settings-editor-page name="editor" route="{{ route }}" state="[[ state ]]"></kanban-settings-editor-page>
+        </kct-pages>
+
+    </template>
+    <script>
+        class KanbanSettingsPage extends KctView {
+
+            static get is() {
+                return 'kanban-settings-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Kanban Setting' },
+                    page: { type: String, value: 'index' }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__pageChanged(page)'
+                ]
+            }
+
+            handleResizing(width, height) {
+                let pageNode = this.$.pages.selectedItem;
+                
+                if (pageNode && pageNode.handleResizing) {
+                    pageNode.handleResizing(width, height);
+                }
+            }
+
+            handleRouteParams(setting, action) {
+                if (setting != 'kanban-settings') return;
+
+                switch(action) {
+                    case 'add':
+                    case 'edit':
+                        this.set('page', 'editor');
+                        break;
+                    default:
+                        this.set('page', 'index');
+                }
+            }
+
+            __pageChanged(page) {
+                let pageNode = this.$.pages.selectedItem;
+
+                if (pageNode) {
+                    if (pageNode.activate) {
+                        pageNode.activate();
+                    }
+                }
+            }
+
+        }
+
+        customElements.define(KanbanSettingsPage.is, KanbanSettingsPage);
+    </script>
+</dom-module>

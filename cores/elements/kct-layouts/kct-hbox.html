@@ -1,0 +1,32 @@
+<dom-module id="kct-hbox">
+    <template>
+        <style>
+            :host { 
+                display: block; 
+                @apply --layout-horizontal;
+            }
+
+            :host([fit]) {
+                height: 100%;
+            }
+
+            ::slotted(.flex)   { @apply --layout-flex;   }
+            ::slotted(.flex-2) { @apply --layout-flex-2; }
+            ::slotted(.flex-3) { @apply --layout-flex-3; }
+        </style>
+        <slot></slot>
+    </template>
+    <script>
+        class KctHbox extends Polymer.Element {
+            static get is() {
+                return 'kct-hbox';
+            }
+            static get properties() {
+                return {
+                    fit: { type: Boolean, value: false }
+                }
+            }
+        }
+        customElements.define(KctHbox.is, KctHbox);
+    </script>
+</dom-module>

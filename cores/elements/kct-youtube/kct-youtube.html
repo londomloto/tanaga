@@ -1,0 +1,181 @@
+<dom-module id="kct-youtube">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+            .container {
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+            #overlay {
+                background-color: transparent;
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 50px;
+            }
+            #player {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+
+        <div class="container">
+            <div id="player"></div>
+            <div id="overlay" on-tap="__onOverlayTap"></div>
+        </div>
+
+    </template>
+    <script>
+
+        {
+            let managers = [];
+            let loadingScript = false;
+
+            if (window.onYouTubeIframeAPIReady === undefined) {
+                window.onYouTubeIframeAPIReady = function() {
+
+                    managers.forEach(c => {
+                        if ( ! c.ready) {
+                            c.ready = true;
+                            c.element.setup();
+                        }
+                    });
+                };
+            }
+
+            class KctYoutube extends Polymer.Element {
+                static get is() {
+                    return 'kct-youtube';
+                }
+                static get properties() {
+                    return {
+                        url: { type: String },
+                        autoplay: { type: Boolean, value: false }
+                    };
+                }
+                static get observers() {
+                    return [
+                        '__urlChanged(url)'
+                    ];
+                }
+                constructor() {
+                    super();
+
+                    managers.push({
+                        element: this,
+                        ready: false
+                    });
+
+                    this.__player = null;
+
+                    this.__loader = {};
+                    this.__loader.promise = new Promise(resolve => { this.__loader.resolve = resolve; });
+                }
+                getVideoId() {
+                    let matches = (this.url || '').match(/(\/embed\/(.*)|watch\?v=(.*))/);
+                    let videoId;
+                    
+                    if (matches) {
+                        videoId = matches[2] || matches[3];
+                    }
+                    return videoId;
+                }
+                loadApi() {
+
+                    if (loadingScript) {
+                        return this.__loader.promise;
+                    }
+
+                    loadingScript = true;
+
+                    let apiLoaded = window.YT && window.YT.Player;
+                    let scriptLoaded = document.getElementById('youtube-api');
+
+                    if ( ! apiLoaded && ! scriptLoaded) {
+                        let offset = document.getElementsByTagName('script')[0];
+                        let script = document.createElement('script');
+
+                        script.id = 'youtube-api';
+                        script.src = '//www.youtube.com/iframe_api';
+
+                        Polymer.RenderStatus.afterNextRender(this, () => {
+                            offset.parentNode.insertBefore(script, offset);
+                        });
+                        
+                    }
+
+                    return this.__loader.promise;  
+                }
+                play() {
+                    this.loadApi().then(() => {
+                        this.__player.playVideo();
+                    });
+                }
+                pause() {
+                    this.loadApi().then(() => {
+                        this.__player.pauseVideo();
+                    });
+                }
+                resume() {
+                    this.loadApi().then(() => {
+                        this.__player.resumeVideo();
+                    });
+                }
+                setup() {
+                    if ( ! this.__player) {
+                        
+                        // let videoId = this.getVideoId();
+
+                        let options = {
+                            width: '100%',
+                            height: '100%', 
+                            //videoId: videoId,
+                            events: {
+                                onReady: () => {
+                                    this.__loader.resolve();
+                                }
+                            }
+                        };
+
+                        this.__player = new YT.Player(this.$.player, options);
+                    }
+                }
+                __urlChanged() {
+                    this.loadApi().then(() => {
+                        
+                        let videoId = this.getVideoId();
+
+                        if (videoId) {
+                            if (this.autoplay) {
+                                this.__player.loadVideoById(videoId);
+                            } else {
+                                this.__player.cueVideoById(videoId);
+                            }
+                        }
+                    });
+                }
+                __onOverlayTap() {
+                    if ( ! this.__player) return;
+                    let state = this.__player.getPlayerState();
+                    //if (state == -3) return;
+
+                    if (state == 1) {
+                        this.pause();
+                    } else {
+                        this.play();
+                    }
+                }
+            }
+            customElements.define(KctYoutube.is, KctYoutube);
+
+        }
+
+        
+    </script>
+</dom-module>

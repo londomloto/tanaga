@@ -1,0 +1,19 @@
+<script>
+    class TextHelper {
+
+        static repeat(pattern, count, sep) {
+            if (count < 1) {
+                count = 0;
+            }
+
+            let buf = [], i;
+
+            for (i = count; i--; ) {
+                buf.push(pattern);
+            }
+
+            return buf.join(sep || '');
+        }
+
+    }
+</script>

@@ -1,0 +1,405 @@
+<link rel="import" href="../../../vendors/highcharts/highcharts.html">
+<link rel="import" href="../../../mixins/mixins.html">
+
+<script>
+    Mixins.Chart = Polymer.dedupingMixin(superclass => {
+
+        const THEMES = {
+            dark: {
+                colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066', '#eeaaee', '#55BF3B', '#DF5353', '#7798BF', '#aaeeee'],
+                chart: {
+                    // backgroundColor: '#343435',
+                    backgroundColor: 'rgba(255,255,255,0)',
+                    style: {
+                        fontFamily: '"Segoe UI", Roboto, Arial, sans-serif'
+                    },
+                    plotBorderColor: '#343435'
+                },
+                title: {
+                    style: {
+                        color: '#FFFFFF',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textDecoration: 'underline'
+                    }
+                },
+                subtitle: {
+                    style: {
+                        color: '#FFFFFF',
+                        fontSize: '13px',
+                        fontWeight: 'normal'
+                    }
+                },
+                xAxis: {
+                    gridLineColor: '#707073',
+                    labels: {
+                        style: {
+                            color: '#E0E0E3'
+                        }
+                    },
+                    lineColor: '#707073',
+                    minorGridLineColor: '#505053',
+                    tickColor: '#707073',
+                    title: {
+                        style: {
+                            color: '#A0A0A3'
+
+                        }
+                    }
+                },
+                yAxis: {
+                    gridLineColor: '#707073',
+                    labels: {
+                        style: {
+                            color: '#E0E0E3'
+                        }
+                    },
+                    lineColor: '#707073',
+                    minorGridLineColor: '#505053',
+                    tickColor: '#707073',
+                    tickWidth: 1,
+                    title: {
+                        style: {
+                            color: '#A0A0A3'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    style: {
+                        color: '#F0F0F0'
+                    }
+                },
+                plotOptions: {
+                    pie: {
+                        borderColor: '#343435',
+                        borderWidth: 0
+                    },
+                    column: {
+                        dataLabels: {
+                            enabled: false
+                        }
+                    },
+                    series: {
+                        //animation: false,
+                        dataLabels: {
+                            color: '#FFFFFF',
+                            style: {
+                                textOutline: 'none'
+                            }
+                        },
+                        marker: {
+                            lineColor: '#333'
+                        }
+                    },
+                    boxplot: {
+                        fillColor: '#505053'
+                    },
+                    candlestick: {
+                        lineColor: 'white'
+                    },
+                    errorbar: {
+                        color: 'white'
+                    }
+                },
+                legend: {
+                    itemStyle: {
+                        color: '#E0E0E3'
+                    },
+                    itemHoverStyle: {
+                        color: '#FFF'
+                    },
+                    itemHiddenStyle: {
+                        color: '#606063'
+                    }
+                },
+                labels: {
+                    style: {
+                        color: '#707073'
+                    }
+                },
+                drilldown: {
+                    activeAxisLabelStyle: {
+                        color: '#F0F0F3'
+                    },
+                    activeDataLabelStyle: {
+                        color: '#F0F0F3'
+                    }
+                },
+
+                navigation: {
+                    buttonOptions: {
+                        symbolStroke: '#DDDDDD',
+                        theme: {
+                            fill: '#505053'
+                        }
+                    }
+                },
+
+                rangeSelector: {
+                    buttonTheme: {
+                        fill: '#505053',
+                        stroke: '#000000',
+                        style: {
+                            color: '#CCC'
+                        },
+                        states: {
+                            hover: {
+                                fill: '#707073',
+                                stroke: '#000000',
+                                style: {
+                                    color: 'white'
+                                }
+                            },
+                            select: {
+                                fill: '#000003',
+                                stroke: '#000000',
+                                style: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    },
+                    inputBoxBorderColor: '#505053',
+                    inputStyle: {
+                        backgroundColor: '#333',
+                        color: 'silver'
+                    },
+                    labelStyle: {
+                        color: 'silver'
+                    }
+                },
+
+                navigator: {
+                    handles: {
+                        backgroundColor: '#666',
+                        borderColor: '#AAA'
+                    },
+                    outlineColor: '#CCC',
+                    maskFill: 'rgba(255,255,255,0.1)',
+                    series: {
+                        color: '#7798BF',
+                        lineColor: '#A6C7ED'
+                    },
+                    xAxis: {
+                        gridLineColor: '#505053'
+                    }
+                },
+                scrollbar: {
+                    barBackgroundColor: '#808083',
+                    barBorderColor: '#808083',
+                    buttonArrowColor: '#CCC',
+                    buttonBackgroundColor: '#606063',
+                    buttonBorderColor: '#606063',
+                    rifleColor: '#FFF',
+                    trackBackgroundColor: '#404043',
+                    trackBorderColor: '#404043'
+                },
+
+                // special colors for some of the
+                legendBackgroundColor: 'rgba(0, 0, 0, 0.5)',
+                background2: '#505053',
+                dataLabelsColor: '#B0B0B3',
+                textColor: '#C0C0C0',
+                contrastTextColor: '#F0F0F3',
+                maskColor: 'rgba(255,255,255,0.3)'
+            },
+
+            light: {
+                colors: ['#7cb5ec', '#434348', '#90ed7d', '#f7a35c', '#8085e9', '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1'],
+                chart: {
+                    style: {
+                        fontFamily: '"Segoe UI", Roboto, Arial, sans-serif'
+                    }
+                },
+                title: {
+                    margin: 10,
+                    style: {
+                        color: '#607D8B',
+                        fontSize: '16px',
+                        fontWeight: '500'
+                    }
+                },
+                subtitle: {
+                    y: 30,
+                    margin: 10,
+                    style: {
+                        color: '#607D8B',
+                        fontSize: '12px',
+                        fontWeight: 'normal'
+                    }
+                },
+                xAxis: {
+                    gridLineColor: '#e6e6e6',
+                    labels: {
+                        style: {
+                            color: '#607D8B'
+                        }
+                    },
+                    lineColor: '#e6e6e6',
+                    minorGridLineColor: '#e6e6e6',
+                    tickColor: '#e6e6e6',
+                    title: {
+                        style: {
+                            color: '#607D8B'
+
+                        }
+                    }
+                },
+                yAxis: {
+                    gridLineColor: '#e6e6e6',
+                    labels: {
+                        style: {
+                            color: '#607D8B'
+                        }
+                    },
+                    lineColor: '#e6e6e6',
+                    minorGridLineColor: '#e6e6e6',
+                    tickColor: '#e6e6e6',
+                    tickWidth: 1,
+                    title: {
+                        style: {
+                            color: '#607D8B'
+                        }
+                    }
+                },
+                plotOptions: {
+                    column: {
+                        dataLabels: {
+                            enabled: false
+                        }
+                    },
+                    series: {
+                        //animation: false,
+                        dataLabels: {
+                            color: '#607D8B'
+                        }
+                    }
+                },
+                legend: {
+                    itemStyle: {
+                        color: '#607D8B'
+                    },
+                    itemHoverStyle: {
+                        color: '#607D8B'
+                    },
+                    itemHiddenStyle: {
+                        color: '#CCCCCC'
+                    }
+                }
+            }
+        };
+
+        // Highcharts.setOptions(THEMES.light);
+        // Highcharts.setOptions(THEMES.dark);
+        // Highcharts.setOptions(THEMES.phantom);
+
+        Highcharts.setOptions({
+            lang: {
+                // numericSymbols: null //otherwise by default ['k', 'M', 'G', 'T', 'P', 'E']
+                numericSymbols: null
+            }
+        });
+
+        return class extends superclass {
+            static get properties() {
+                return {
+                    title: { type: String },
+                    subtitle: { type: String },
+                    theme: { type: String, value: 'light', reflectToAttribute: true },
+                    styles: { type: Object, computed: '__computeStyles(theme)' },
+                    legend: { type: Object },
+                    animation: { type: Boolean, value: false },
+                    showLegend: { type: Boolean, value: false },
+                    showLabel: { type: Boolean, value: false },
+                    showHeaders: { type: Boolean, value: false },
+                    hidden: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+            static get observers() {
+                return [
+                    '__titleChanged(title, subtitle)',
+                    '__themeChanged(theme)',
+                    '__animationChanged(animation)',
+                    '__legendChanged(legend.*)'
+                ];
+            }
+            resize() {
+                if ( ! this.chart) return;
+                this.chart.reflow();
+            }
+            print() {
+                if ( ! this.chart) return;
+
+                let options = {};
+
+                if (this.title) {
+                    let name = this.title.toLowerCase().replace(/([^a-z0-9]+)/, '-');
+                    options.filename = name;
+                }
+                this.chart.exportChartLocal(options);
+            }
+            refresh() {
+
+            }
+            __legendChanged() {
+                if ( ! this.chart) return;
+                
+                this.chart.update({
+                    legend: this.legend
+                });
+            }
+            __animationChanged(animation) {
+                if ( ! this.chart) return;
+
+                this.chart.update({
+                    plotOptions: {
+                        series: {
+                            animation: animation
+                        }
+                    }
+                });
+            }
+            __themeChanged(theme) {
+                if (this.chart) {
+                    let styles = this.styles;
+                    this.chart.update(styles);
+                }
+            }
+            __computeStyles(theme) {
+
+                let styles = {};
+
+                if (theme) {
+                    Object.assign(styles, THEMES[theme]);
+                }
+
+                return styles;
+            }
+            __titleChanged(title, subtitle) {
+                if ( ! this.chart) return;
+
+                let titleOptions = {},
+                    subtitleOptions = {};
+
+                if (title) {
+                    titleOptions.text = title;
+                }
+
+                if (subtitle) {
+                    subtitleOptions.text = subtitle;
+                }
+
+                //this.chart.setTitle(titleOptions, subtitleOptions);
+            }
+
+            __onPrintTap() {
+                this.print();
+            }
+
+            __onRefreshTap() {
+                this.refresh();
+            }
+        }
+    });
+</script>

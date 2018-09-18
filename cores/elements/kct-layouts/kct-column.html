@@ -1,0 +1,159 @@
+<link rel="import" href="../kct-media/kct-media.html">
+
+<dom-module id="kct-column">
+    <template>
+        <style>
+            :host {
+                display: block;
+
+                --kct-column-columns: 1;
+                --kct-column-gutter: 0.8rem;
+                --kct-column-spacer: 0.8rem;
+
+                margin-left: calc(var(--kct-column-gutter) * -1);
+                margin-right: calc(var(--kct-column-gutter) * -1);
+                padding-left: var(--kct-column-gutter);
+                padding-top: 0;
+                
+                display: -ms-flexbox;
+                display: -webkit-flex;
+                display: flex;
+
+                -webkit-flex-direction: row;
+                    -ms-flex-direction: row;
+                        flex-direction: row;
+
+                -webkit-flex-wrap: wrap;
+                    -ms-flex-wrap: wrap;
+                        flex-wrap: wrap;
+
+                box-sizing: border-box;
+            }
+
+            ::slotted(*) {
+                -webkit-flex: 1;
+                    -ms-flex: 1 1 100%;
+                        flex: 1;
+
+                -webkit-flex-basis: calc((100% - 0.1px - (var(--kct-column-gutter, 0px) * var(--kct-column-columns, 1))) / var(--kct-column-columns, 1));
+                        flex-basis: calc((100% - 0.1px - (var(--kct-column-gutter, 0px) * var(--kct-column-columns, 1))) / var(--kct-column-columns, 1));
+
+                max-width: calc((100% - 0.1px - (var(--kct-column-gutter, 0px) * var(--kct-column-columns, 1))) / var(--kct-column-columns, 1));
+                margin-bottom: var(--kct-column-spacer, 0px);
+                margin-right: var(--kct-column-gutter, 0px);
+                height: var(--grid-item-height);
+                box-sizing: border-box;
+            }
+
+        </style>
+
+        <slot></slot>
+
+        <kct-media screen="{{ screen }}"></kct-media>
+    </template>
+    <script>
+        {
+
+            function __median(array) {
+                let n = array.length;
+                let m = (n % 2 == 0) 
+                    ? (array[(array.length / 2) - 1] + array[(array.length / 2)]) / 2
+                    : (array[Math.floor(array.length / 2)]);
+
+                return Math.floor(m);
+            }
+
+            class KctColumn extends Polymer.Element {
+                static get is() {
+                    return 'kct-column';
+                }
+                static get properties() {
+                    return {
+                        columns: { type: Number, notify: true, value: 1 },
+                        gutter: { type: String, notify: true, value: '0.8rem' },
+                        spacer: { type: String, notify: true, value: '0.8rem' }
+                    };
+                }
+                static get observers() {
+                    return [
+                        '__propsChanged(columns, gutter, spacer)',
+                        '__screenChanged(screen)'
+                    ];
+                }
+                constructor() {
+                    super();
+                    
+                    this.__columns = null;
+
+                    this.__q1 = null;
+                    this.__q2 = null;
+                    this.__q3 = null;
+                }
+                __propsChanged(columns, gutter, spacer) {
+                    let styles = {};
+
+                    if (columns) {
+                        if ( ! this.__columns) {
+                            this.__columns = columns;
+
+                            // segmenting...
+                            // slower ...
+                            // let array = Array.apply(null, { length: columns }).map(Number.call, Number);
+                            let array = [];
+                            for (let i = 0; i < columns; i++) {
+                                array.push(i + 1);
+                            }
+                            let s1 = (array.length % 2 == 0) 
+                                ? array.slice(0, (array.length / 2)) 
+                                : array.slice(0, Math.floor(array.length / 2));
+
+                            
+                            let s2 = array;
+                            
+                            let s3 = (array.length % 2 == 0) 
+                                ? array.slice((array.length / 2), array.length) 
+                                : array.slice(Math.ceil(array.length / 2), array.length);
+                            
+                            this.__q1 = s1.length ? (s1[0] || 1) : 1;
+                            this.__q2 = __median(s2) || Math.ceil(columns / 2);
+                            this.__q3 = s3.length ? (s3[0] || columns) : columns;
+                        }
+
+                        styles['--kct-column-columns'] = columns;
+                    }
+
+                    if (gutter) {
+                        styles['--kct-column-gutter'] = gutter;
+                    }
+
+                    if (spacer) {
+                        styles['--kct-column-spacer'] = spacer;
+                    }
+
+                    this.updateStyles(styles);
+                }
+
+                __screenChanged(screen) {
+                    if (screen) {
+                        let columns;
+                        switch(screen) {
+                            case 'sm':
+                                columns = this.__q1;
+                                break;
+                            case 'md':
+                                columns = this.__q2;
+                                break;
+                            case 'lg':
+                                columns = this.__q3;
+                                break;
+                        }
+                        columns = columns || this.__columns;
+                        this.updateStyles({'--kct-column-columns': columns});
+                    }
+                }
+            }
+            customElements.define(KctColumn.is, KctColumn);
+        }
+        
+    </script>
+</dom-module>

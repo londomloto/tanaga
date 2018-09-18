@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>paper-button-group demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../../polymer/polymer.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../paper-button/paper-button.html">
+    <link rel="import" href="../../paper-styles/paper-styles.html">
+    <link rel="import" href="../paper-button-group.html">
+
+    <style is="demo-style">
+
+        paper-button[toggles] {
+            transition: background-color 0.3s;
+        }
+
+        paper-button[active] {
+            color: white;
+            background-color: var(--paper-green-500);
+            --paper-button-flat-focus-color: var(--paper-green-50);
+        }
+
+        paper-button[toggles][active] {
+            color: white;
+            background-color: var(--paper-green-500);
+            --paper-button-flat-focus-color: var(--paper-green-50);
+        }
+
+        paper-button:hover {
+            background: #eee;
+        }
+
+        paper-button.ripple::shadow paper-ripple {
+            color: var(--paper-pink-a200);
+        }
+
+        paper-button.ripple paper-ripple {
+            color: var(--paper-pink-a200);
+        }
+
+        .smallButton {
+            min-width: 3em;
+            /*margin: 0em;*/
+            padding: 0em;
+            margin: 0.2em;
+            min-height: 2em;
+        }
+
+    </style>
+</head>
+
+<body unresolved>
+<div class="centered">
+    <h4>Enabled</h4>
+    <demo-snippet>
+        <template>
+            <paper-button-group selected="2">
+                <paper-button>Oxygen</paper-button>
+                <paper-button>Carbon</paper-button>
+                <paper-button>Hydrogen</paper-button>
+                <paper-button>Nitrogen</paper-button>
+                <paper-button>Calcium</paper-button>
+            </paper-button-group>
+        </template>
+    </demo-snippet>
+
+    <h4>Disabled</h4>
+    <demo-snippet>
+        <template>
+            <paper-button-group attr-for-selected="name" selected="c">
+                <paper-button name="o">Oxygen</paper-button>
+                <paper-button name="c">Carbon</paper-button>
+                <paper-button name="h" disabled>Hydrogen</paper-button>
+                <paper-button name="n" disabled>Nitrogen</paper-button>
+                <paper-button name="ca">Calcium</paper-button>
+            </paper-button-group>
+        </template>
+    </demo-snippet>
+    <h4>Score</h4>
+    <demo-snippet>
+        <template>
+            <style>
+                .smallButton {
+                    min-width: 3em;
+                    padding: 0em;
+                    margin: 0.2em;
+                    min-height: 2em;
+                }
+            </style>
+            <paper-button-group attr-for-selected="name" selected="1.3">
+                <paper-button raised class="smallButton" name="0.5">0.5</paper-button>
+                <paper-button raised class="smallButton" name="0.6">0.6</paper-button>
+                <paper-button raised class="smallButton" name="0.7">0.7</paper-button>
+                <paper-button raised class="smallButton" name="0.8">0.8</paper-button>
+                <paper-button raised class="smallButton" name="0.9">0.9</paper-button>
+                <paper-button raised class="smallButton" name="1.0">1.0</paper-button>
+                <paper-button raised class="smallButton" name="1.1">1.1</paper-button>
+                <paper-button raised class="smallButton" name="1.2">1.2</paper-button>
+                <paper-button raised class="smallButton" name="1.3">1.3</paper-button>
+                <paper-button raised class="smallButton" name="1.4">1.4</paper-button>
+                <paper-button raised class="smallButton" name="1.5">1.5</paper-button>
+                <paper-button raised class="smallButton" name="1.6">1.6</paper-button>
+                <paper-button raised class="smallButton" name="1.7">1.7</paper-button>
+                <paper-button raised class="smallButton" name="1.8">1.8</paper-button>
+                <paper-button raised class="smallButton" name="1.9">1.9</paper-button>
+                <paper-button raised class="smallButton" name="2.0">2.0</paper-button>
+            </paper-button-group>
+        </template>
+    </demo-snippet>
+
+    <h4>Styling</h4>
+    <demo-snippet>
+        <template>
+            <style>
+                paper-button.blue {
+                    --paper-button-checked-color: var(--paper-light-blue-500);
+                    --paper-button-checked-ink-color: var(--paper-light-blue-500);
+                    --paper-button-unchecked-color: var(--paper-light-blue-900);
+                    --paper-button-unchecked-ink-color: var(--paper-light-blue-900);
+                }
+
+                paper-button.red {
+                    --paper-button-checked-color: var(--paper-red-500);
+                    --paper-button-checked-ink-color: var(--paper-red-500);
+                    --paper-button-unchecked-color: var(--paper-red-900);
+                    --paper-button-unchecked-ink-color: var(--paper-red-900);
+                }
+
+                paper-button.green {
+                    --paper-button-checked-color: var(--paper-green-500);
+                    --paper-button-checked-ink-color: var(--paper-green-500);
+                    --paper-button-unchecked-color: var(--paper-green-900);
+                    --paper-button-unchecked-ink-color: var(--paper-green-900);
+                }
+
+                paper-button.orange {
+                    --paper-button-checked-color: var(--paper-orange-500);
+                    --paper-button-checked-ink-color: var(--paper-orange-500);
+                    --paper-button-unchecked-color: var(--paper-orange-900);
+                    --paper-button-unchecked-ink-color: var(--paper-orange-900);
+                }
+
+                paper-button.blue {
+                    color: var(--paper-light-blue-500);
+                    --paper-button-flat-focus-color: var(--paper-light-blue-50);
+                }
+
+                paper-button.blue:hover {
+                    background: var(--paper-light-blue-50);
+                }
+
+                paper-button.red {
+                    color: var(--paper-red-500);
+                    --paper-button-flat-focus-color: var(--paper-red-50);
+                }
+
+                paper-button.red:hover {
+                    background: var(--paper-red-50);
+                }
+
+                paper-button.green {
+                    color: var(--paper-green-500);
+                    --paper-button-flat-focus-color: var(--paper-green-50);
+                }
+
+                paper-button.green:hover {
+                    background: var(--paper-green-50);
+                }
+
+                paper-button.orange {
+                    color: var(--paper-orange-500);
+                    --paper-button-flat-focus-color: var(--paper-orange-50);
+                }
+
+                paper-button.orange:hover {
+                    background: var(--paper-orange-50);
+                }
+            </style>
+            <paper-button-group attr-for-selected="name" selected="c">
+                <paper-button name="o" class="blue">Oxygen</paper-button>
+                <paper-button name="c" class="red">Carbon</paper-button>
+                <paper-button name="h" class="orange">Hydrogen</paper-button>
+                <paper-button name="n" class="green">Nitrogen</paper-button>
+                <paper-button name="ca" class="blue">Calcium</paper-button>
+            </paper-button-group>
+        </template>
+    </demo-snippet>
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,78 @@
+<link rel="import" type="text/css" href="task-date-picker-theme.html">
+<link rel="import" type="text/css" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
+
+<dom-module id="task-date-picker">
+    <template>
+        <style>
+            :host {
+                display:inline-block;
+
+                --material-font-family: var(--app-font-family);
+                --material-subhead-font-size: 16px;
+                ---material-text-field-input-line-background-color: var(--paper-grey-300);
+                ---material-text-field-input-line-opacity: 1;
+
+            }
+            :host([opened]) {
+                pointer-events:auto;
+            }
+            [part="text-field"] {
+                min-width:100%;
+                max-width:100%;
+            }
+            [part="overlay"] {
+                height:100vh;
+                width:420px;
+            }
+            /*[part="clear-button"],[part="toggle-button"] {
+                font-family:'vaadin-date-picker-icons';
+            }
+            [part="clear-button"]::before {
+                content:"\e901";
+            }
+            [part="toggle-button"]::before {
+                content:"\e902";
+            }*/
+            :host([disabled]) [part="clear-button"],
+            :host([disabled]) [part="toggle-button"],
+            :host([readonly]) [part="clear-button"],
+            :host([readonly]) [part="toggle-button"],
+            :host(:not([has-value])) [part="clear-button"] {
+                display: none;
+            }  
+
+            /** custom */
+            [part="clear-button"] {
+                display: none;
+            }
+        </style>   
+
+        <vaadin-text-field id="input" role="application" autocomplete="off" on-focus="_focus" value="{{_userInputValue}}" invalid="[[invalid]]" label="[[label]]" name="[[name]]" placeholder="[[placeholder]]" required="[[required]]" disabled="[[disabled]]" readonly="[[readonly]]" error-message="[[errorMessage]]" aria-label$="[[label]]" part="text-field">
+            <slot name="prefix" slot="prefix"></slot>
+            <!-- <div part="clear-button" slot="suffix" on-tap="_clear" role="button" aria-label$="[[i18n.clear]]"></div> -->
+            <paper-icon-button icon="close" part="clear-button" slot="suffix" on-tap="_clear" role="button" aria-label$="[[i18n.clear]]"></paper-icon-button>
+            <!-- <div part="toggle-button" slot="suffix" on-tap="_toggle" role="button" aria-label$="[[i18n.calendar]]" aria-expanded$="[[_getAriaExpanded(opened)]]"></div> -->
+            <paper-icon-button icon="arrow-drop-down" part="toggle-button" slot="suffix" on-tap="_toggle" role="button" aria-label$="[[i18n.calendar]]" aria-expanded$="[[_getAriaExpanded(opened)]]"></paper-icon-button>
+        </vaadin-text-field>
+
+        <iron-dropdown id="dropdown" fullscreen$=[[_fullscreen]] allow-outside-scroll on-iron-overlay-opened="_onOverlayOpened" on-iron-overlay-closed="_onOverlayClosed" on-iron-overlay-canceled="_preventCancelOnComponentAccess" opened="{{opened}}" no-auto-focus>
+            <vaadin-date-picker-overlay id="overlay" i18n="[[i18n]]" fullscreen$="[[_fullscreen]]" label="[[label]]" selected-date="{{_selectedDate}}" slot="dropdown-content" focused-date="{{_focusedDate}}" show-week-numbers="[[showWeekNumbers]]" min-date="[[_minDate]]" max-date="[[_maxDate]]" role="dialog" part="overlay"></vaadin-date-picker-overlay>
+        </iron-dropdown>
+
+        <iron-media-query query="[[_fullscreenMediaQuery]]" query-matches="{{_fullscreen}}"></iron-media-query>
+
+    </template>
+    <script>
+        {
+            let BaseClass = customElements.get('vaadin-date-picker');
+
+            class TaskDatePicker extends BaseClass {
+                static get is() {
+                    return 'task-date-picker';
+                }
+            }
+
+            customElements.define(TaskDatePicker.is, TaskDatePicker);
+        }
+    </script>
+</dom-module>

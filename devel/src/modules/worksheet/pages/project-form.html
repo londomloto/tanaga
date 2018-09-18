@@ -1,0 +1,676 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-selector/iron-selector.html">
+
+<link rel="import" href="../../../../../cores/bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../../../cores/bower_components/neon-animation/neon-animated-pages.html">
+<link rel="import" href="../../../../../cores/bower_components/neon-animation/neon-animatable.html">
+<link rel="import" href="../../../../../cores/bower_components/neon-animation/neon-animations.html">
+
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
+
+<link rel="import" href="../blocks/header-block.html">
+<link rel="import" href="../plugins/user-invitation.html">
+
+<dom-module id="project-form">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .main {
+                background-color: #fff;
+                padding: 15px 300px;
+            }
+            h4 {
+                font-size: 20px;
+                font-weight: 300;
+                display: block;
+                margin-bottom: 30px;
+            }
+            .step-actions paper-button {
+                margin: 0;
+                border: 1px solid var(--paper-blue-900);
+                background-color: var(--paper-blue-900);
+                color: #FFF;
+                /*color: var(--paper-cyan-500);*/
+            }
+            .step-actions paper-button[disabled] {
+                border-color: var(--paper-grey-300);
+                background-color: var(--paper-grey-300);
+            }
+            .step-actions paper-button.btn-outline {
+                background-color: transparent;
+                color: var(--paper-blue-900);
+            }
+            .step-actions paper-button iron-icon {
+                pointer-events: none;
+            }
+            .form-control {
+                margin-bottom: 15px;
+            }
+            .form-control label {
+                font-size: 12px;
+            }
+            paper-input {
+                --paper-input-container-label-floating: { 
+                    font-size: 16px; 
+                    margin-bottom: 30px; 
+                };
+                --paper-input-container-input: {
+                    font-size: 15px;
+                };
+            }
+            .btn-member {
+                width: 32px;
+                height: 32px;
+                background-color: var(--paper-grey-100);
+                border-radius: 50%;
+            }
+            kct-combobox {
+                padding: 4px 0;
+                width: 300px;
+            }
+            paper-radio-group {
+                @apply --layout-horizontal;
+            }
+            paper-radio-button {
+                display: block;
+                padding: 0;
+                margin-right: 15px;
+                @apply --layout-flex;
+            }
+            footer {
+                padding: 15px 300px;
+                background-color: #fff;
+            }
+
+            .sheet {
+                margin-left: 5px;
+            }
+            .sheet-logo {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background-color: var(--paper-amber-500);
+                color: #fff;
+                box-sizing: border-box;
+                padding: 13px;
+            }
+            .sheet-logo iron-icon {
+                width: 100%;
+                height: 100%;
+            }
+            .sheet-body {
+                padding: 0 8px;
+            }
+            .sheet-name {
+                font-size: 15px;
+            }
+            .sheet-desc {
+                color: #999;
+                font-size: 13px;
+            }
+            .preview {
+                width: 100%;
+                height: 250px;
+                margin-top: 30px;
+                background-image: var(--preview);
+                background-repeat: no-repeat;
+                background-size: cover;
+                border: 3px solid #fff;
+                @apply --shadow-elevation-2dp;
+            }
+
+            .member-item {
+                float: left;
+                margin: 0 15px 15px 0;
+            }
+            .member-item > .icon {
+                float: left;
+                width: 50px;
+                height: 50px;
+                line-height: 48px;
+                text-align: center;
+                background-color: var(--paper-grey-200);
+            }
+            .member-item > .text,
+            .member-item > .form {
+                margin-left: 60px;
+                font-weight: 500;
+            }
+            .member-item .meta {
+                font-weight: 400;
+                margin-bottom: 5px;
+                font-size: 13px;
+                color: #999;
+            }
+            .member-item .tool {
+                font-weight: 400;
+                font-size: 13px;
+            }
+            
+            .member-item-add > .icon {
+                cursor: pointer;
+            }
+            .member-item-add:hover > .icon {
+                background-color: var(--paper-cyan-500);
+                color: #fff;
+            }
+            .member-item-add > .icon iron-icon {
+                pointer-events: none;
+            }
+
+            /** wizard-neon */
+            neon-animated-pages {
+                display: block;
+                height: 100%;
+            }
+
+            neon-animatable {
+                padding: 0 15px;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-publisher id="event-publisher"></kct-event-publisher>
+
+        <kct-vbox>
+            <header-block text="Project Wizard" on-back-tap="__onBackTap">
+                <h3 slot="header-value">[[ __projectTitle ]]</h3>
+            </header-block>
+
+            <div class="flex main scroll-y">
+                
+                <neon-animated-pages 
+                    id="wizard" 
+                    attr-for-selected="name" 
+                    selected="[[ step ]]" 
+                    entry-animation="[[ entryAnimation ]]" 
+                    exit-animation="[[ exitAnimation ]]" 
+                    on-neon-animation-finish="__onSlideEnd">
+
+                    <neon-animatable name="step-1">
+                        <h4>Create Project</h4>
+                        
+                        <div id="project-title-container" class="form-control">
+                            <paper-input 
+                                id="project-title-field" 
+                                value="{{ projectRecord.sp_title }}" 
+                                label="Project Name" 
+                                required 
+                                auto-validate 
+                                error-message="Project name is required" 
+                                always-float-label></paper-input>
+                        </div>
+
+                        <div class="form-control">
+                            <paper-input value="{{ projectRecord.sp_desc }}" label="Description (optional)" always-float-label></paper-input>
+                        </div>
+
+                        <div class="form-control m-t">
+                            <label>Project Members (optional)</label>
+                            <div class="m-t">
+                                <div class="member-list">
+                                    <template is="dom-repeat" items="[[ members ]]">
+
+                                        <div class="member-item">
+                                            <div class="icon">
+                                                <img src$="[[ item.su_avatar_thumb ]]&w=50&h=50">
+                                            </div>
+                                            <div class="text">
+                                                <div class="name">[[ item.su_fullname ]]</div>
+                                                <div class="meta">[[ item.su_email ]]</div>
+                                                <div class="tool"><a on-tap="__onRemoveMemberTap" href="javascript:;">Remove</a></div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>       
+                                    </template>
+
+                                    <div id="button-add-member" class="member-item member-item-add">
+                                        <div class="icon" on-tap="__onAddMemberTap">
+                                            <iron-icon icon="add"></iron-icon>
+                                        </div>
+                                        <div class="form" hidden$="[[ __hideComboUser ]]">
+                                            <kct-combobox 
+                                                id="combo-user" 
+                                                url="/users" 
+                                                page-size="10" 
+                                                width="160" 
+                                                placeholder="Select or search user..." 
+                                                item-label-path="su_email" 
+                                                item-value-path="su_id" 
+                                                on-change="__onComboUserChange" 
+                                                on-vaadin-dropdown-closed="__onComboUserClose"
+                                                hide-clear 
+                                                no-label-float>
+
+                                                <paper-button slot="toolbar" on-tap="__onInviteMemberTap"><iron-icon icon="mail"></iron-icon>&nbsp;Invite</paper-button>
+                                                <paper-button slot="toolbar" on-tap="__onComboUserCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+
+                                                <template>
+                                                    <style>
+                                                        .icon {
+                                                            position: relative;
+                                                            width: 32x;
+                                                            height: 32px;
+                                                            border-radius: 50%;
+                                                            overflow: hidden;
+                                                            float: left;
+                                                        }
+                                                        .text {
+                                                            margin-left: 40px;
+                                                            font-size: 13px;
+                                                        }
+                                                        .meta {
+                                                            font-size: 12px;
+                                                            color: #999;
+                                                        }
+                                                        .clearfix {
+                                                            clear: both;
+                                                        }
+                                                    </style>
+                                                    <div>
+                                                        <div class="icon">
+                                                            <img src$="[[ item.su_avatar_thumb ]]&w=32&h=32">
+                                                        </div>
+                                                        <div class="text">
+                                                            <div>[[ item.su_fullname ]]</div>
+                                                            <div class="meta">[[ item.su_email ]]</div>
+                                                        </div>
+                                                        <div class="clearfix"></div>
+                                                    </div>
+                                                </template>
+                                            </kct-combobox>
+                                        </div>
+                                    </div>
+                                    <div class="clearfix"></div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </neon-animatable>
+
+                    <neon-animatable name="step-2">
+                        <h4>Choose Worksheet Template</h4>
+                        <div>
+                            <paper-radio-group attr-for-selected="name" selected="{{ projectRecord.sp_worksheet_id }}">
+                                <template is="dom-repeat" items="[[ worksheets ]]">
+                                    <paper-radio-button name="[[ item.ks_id ]]">
+                                        <kct-hbox class="sheet">
+                                            <div class="sheet-logo">
+                                                <iron-icon icon="view-carousel"></iron-icon>
+                                            </div>
+                                            <div class="flex sheet-body">
+                                                <div class="sheet-name">[[ item.ks_name ]]</div>
+                                                <div class="sheet-desc">[[ item.ks_description ]]</div>
+                                            </div>
+                                        </kct-hbox>    
+                                    </paper-radio-button>
+                                </template>
+                            </paper-radio-group>
+                            
+                            <div class="preview"></div>
+
+                        </div>
+                    </neon-animatable>
+                </neon-animated-pages>
+
+            </div>
+
+            <footer>
+                <kct-pages attr-for-selected="name" selected="[[ step ]]">
+                    <div name="step-1">
+                        <div class="step-actions">
+                            <kct-hbox>
+                                <div class="flex"></div>
+                                <div class="flex text-right">
+                                    <paper-button id="button-goto-step2" data-step="step-2" on-tap="__onStepTap" disabled$="[[ formInvalid ]]">Choose Worksheet Template&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                                </div>
+                            </kct-hbox>
+                        </div>
+                    </div>
+                    <div name="step-2">
+                        <div class="step-actions">
+                            <kct-hbox>
+                                <div class="flex">
+                                    <paper-button class="btn-outline" data-step="step-1" on-tap="__onStepTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back</paper-button>
+                                </div>
+                                <div class="flex text-right">
+                                    <paper-button id="button-save-project" data-step="step-3" on-tap="__onStepTap" disabled$="[[ formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Create Project</paper-button>
+                                </div>
+                            </kct-hbox>
+                        </div>
+                    </div>
+                </kct-pages>
+            </footer>
+
+        </kct-vbox>
+
+        <user-invitation id="invitation" on-invited="__onUserInvited"></user-invitation>
+
+    </template>
+
+    <script>
+        class ProjectForm extends KctView {
+            static get is() {
+                return 'project-form';
+            }
+
+            static get properties() {
+                return {
+                    step: { type: String },
+                    returnAction: { type: String },
+                    projectRecord: { type: Object },
+                    members: { type: Array },
+                    worksheets: { type: Array },
+                    formInvalid: { type: Boolean, value: true },
+                    entryAnimation: { type: String, value: 'slide-from-right-animation' },
+                    exitAnimation: { type: String, value: 'slide-left-animation' }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__projectTitleChanged(projectRecord.sp_title)',
+                    '__templateChanged(projectRecord.sp_worksheet_id)',
+                    '__validationChanged(projectRecord.sp_title)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__projectTitle = 'Untitled Project';
+                this.__hideComboUser = true;
+            }
+
+            handleRouteParams(project) {
+                if (project != 'create') return;
+
+                let returnAction = '/worksheet?reload=yes';
+
+                if (this.route.data && this.route.data.back) {
+                    returnAction = this.route.data.back;
+                }
+
+                this.set('returnAction', returnAction);
+                this.set('members', []);
+
+                if (this.user) {
+                    this.push('members', {
+                        su_id: this.user.su_id,
+                        su_fullname: this.user.su_fullname,
+                        su_email: this.user.su_email,
+                        su_avatar_thumb: this.user.su_avatar_thumb
+                    });
+                }
+
+                this.set('worksheets', []);
+                this.set('projectRecord', {});
+                this.set('step', 'step-1');
+
+                this.__loadWorksheets();
+
+                // show tour
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.__startTour();
+                });
+            }
+
+            __projectTitleChanged(value) {
+                this.set('__projectTitle', value || 'Untitled Project');
+            }
+
+            __validationChanged(title) {
+                let valid = true;
+                valid = valid && (!!title);
+                this.set('formInvalid', !valid);
+            }
+
+            __templateChanged(value) {
+                if (value) {
+                    let sheet = (this.worksheets || []).find(e => {
+                        return e.ks_id == value;
+                    });
+                    if (sheet) {
+                        this.updateStyles({
+                            '--preview': 'url(' + sheet.ks_image_url + ')'
+                        });
+                    }
+                }
+            }
+
+            __autoTyping() {
+                let input = this.$['project-title-field'],
+                    title = 'Example Project',
+                    total = title.length,
+                    count = total - 1;
+
+                let timer = setInterval(() => {
+                    let pos = count--;
+                    if (pos <= 0) {
+                        clearInterval(timer);
+                        timer = null;
+                    }
+                    let chr = title.substr(0, (total - pos));
+                    this.set('projectRecord.sp_title', chr);
+                }, 100);
+            }
+
+            __startTour(step) {
+                let enabled = this.config.app_tour_enabled;
+                enabled = enabled === undefined ? true : enabled;
+
+                if ( ! enabled) {
+                    return;
+                }
+
+                if (step === undefined) {
+                    step = 0;
+                }
+
+                let options = {
+                    id: 'tour-project-form',
+                    isTourBubble: false,
+                    steps: [
+                        {
+                            title: 'Project Title',
+                            content: 'Type your awesome project name here',
+                            target: this.$['project-title-container'],
+                            placement: 'top',
+                            showCTAButton: true,
+                            ctaLabel: 'Disable Guide',
+                            onCTA: () => {
+                                this.set('config.app_tour_enabled', false);
+                                this.__stopTour();
+                            }
+                        },
+                        {
+                            title: 'Project Members',
+                            content: 'Click this button to add or invite another user to join your awesome project',
+                            target: this.$['button-add-member'],
+                            showNextButton: false,
+                            placement: 'top'
+                        },
+                        {
+                            title: 'Next',
+                            content: 'Click this button to goto next step',
+                            target: this.$['button-goto-step2'],
+                            showNextButton: false,
+                            placement: 'top'
+                        },
+                        {
+                            title: 'Save Your Project',
+                            content: 'Click this button to save your project and start working',
+                            target: this.$['button-save-project'],
+                            showNextButton: false,
+                            placement: 'top'
+                        }
+                    ]
+                };
+
+                hopscotch.startTour(options, step);
+            }
+
+            __stopTour() {
+                hopscotch.endTour(true);
+            }
+
+            __goback() {
+                this.__stopTour();
+
+                this.set('route.data.back', null);
+                this.set('route.path', this.returnAction);
+            }
+
+            __loadComboUser() {
+                let assignees = (this.members || []).map(m => m.su_id + ''),
+                    combo = this.$['combo-user'];
+
+                if (assignees.length) {
+                    return combo.load({
+                        params: {
+                            su_id: ['NOT IN', assignees]
+                        }
+                    });
+                } else {
+                    return combo.load();
+                }
+            }
+
+            __loadWorksheets() {
+                this.$.ajax.GET('/kanban/kanban-settings').then(res => {
+                    let worksheets = res.data;
+                    this.set('worksheets', worksheets);
+
+                    if (worksheets.length) {
+                        this.set('projectRecord.sp_worksheet_id', worksheets[0].ks_id);
+                    }
+                });
+            }
+
+            __saveProject() {
+                let data = Object.assign({}, this.projectRecord);
+                data.members = (this.members || []).map(m => m.su_id);
+
+                this.$.ajax.POST('/projects', data).then(res => {
+                    if (res.success) {
+                        this.$['event-publisher'].publish('project-saved');
+                        this.set('route.path', '/worksheet/' + res.data.sp_name + '/view/kanban');
+                    }
+                });
+            }
+
+            __onSlideEnd() {
+                
+                if (this.step == 'step-2') {
+                    this.__startTour(3);
+                }
+            }
+
+            __onStepTap(e) {
+                let step = e.target.dataset.step;
+                
+                this.__stopTour();
+
+                if (step != 'step-3') {
+
+                    let currIndex = +this.step.replace(/step-/, ''),
+                        nextIndex = +step.replace(/step-/, ''),
+                        back = currIndex > nextIndex;
+
+                    if (back) {
+                        this.set('entryAnimation', 'slide-from-left-animation');
+                        this.set('exitAnimation', 'slide-right-animation');
+                    } else {
+                        this.set('entryAnimation', 'slide-from-right-animation');
+                        this.set('exitAnimation', 'slide-left-animation');
+                    }
+
+                    this.set('step', step);
+                } else {
+                    this.__saveProject();
+                }
+            }
+
+            __onAddMemberTap() {
+                this.__stopTour();
+
+                let combo = this.$['combo-user'];
+                this.set('__hideComboUser', false);
+
+                this.__loadComboUser().then(() => {
+                    combo.open();
+                });
+                
+            }
+
+            __onRemoveMemberTap(e) {
+                let member = e.model.item,
+                    index = (this.members || []).findIndex(m => m.su_id == member.su_id);
+                if (index !== -1) {
+                    this.splice('members', index, 1);
+                    this.__loadComboUser();
+                }
+            }
+
+            __onComboUserChange(e) {
+                let combo = e.target,
+                    model = combo.getModelForValue(combo.value);
+
+                if (model) {
+                    this.push('members', Object.assign({}, model));
+                }   
+
+
+                combo.value = '';
+                combo.close();
+
+                this.set('__hideComboUser', true);
+                this.__loadComboUser();
+            }
+
+            __onInviteMemberTap() {
+                this.$['combo-user'].close();
+                this.set('__hideComboUser', true);
+
+                this.$.invitation.open();
+            }
+
+            __onUserInvited(e) {
+                let user = e.detail.user;
+                
+                this.push('members', Object.assign({}, user));
+                this.__loadComboUser();
+
+                this.$.invitation.close();
+            }
+
+            __onComboUserCloseTap() {
+                this.$['combo-user'].close();
+                this.set('__hideComboUser', true);
+            }
+
+            __onComboUserClose() {
+                this.__startTour(2);
+            }
+
+            __onBackTap() {
+                this.__goback();
+            }
+        }
+        customElements.define(ProjectForm.is, ProjectForm);
+    </script>
+</dom-module>

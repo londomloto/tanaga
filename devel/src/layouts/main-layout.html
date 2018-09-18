@@ -1,0 +1,562 @@
+<link rel="import" href="../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../cores/bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../../cores/bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../../cores/bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../../cores/bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../../cores/bower_components/app-layout/app-scroll-effects/effects/waterfall.html">
+<link rel="import" href="../../../cores/bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+
+<link rel="import" href="../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../cores/elements/kct-tabs/kct-tabs.html">
+<link rel="import" href="../../../cores/elements/kct-tabs/kct-tab.html">
+<link rel="import" href="../../../cores/elements/kct-page/kct-page.html">
+<link rel="import" href="../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../cores/elements/kct-auth/kct-auth.html">
+<link rel="import" href="../../../cores/elements/kct-socket/kct-socket-manager.html">
+<link rel="import" href="../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../blocks/navigation-block.html">
+<link rel="import" href="../blocks/notification-block.html">
+
+<link rel="import" href="base-layout.html">
+
+<dom-module id="main-layout">
+    <template>
+        <style include="theme-helper"></style>
+        <style>
+            :host { 
+                display: block;
+            }
+            
+            #workspace {
+                display: block;
+                height: 100%;
+            }
+
+            app-drawer-layout.unresolved #workspace {
+                opacity: 0;
+            }
+
+            app-drawer-layout:not([narrow]) [drawer-toggle] {
+                display: none;
+            }
+
+            app-header {
+                position: absolute;
+                width: 100%;
+                top: 0;
+                left: 0;
+                background-color: var(--paper-blue-grey-500);
+                color: #fff;
+            }
+
+            app-header paper-icon-button {
+                --paper-icon-button-ink-color: var(--paper-indigo-500);
+            }
+
+            #drawer1 > div {
+                height: 100%;
+                position: relative;
+            }
+
+            .primary-toolbar {
+                /*height: 42px;*/
+                z-index: 2;
+                padding-right: 5px;
+                --app-toolbar-font-size: 16px;
+                /*border-bottom: 1px solid var(--paper-blue-grey-600);*/
+
+            }
+
+            .secondary-toolbar {
+                padding: 0;
+                height: 30px;
+                box-shadow: 0 -1px 2px rgba(0,0,0,0.2), 0 0px 2px rgba(0,0,0,0.2);
+                border-bottom: 1px solid #fff;
+            }
+            /*.secondary-toolbar::before {
+                display: block;
+                content: '';
+                border-bottom: 1px solid #dfdfdf;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 2px;
+                bottom: 0;
+            }*/
+            [main-title] { line-height: 30px; }
+            [main-title] .logo-text {
+                position: relative;
+                font-size: 20px;
+                font-weight: 500;
+                top: 2px;
+            }
+
+            [main-title] .logo-powered {
+                font-size: 10px;
+                text-transform: uppercase;
+            }
+
+            kct-tabs { 
+                width: 100%; 
+                position: relative;
+                --paper-tabs-selection-bar-color: #fff;
+                --paper-tabs-selection-bar: {
+                    border-bottom-width: 3px;
+                };
+            }
+            kct-tabs > kct-tab {
+                color: var(--paper-grey-300);
+                position: relative;
+                z-index: 1;
+                --paper-tab-ink: var(--paper-grey-300);
+            }
+            kct-tabs > kct-tab.iron-selected {
+                color: #fff;
+            }
+            kct-tabs > kct-tab.iron-selected::before {
+                display: block;
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: 4px;
+            }
+            
+            .navbar {
+                height: 42px;
+                @apply --layout-horizontal;
+            }
+            .navbar > .nav-item {
+                height: 100%;
+                padding: 0 2px;
+                color: var(--paper-indigo-500);
+            }
+
+            .navbar > .nav-item.nav-flex {
+                @apply --layout-flex;
+            }
+
+            .navbar > .nav-item > * {
+                position: relative;
+                top: 2px;
+            }
+
+            .nav-message {
+                background-color: var(--paper-blue-500);
+                color: #fff;
+                padding: 6px 12px 5px 12px;
+                border-radius: 15px;
+                font-size: 12px;
+                position: relative;
+                top: 8px !important;
+            }
+
+            .nav-message > a {
+                color: var(--paper-yellow-500);
+            }
+            .nav-profile {
+                cursor: pointer;
+            }
+            .nav-profile > div {
+                float: left;
+                color: #fff;
+                position: relative;
+                background-color: var(--paper-blue-grey-300);
+            }
+            .nav-profile > .nav-profile-name {
+                height: 26px;
+                padding: 0 15px;
+                line-height: 24px;
+                border-radius: 15px 0 0 15px;
+                right: -10px;
+                margin-left: -10px;
+                top: 6px;
+                z-index: 1;
+                font-size: 13px;
+            }
+            .nav-profile > .nav-profile-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                text-align: center;
+                overflow: hidden;
+                z-index: 2;
+                top: 1px;
+            }
+            .nav-profile > .nav-profile-icon img {
+                display: inline-block;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                position: relative;
+                top: 2px;
+            }
+            .nav-profile > .nav-profile-edit {
+                height: 26px;
+                padding: 0 10px;
+                border-radius: 0 15px 15px 0;
+                left: -10px;
+                margin-right: -10px;
+                top: 6px;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            
+            .nav-power {
+                color: var(--paper-red-300);
+                --paper-icon-button-ink-color: var(--paper-red-500);
+            }
+
+            .layout.sm .hidden-sm { display: none;  }
+            .layout.md .hidden-md { display: none;  }
+        </style>
+        
+        <kct-auth id="auth" config="[[ config ]]" user="{{ user }}" on-load="__onAuthLoad"></kct-auth>
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <kct-socket-manager id="socket" name="global-socket"></kct-socket-manager>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+
+        <app-drawer-layout id="viewport" class="unresolved" fullbleed force-narrow>
+            
+            <app-drawer id="drawer1" slot="drawer" align="start">
+                <navigation-block id="navigation" config="{{ config }}" route="{{ route }}" user="{{ user }}" on-tap="__onNavigationTap"></navigation-block>
+            </app-drawer>
+            
+            <app-header-layout class$="layout [[ screen ]]" has-scrolling-region>
+                <app-header slot="header" fixed effects="waterfall">
+                    <app-toolbar class="primary-toolbar">
+                        <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+                        <div main-title>
+                            <div class="logo">
+                                <span class="logo-text">[[ config.app_title ]]</span>
+                            </div>
+                        </div>
+                        <div class="navbar">
+                            <div class="nav-item nav-flex">
+                                <template is="dom-if" if="[[__displayGlobalNotif()]]">                                
+                                    <div class="nav-message hidden-sm hidden-md" inner-H-T-M-L=[[config.notif_global]]></div>
+                                </template>
+                            </div>
+                            <div class="nav-item">
+                                <notification-block id="notification" user="[[ user ]]" route="{{ route }}" class="nav-notif" screen="[[ screen ]]" ></notification-block>
+                            </div>
+                            <div class="nav-item">
+                                <div class="nav-profile" on-click="__onProfileClick">
+                                    <div class="nav-profile-name hidden-sm hidden-md">[[ user.su_fullname ]]</div>
+                                    <div class="nav-profile-icon"><img class="avatar" src$="[[ user.su_avatar_thumb ]]&w=32&h=32" alt="."></div>
+                                    <div class="nav-profile-edit hidden-sm hidden-sm"><iron-icon icon="create"></iron-icon></div>
+                                    <div class="clearfix"></div>
+                                </div>
+                            </div>
+                            <div class="nav-item">
+                                <paper-icon-button  class="nav-power" on-tap="__onLogoutTap" icon="power-settings-new"></paper-icon-button>
+                            </div>
+                        </div>
+                        <!-- <paper-icon-button icon="search" on-tap="__onSearchTap"></paper-icon-button> -->
+                    </app-toolbar>
+                    <app-toolbar class="secondary-toolbar">
+                        <kct-tabs id="tabs" selected="{{ page }}" attr-for-selected="name" scrollable>
+                            <dom-repeat items="{{ pages }}">
+                                <template>
+                                    <kct-tab 
+                                        name="[[ item.name ]]" 
+                                        title="[[ item.title ]]" 
+                                        on-close="__onTabClose"></kct-tab>
+                                </template>
+                            </dom-repeat>
+                        </kct-tabs>
+                    </app-toolbar>
+                </app-header>
+                <kct-pages id="workspace" selected="{{ page }}" on-itemactivate="__onPageActive" attr-for-selected="name">
+                    <dom-repeat items="{{ pages }}">
+                        <template>
+                            <kct-page 
+                                type="[[ item.type ]]" 
+                                name="[[ item.name ]]" 
+                                state="[[ item.state ]]" 
+                                title="{{ item.title }}" 
+                                config="{{ config }}" 
+                                route="{{ route }}" 
+                                user="{{ user }}" 
+                                on-close="__onPageClose"></kct-page>
+                        </template>
+                    </dom-repeat>
+                </kct-pages>
+            </app-header-layout>
+
+            <!-- <app-drawer id="drawer2" slot="drawer" align="end" swipe-open></app-drawer> -->
+
+        </app-drawer-layout>
+
+        <kct-confirm id="confirm-logout">
+            <p>Are you sure want to exit from application?</p>
+        </kct-confirm>
+
+        
+
+    </template>
+
+    <script>
+        class MainLayout extends BaseLayout {
+
+            static get is() { 
+                return 'main-layout'; 
+            }
+
+            static get properties() {
+                return {
+                    name: { type: String, value: 'main' },
+                    page: { type: String },
+                    busy: { type: Boolean, value: false },
+                    pages: { type: Array, value: [] }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__routeEventChanged(route.event)',
+                    '__pageChanged(page)'
+                ];
+            }
+
+            constructor() {
+                super();
+                
+                this.__workspaceResizeHandler = this.__onWorkspaceResize.bind(this);
+                this.__activePage = null;
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                this.$.workspace.addEventListener('iron-resize', this.__workspaceResizeHandler);
+            }
+
+            disconnectedCallback() {
+                super.disconnectedCallback();
+                this.$.workspace.removeEventListener('iron-resize', this.__workspaceResizeHandler);
+            }
+
+            _layoutActive() {
+                this._debounce(
+                    'active',
+                    () => {
+                        this.$.viewport.classList.remove('unresolved');
+                        this.__doLayout();
+                    },
+                    1000
+                );
+            }
+
+            __doLayout() {
+                this.$.viewport.notifyResize();
+            }
+
+            __findPage(name) {
+                return this.pages.find((page) => { return page.name == name; });
+            }
+
+            __findPageIndex(name) {
+                return this.pages.findIndex((page) => { return page.name == name; })
+            }
+
+            __routeEventChanged(event) {
+                if (event != 'finish') return;
+
+                if (this.state.layout == this.name) {
+                    this._resolvePageFromState(this.state).then((spec) => {
+                        let name = spec.name;
+
+                        if (spec.type == 'project-page') {
+                            name = this.state.project;
+                            spec.name = name;
+                        }
+                        
+                        let page = this.__findPage(name),
+                            pageState = Object.assign(Object.create(null), this.state);
+
+                        if ( ! page) {
+                            Polymer.importHref(
+                                spec.file,
+                                () => {
+                                    spec.state = pageState;
+                                    this.push('pages', spec);
+
+                                    this._debounce(
+                                        'selectpage',
+                                        () => {
+                                            this.set('page', name);
+                                            this.__doLayout();
+                                        },
+                                        0
+                                    );
+                                },
+                                (err) => {
+                                    this.set('route.path', '/not-found');
+                                }
+                            );
+                        } else {
+                            let index = this.pages.indexOf(page);
+
+                            this.set('page', name);
+                            this.set('pages.' + index + '.state', pageState);
+                        }
+                    });
+                }
+            }
+
+            __pageChanged(name) {
+                if (name) {
+                    let page = this.pages.find(p => p.name == name);
+
+                    if (page) {
+                        let index;
+                        
+                        if (this.__activePage) {
+                            index = this.pages.indexOf(this.__activePage);
+                            if (index !== -1) {
+                                this.set('pages.' + index + '.state.active', false);
+                            }
+                        }
+
+                        index = this.pages.indexOf(page);
+                        this.set('pages.' + index + '.state.active', true);
+                        
+                        this.set('route.addr', page.state.path);
+
+                        this.__activePage = page;
+                    }
+                }
+            }
+
+            __onSocketNotify() {
+                this.$.notification.dirty = true;
+            }
+            
+            __onAuthLoad() {
+                this._debounce(
+                    'authorize',
+                    () => {
+                        this.$.navigation.loadMenus();
+                        //this.$.socket.connect();
+                    },
+                    1000
+                );
+            }
+
+            __onWorkspaceResize() {
+                this._debounce(
+                    'workspaceresize',
+                    () => {
+                        let workspace = this.$.workspace,
+                            pageNode = workspace.selectedItem;
+
+                        if (pageNode) {
+                            let offset = workspace.getBoundingClientRect(),
+                                doc = document.documentElement,
+                                width  = (window.innerWidth || doc.clientWidth) - offset.left,
+                                height = (window.innerHeight || doc.clientHeight) - offset.top;
+
+                            pageNode.handleResizing(width, height);
+                        }
+                    },
+                    500
+                );
+            }
+
+            __onTabClose(e) {
+                
+                let pageIndex = e.model.index,
+                    pageNode = this.$.workspace.items[pageIndex];
+
+                if (pageNode) {
+                    pageNode.close();
+                }
+            }
+
+            __onPageActive(e) {
+                let pageNode = e.detail.activeItem;
+
+                this.$.workspace.items.forEach(node => {
+                    node.opened = false;
+                });
+
+                if (pageNode) {
+                    pageNode.opened = true;
+                    pageNode.activate && pageNode.activate();
+                }
+
+            }
+
+            __onProfileClick(e) {
+                this.set('route.path', '/profile');
+            }
+
+            __onPageClose (e) {
+                let pageIndex = e.model.index,
+                    eventData = e.detail;
+
+                if (pageIndex !== -1) {
+                    this.set('pages.' + pageIndex + '.state.active', false);
+                    this.splice('pages', pageIndex, 1);
+
+                    this._debounce(
+                        'switchpage',
+                        () => {
+                            let next = this.pages[pageIndex],
+                                prev = this.pages[(pageIndex - 1)];
+
+                            if (eventData.back) {
+                                this.set('route.path', eventData.back);
+                            } else {
+                                if ( ! this.pages.length) {
+                                    this.set('route.path', '/');
+                                } else {
+                                    if (next) {
+                                        this.set('page', next.name);
+                                    } else if (prev) {
+                                        this.set('page', prev.name);
+                                    }    
+                                }
+                            }
+                        },
+                        10
+                    );
+                }
+            }
+
+            __onLogoutTap() {
+                this.$['confirm-logout'].open().then((y) => {
+                    if (y == 'yes') {
+                        this.$.auth.logout().then(() => {
+                            this.set('route.path', '/login');
+                        });
+                    }
+                });
+            }
+
+            __onSearchTap() {
+                this.$.drawer2.toggle();
+            }
+
+            __onNavigationTap() {
+                this.$.drawer1.toggle();
+            }
+
+            __onNotificationTap() {
+                this.set('route.path','/billing');
+            }
+
+            __displayGlobalNotif() {
+                return this.config.notif_global && this.config.notif_global != '';
+            }
+
+        }
+
+        customElements.define(MainLayout.is, MainLayout);
+
+    </script>
+</dom-module>

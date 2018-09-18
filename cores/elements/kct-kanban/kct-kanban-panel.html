@@ -1,0 +1,157 @@
+<link rel="import" href="../../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/app-layout/app-scroll-effects/effects/waterfall.html">
+<link rel="import" href="../../bower_components/app-layout/app-scroll-effects/effects/resize-title.html">
+
+<dom-module id="kct-kanban-panel">
+    <template>
+        <style>
+            :host {
+                height: 100%;
+                /*display: inline-block;*/
+                margin: 0;
+                display: block;
+                float: left;
+            }
+            .panel {
+                width: var(--panel-width, 300px);
+                margin: 0 0 0 15px;
+                /*margin: 0 -4px 0 0;*/
+                height: 100%;
+                background-color: #fff;
+                @apply --shadow-elevation-2dp;
+            }
+            app-header-layout {
+                height: 100%;
+                background-color: var(--panel-body-background, #fff);
+            }
+            app-header {
+                
+            }
+            app-header[hidden] {
+                display: none;
+            }
+            .primary-toolbar {
+                height: 46px;
+                padding-right: 5px;
+                background-color: var(--panel-primary-toolbar-background, transparent);
+                color: var(--panel-header-color, #ffffff);
+            }
+            .secondary-toolbar {
+                height: 40px;
+            }
+            .secondary-toolbar ::slotted(*) {
+                @apply --layout-flex;
+            }
+            app-toolbar[hidden] {
+                display: none;
+            }
+            .panel-content {
+                color: #212121;
+                position: relative;
+            }
+            [main-title] {
+                font-weight: 300;
+                font-size: 16px;
+            }
+            .panel-title {
+                font-weight: 300;
+                font-size: 16px;
+                @apply --layout-flex;
+            }
+            .panel-title ::slotted(paper-input) {
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    border-color: #fff;
+                };
+                --paper-input-container-label: {
+                    color: #fff;
+                    font-size: 15px;
+                };
+                --paper-input-container-input: {
+                    font-size: 15px;
+                    color: #fff;
+                };
+            }
+            
+        </style>
+        <div class="panel">
+            <app-header-layout has-scrolling-region>
+                <app-header fixed effects="[[effects]]" slot="header" hidden="[[ hideHeader ]]">
+                    <app-toolbar class="primary-toolbar" hidden$="[[ hidePrimary ]]">
+                        <div class="panel-title">
+                            <div main-title>
+                                <slot name="panel-title">[[ title ]]</slot>
+                            </div>
+                        </div>
+                        <div class="panel-tool">
+                            <slot name="primary-toolbar"></slot>
+                        </div>
+                    </app-toolbar>
+                    <app-toolbar class="primary-toolbar" hidden$="[[ hideCondensed ]]">
+                        <div class="panel-title">
+                            <div condensed-title>
+                                <slot name="panel-title-condensed">[[ title ]]</slot>
+                            </div>
+                        </div>
+                        <div class="panel-tool">
+                            <slot name="primary-toolbar"></slot>
+                        </div>
+                    </app-toolbar>
+                    <app-toolbar class="secondary-toolbar" hidden$="[[ hideSecondary ]]">
+                        <slot name="secondary-toolbar"></slot>
+                    </app-toolbar>
+                </app-header>
+                <div class="panel-content">
+                    <slot></slot>
+                </div>
+            </app-header-layout>
+        </div>
+    </template>
+    <script>
+        class KctKanbanPanel extends Polymer.Element {
+            static get is() {
+                return 'kct-kanban-panel';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Panel' },
+                    width: { type: String, notify: true, value: 'auto' },
+                    accent: { type: String, value: 'transparent' },
+                    hideHeader: { type: Boolean, value: false },
+                    hidePrimary: { type: Boolean, value: false },
+                    hideCondensed: { type: Boolean, value: false },
+                    hideSecondary: { type: Boolean, value: false },
+                    freeze: { type: Boolean, value: false },
+                    effects: { type: String, value: ()=>{
+                        return this.hideCondensed ? 'waterfall' : 'resize-title';
+                    }}
+                };
+            }
+            static get observers() {
+                return [
+                    '__accentChanged(accent)',
+                    '__widthChanged(width)'
+                ];
+            }
+            __accentChanged(accent) {
+                if ( ! accent) {
+                    accent = 'transparent';
+                }
+                
+                this.updateStyles({
+                    '--panel-primary-toolbar-background': accent
+                });
+            }
+            __widthChanged(width) {
+                let style = ! isNaN(width) ? width + 'px' : width;
+                this.updateStyles({ '--panel-width': style });
+                this.dispatchEvent(new CustomEvent('resize'));
+            }
+        }
+        customElements.define(KctKanbanPanel.is, KctKanbanPanel);
+    </script>
+</dom-module>

@@ -1,0 +1,86 @@
+<dom-module id="kct-chip">
+    <template>
+        <style>
+            :host {
+                display: inline-block;
+            }
+            .chip-container {
+                position: relative;
+                margin: 5px 2px;
+                @apply --chip-container;
+            }
+            .chip {
+                display: block;
+                background-color: var(--paper-grey-300);
+                border-radius: 50px;
+                text-decoration: none;
+                color: #333;
+                height: 30px;
+                padding: 0 8px 0 40px;
+                line-height: 30px;
+                @apply --chip;
+            }
+            .chip:focus {
+                @apply --shadow-elevation-2dp;
+            }
+            .icon {
+                position: absolute;
+                width: 24px;
+                height: 24px;
+                padding: 4px;
+                border-radius: 50%;
+                background-color: var(--paper-grey-500);
+                top: 50%;
+                margin-top: -16px;
+                text-align: center;
+                @apply --icon;
+            }
+            .icon iron-icon {
+                color: #fff;
+                --iron-icon-width: 100%;
+                --iron-icon-height: 100%;
+            }
+            .text {
+                font-size: 13px;
+            }
+            paper-icon-button {
+                padding: 4px;
+                width: 24px;
+                height: 24px;
+            }
+        </style>
+        <div class="chip-container">
+            <div class="icon">
+                <iron-icon icon="[[ icon ]]"></iron-icon>
+            </div>
+            <a href="javascript:;" on-click="__onClick" class="chip">
+                <span class="text">[[ label ]]</span>
+                <span class="remove">
+                    <paper-icon-button on-tap="__onClearTap" icon="clear"></paper-icon-button>
+                </span>
+            </a>    
+        </div>
+        
+    </template>
+    <script>
+        class KctChip extends Polymer.Element {
+            static get is() {
+                return 'kct-chip';
+            }
+            static get properties() {
+                return {
+                    label: { type: String, value: 'Label' },
+                    icon: { type: String }
+                }
+            }
+            __onClick(e) {
+                this.dispatchEvent(new CustomEvent('tap'));
+            }
+            __onClearTap(e) {
+                e.stopPropagation();
+                this.dispatchEvent(new CustomEvent('cleartap'));
+            }
+        }
+        customElements.define(KctChip.is, KctChip);
+    </script>
+</dom-module>

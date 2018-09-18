@@ -1,0 +1,1105 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-kanban/kct-kanban.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-dropdown/kct-dropdown.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/elements/kct-search/kct-search.html">
+<link rel="import" href="../components/create-opportunity-form.html">
+<link rel="import" href="dialogs/kanban-form.html">
+
+<dom-module id="kanban-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--kanban-page-height, 500px);
+            }
+            .btn-browse {
+                position: relative;
+                top: -1px;
+                padding: 4px;
+                width: 36px;
+                height: 36px;
+            }
+            .panel-secondary-toolbar {
+                text-align: center;
+            }
+            .panel-secondary-toolbar span {
+                display: inline-block;
+                font-weight: 400;
+                font-size: 20px;
+                color: var(--paper-cyan-500);
+            }
+            .panel-content {
+                padding: 8px;
+            }
+            .panel-content .box {
+                border: 1px solid var(--paper-grey-300);
+                margin-bottom: 8px;
+            }
+            .panel-content .box-foot {
+                padding: 5px;
+            }
+            .spinner {
+                width: 24px;
+                height: 24px;
+                --paper-spinner-color: #fff;
+            }
+            .icon-status {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -1px;
+            }
+            .initial {
+                display: block;
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                border-radius: 50%;
+                text-align: center;
+                font-weight: 300;
+                background-color: var(--paper-cyan-500);
+                color: #fff;
+            }
+            .panel-item {
+                background-color: var(--paper-grey-100);
+            }
+            .panel-item .box-tool {
+                right: 0;
+                top: 0;
+            }
+
+            .menu-display-options paper-button {
+                padding: 0;
+                font-size: 16px;
+            }
+            .menu-display-options paper-icon-button {
+                position: relative;
+                top: 1px;
+            }
+
+            .menu-display-options paper-item {
+                cursor: pointer;
+            }
+
+            .menu-display-options span {
+                font-size: 10px;
+            }
+
+            .toolbar-query {
+                display: inline-block;
+                vertical-align: top;
+            }
+
+            .toolbar-query paper-input {
+                display: inline-block;
+            }
+
+            .toolbar-display {
+                display: inline-block;
+            }
+
+            .label-ticket {
+                font-size: 14px;
+            }
+            .label-customer,
+            .label-products { font-size: 14px;font-weight: 500; }
+            .label-amounts { color: var(--paper-indigo-500); font-weight: 500; }
+            .label-revenue-type { color: var(--paper-indigo-500);}
+            .label-extra { font-size: 12px; }
+            .label-aging {
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .label-date {
+                font-size: 12px;
+            }
+            .label-status {
+                font-size: 12px;
+            }
+            .pointer {
+                cursor: pointer;
+            }
+            page-header-block {
+                --page-header-padding: 0.3rem 0.5rem
+            }
+        </style>
+
+        <kct-ajax id="ajax1"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+        <kct-ajax id="ajax3"></kct-ajax>
+        <kct-ajax id="ajax4"></kct-ajax>
+        <kct-ajax id="ajax5"></kct-ajax>
+        <kct-role id="role" auto-validate></kct-role>
+        <kct-search id="search" fields="[[ searchFields ]]" on-query="__onSearch" delay="500"></kct-search>
+        <kct-search id="gridSearch" fields="[[ searchFields ]]" on-query="__onGridSearch" delay="500"></kct-search>
+
+        <!-- <template is="dom-if" if="{{displayAsKanban}}"> -->
+        <kct-vbox style="display: {{__kanbanVisible(displayAsKanban)}}">
+            <page-header-block icon="view-carousel" data-authorized extra-size>
+                <label slot="header-content">Worksheet</label>
+                <vaadin-combo-box 
+                    id="combo" 
+                    slot="header-content" 
+                    label="Select Worksheet"
+                    value="{{ sheet }}" 
+                    items="[[ worksheets ]]"
+                    item-label-path="ks_name" 
+                    item-value-path="ks_id" 
+                    no-label-float>
+                    <template>
+                        <style>
+                            .combo-item-text {
+                                font-weight: 500;
+                                font-size: 18px;
+                            }
+                            .combo-item-desc {
+                                font-size: 14px;
+                                color: var(--app-muted);
+                            }
+                        </style>
+                        <div class="combo-item">
+                            <div class="combo-item-text">[[ item.ks_name ]]</div>
+                            <div class="combo-item-desc">[[ item.ks_description ]]</div>    
+                        </div>
+                        
+                    </template>
+                </vaadin-combo-box>
+
+                <paper-button on-tap="__onRefreshTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Reload</paper-button>
+                <paper-button on-tap="__onCreateTap" data-perm="create@worksheet"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
+
+                <paper-icon-button on-tap="__onSearchTap" icon="search" slot="secondary-toolbar"></paper-icon-button>
+                <div class="separator" slot="secondary-toolbar"></div>
+                <div class="toolbar-display"  class="menu-display-options" horizontal-align="right" slot="secondary-toolbar">
+                    <paper-icon-button on-tap="__onDisplayChange" name="kanban" icon="view-quilt" style="width:32px;height: 32px; padding: 0px;" title="Kanban"></paper-icon-button>
+                    <paper-icon-button on-tap="__onDisplayChange" name="grid" icon="view-list" style="width:32px;height: 32px; padding: 4px;" title="List"></paper-icon-button>
+                </div>  
+
+            </page-header-block>
+            <div class="flex">
+                <kct-kanban id="kanban" columns="4" data-authorized>
+                    <template is="dom-repeat" items="[[ kanban.ks_panels ]]" as="panel">
+                        <kct-kanban-panel accent="[[ panel.kp_accent ]]" hide-secondary>
+                            <div slot="panel-title">
+                                <template is="dom-if" if="[[ panel.kp_busy ]]">
+                                    <paper-spinner-lite hidden="" class="spinner" active$="[[ panel.kp_busy ]]"></paper-spinner-lite>    
+                                </template>
+                                <template is="dom-if" if="[[ !panel.kp_busy ]]">
+                                    <div><span class="f-500">[[ panel.kp_title ]]</span></div>
+                                    <div><span>[[ panel.kp_summaries.items ]] item(s)</span> &bull; <span class="f-500">IDR [[ panel.kp_summaries.amounts_formatted ]]</span></div>
+                                </template>
+                            </div>
+                            <!-- <kct-dropdown slot="primary-toolbar" halign="right">
+                                <paper-item on-tap="__onPanelReloadTap">Reload</paper-item>
+                                <paper-item>Print document</paper-item>
+                            </kct-dropdown> -->
+                            <div slot="panel-title-condensed">
+                                <span class="f-500">[[ panel.kp_title ]]</span>
+                            </div>
+                            <div class="panel-content">
+                                <template is="dom-repeat" items="[[ panel.kp_data ]]" as="row">
+                                    <div class="box box-shadow panel-item">
+                                        <div class="box-tool">
+                                            <paper-icon-button icon="create" title="Update Item" on-tap="__onRecordUpdateTap"  data-perm="update@worksheet"></paper-icon-button>
+                                        </div>
+                                        <div class="box-body pointer" on-tap="__onRecordUpdateTap">
+                                            <kct-hbox>
+                                                <div class="panel-item-init">
+                                                    <span class="initial" style$="background-color: [[ _accent() ]]">[[ __computeInitial(row) ]]</span>
+                                                </div>
+                                                <div class="flex">
+                                                    <div class="p-l-sm" style="relative; top: 4px;">
+                                                        <div>
+                                                            <div class="label-ticket">[[ row.mc_company_name ]] :. [[ row.ts_ticket_number ]]</div>
+                                                            <!-- <div class="label-customer"></div> -->
+                                                            <div class="label-products">[[ row.ts_products ]]</div>
+                                                            
+                                                        </div>
+                                                          
+                                                    </div>
+                                                </div>
+                                            </kct-hbox>
+                                            <kct-hbox>
+                                                <div class="label-amounts">IDR [[ row.ts_amounts_formatted ]]</div>
+                                                <template is="dom-if" if="[[ row.ts_revenue_type ]]">
+                                                    <div class="label-revenue-type flex p-l">( [[ row.ts_revenue_type ]] )</div>
+                                                </template>
+                                            </kct-hbox>
+                                            <kct-hbox>
+                                                <div class="label-aging"> [[row.aging]] days </div>
+                                                <template is="dom-if" if="[[ row.ts_expected_date_closed ]]">
+                                                    <div class="label-date flex ">&nbsp; ( expected close at [[ row.ts_expected_date_closed ]] )</div>
+                                                </template>
+                                            </kct-hbox>
+                                            <kct-hbox>
+                                                <div style$="color: [[panel.kp_accent]]" class="m-t-xs text-sm label-status">
+                                                    [[ row.status_text ]] 
+                                                </div>  
+                                                <div class="m-t-xs text-muted text-sm label-status flex">
+                                                    &nbsp; at [[ row.status_date ]]
+                                                </div>
+                                                
+                                            </kct-hbox>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </kct-kanban-panel>
+                    </template>
+
+                </kct-kanban>
+            </div>
+        </kct-vbox>
+        <!-- </template> -->
+        <!-- <template is="dom-if" if="{{!displayAsKanban}}"> -->
+        <kct-grid 
+            id="productsGrid" 
+            url="/kanban/findgrid" 
+            page-size="10" 
+            row-height="60" 
+            columns="{{ columns }}" 
+            params="{{ gridParams }}"
+            selected="{{ selectedLead }}"
+            selection-model="none"
+            icon="view-quilt" 
+            title="Sales Worksheet"  
+            description="Sales Flow" 
+            on-rowclicked="__onRowClicked"
+            autoload style="display: {{__listVisible(displayAsKanban)}}">
+
+            <template preserve-content>
+                <style>
+                    .cell-customer {
+                        @apply --layout-horizontal;
+                    }
+                    .cell-customer > .logo > span {
+                        display: block;
+                        width: 40px;
+                        height: 40px;
+                        color: #fff;
+                        text-align: center;
+                        font-size: 20px;
+                        line-height: 36px;
+                        font-weight: 300;
+                        border-radius: 50%;
+                        margin-right: 8px;
+                    }
+                    .cell-customer > .text {
+                        @apply --layout-flex;
+                    }
+
+                    .label-status-chip {
+                        /*background: darkorange;*/
+                        display: inline-block;
+                        padding: 1px 12px 3px;
+                        margin: 0 2px;
+                        color: #000;
+                        border-radius: 5px;
+                        font-size: 12px;
+                        font-weight: bolder;
+                    }
+
+                    paper-icon-button {
+                        width: 32px;
+                        height: 32px;
+                        --iron-icon-height: 32px;
+                        --iron-icon-width: 32px;
+                    }
+
+                    :host {
+                        --page-header-padding: 0.3rem 0.5rem
+                    }
+
+                    .grid-panel-header {
+                        display: flex;
+                        align-items: center;
+                    }
+                    
+                    .grid-toolbar > paper-button {
+                        font-weight: 400;
+                        padding-top: 4px;
+                        padding-bottom: 4px;
+                        font-size: 12px;
+                        --iron-icon-width: 20px;
+                        --iron-icon-height: 20px;
+                    }
+
+                    .ag-row {
+                        border-bottom: 1px solid #eee;
+                    }
+                </style>
+            </template>
+
+            <label slot="grid-info" style="position: relative; top: 7px;">Worksheet</label>
+            <vaadin-combo-box 
+                id="combo-grid" 
+                slot="grid-info" 
+                label="Select Worksheet"
+                item-label-path="ks_name" 
+                item-value-path="ks_id" 
+                value="{{ gridSheet }}" 
+                items="[[ gridWorksheets ]]"
+                no-label-float>
+            </vaadin-combo-box>
+                <!-- value="{{ gridSheet }}" 
+                items="[[ gridWorksheets ]]" -->
+            
+
+            <div slot="primary-toolbar">
+                <paper-button on-tap="__onCreateTap" style="width: 32px; height: 32px; font-size: 12px; padding: 4px;"><iron-icon icon="add" style="width: 18px;"></iron-icon>&nbsp;Add</paper-button>
+            </div>
+
+            <paper-icon-button on-tap="__onGridSearchTap" icon="search" slot="secondary-toolbar"></paper-icon-button>
+            <div class="separator" slot="secondary-toolbar"></div>
+            <div class="toolbar-display"  class="menu-display-options" horizontal-align="right" slot="secondary-toolbar">
+                <paper-icon-button on-tap="__onDisplayChange" name="kanban" icon="view-quilt" style="width:32px;height: 32px; padding: 4px;" title="Kanban"></paper-icon-button>
+                <paper-icon-button on-tap="__onDisplayChange" name="grid" icon="view-list" style="width:32px;height: 32px; padding: 0px;" title="List"></paper-icon-button>
+            </div>  
+
+        </kct-grid>
+        <!-- </template> -->
+        <!-- <kanban-form on-close="__onFormClose" id="kanban-form"></kanban-form> -->
+
+        <kanban-form 
+            id="kanban-create-form" 
+            form="[[ form ]]" 
+            record="[[ record ]]" 
+            action="[[ action ]]" 
+            worker="[[ worker ]]" 
+            user="[[ user ]]"
+            buttons='{"SAVE_SEND":"CREATE"}'
+            on-save="__onFormSave"></kanban-form>
+
+        <kanban-form 
+            id="kanban-form" 
+            form="[[ form ]]" 
+            record="[[ record ]]" 
+            action="[[ action ]]" 
+            worker="[[ worker ]]" 
+            user="[[ user ]]"
+            on-save="__onFormSave"></kanban-form>
+
+        <kct-dialog id="create-dialog" title="Create Opportunity" width="600" height="500" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    vaadin-combo-box { 
+                        padding: 2px 0; 
+                    }
+                    paper-input[type=number] { 
+                        padding: 0;
+                        --paper-input-container: {
+                            padding: 12px 0;
+                        };
+                    }
+                    .btn-remove-item {
+                        position: relative;
+                        top: 25px;
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <create-opportunity-form></create-opportunity-form>
+
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onCreateSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onCreateCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="kanban-status-dialog" title="Select status to Process" width="600" height="500" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    vaadin-combo-box { 
+                        padding: 2px 0; 
+                    }
+                    paper-input[type=number] { 
+                        padding: 0;
+                        --paper-input-container: {
+                            padding: 12px 0;
+                        };
+                    }
+                    .btn-remove-item {
+                        position: relative;
+                        top: 25px;
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <template is="dom-repeat" items="[[ selectStatuses ]]">                        
+                        <kct-hbox>                           
+                            <div>
+                                <paper-icon-button class="btn btn-sm btn-danger btn-remove-item" on-tap="__removeProduct">Delete</paper-icon-button>
+                            </div>
+
+                        </kct-hbox>
+
+                    </template>
+
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onCreateSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onKanbanStatusCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+
+    <script>
+        class KanbanPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'kanban-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Worksheet' },
+                    worksheets: { type: Array },
+                    sheet: { type: Number },
+                    gridWorksheets: { type: Array },
+                    gridSheet: { type: Number },
+                    gridParams: { type: Object },
+                    kanban: { type: Object },
+                    workspaces: { type: Array },
+                    workspace: { type: Object },
+                    record: { type: Object },
+                    form: { type: Object },
+                    query: { type: String },
+                    fields: { type: String },
+                    action: { type: String },
+                    worker: { type: String },
+                    display: { type: Object, value: () => ({ name: 'kanban', icon: 'view-quilt' }) },
+                    displayAsKanban: { type: Boolean, value: true },
+                    summaries: { type: Object, value: {} },
+                    total: { type: Number, value: 0 },
+                    revenueTypes:  {
+                        type: Array,
+                        value: () => ([
+                            { text: 'One Time', name: 'One Time' },
+                            { text: 'Recurring', name: 'Recurring' }
+                        ])
+                    },
+                    customerSegment:  {
+                        type: Array,
+                        value: () => ([
+                            { text: 'FSI', name: 'FSI' },
+                            { text: 'FMCG', name: 'FMCG' },
+                            { text: 'MAETL', name: 'MAETL' },
+                            { text: 'EPSE', name: 'EPSE' },
+                            { text: 'Reseller & SME', name: 'Reseller & SME' }
+                        ])
+                    },
+                    customers: { type: Array },
+                    products: { type: Array },
+                    customersStatuses: { 
+                        type: Array,
+                        value: () => ([
+                            { text: 'HOT', name: 'HOT' },
+                            { text: 'HOLD', name: 'HOLD' },
+                            { text: 'DUMP', name: 'DUMP' }
+                        ])
+                    },
+                    sales: { type: Object },
+                    searchFields: {
+                        type: Array,
+                        value: () => ([
+                            { text: 'Ticket No.', name: 'ts_ticket_number' },
+                            { text: 'Company', name: 'company' },
+                            { text: 'Segment', name: 'ts_segment' },
+                            { text: 'Service', name: 'service' },
+                            { text: 'Sub Service', name: 'sub_service' },
+                            { text: 'Amounts', name: 'ts_amounts' },
+                            { text: 'Opprtunity Date', name: 'ts_date_opportunity' },
+                            { text: 'Aging', name: 'aging' }
+                        ])
+                    },
+                    selectStatuses: { type: Array },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            {   text: 'Action', width: 100, dataIndex: 'ts_id', align: "center",
+                                renderer: ()=>{
+                                    return '<paper-icon-button icon="create" style="width:32px;height: 32px; padding: 4px;" title="Update" on-tap="__onRecordUpdateTap"></paper-icon-button>';
+                                }
+                            },
+                            {   text: 'Ticket', width: 200, dataIndex: 'ts_ticket_number',
+                                renderer: (params)=>{
+                                    if(params.data){
+                                        let statuses = '';
+                                        if(params.data.statuses){
+                                            params.data.statuses.forEach((status)=>{
+                                                if(status.status.label != ''){
+                                                    statuses += '<div class="label-status-chip" style="background-color: '+status.panel.kp_accent+'" title="at '+status.tss_created+'">'+status.status.label+'</div>';
+                                                }
+                                            });
+                                        }
+                                        return '<div>\
+                                            <div>'+params.data.ts_ticket_number+'</div>\
+                                            <div>'+statuses+'</div>\
+                                        </div>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            {   text: 'Opportunity', width: 300, dataIndex: 'company', 
+                                renderer: (params)=>{
+                                    if(params.data){                                        
+                                        return '<kct-hbox>\
+                                            <div class="panel-item-init">\
+                                                <span class="initial" style$="background-color: purple"></span>\
+                                            </div>\
+                                            <div class="flex">\
+                                                <div class="p-l-sm" style="relative; top: 4px;">\
+                                                    <div>\
+                                                        <div class="label-ticket">'+params.data.company+' ('+params.data.ts_segment+') </div>\
+                                                        <div class="label-products">'+params.data.service+' - '+params.data.sub_service+'</div>\
+                                                    </div>\
+                                                </div>\
+                                            </div>\
+                                        </kct-hbox>';
+                                    }
+                                    return '';
+                                } 
+                            },
+                            {   text: 'Value', width: 300, dataIndex: 'ts_amounts',
+                                renderer: (params)=>{
+                                    if(params.data){                                        
+                                        return '<kct-hbox>\
+                                                    <div>\
+                                                        <div class="label-amounts">IDR '+params.data.ts_amounts_formatted+'</div>\
+                                                        <div class="label-revenue-type flex p-l"> ( '+params.data.ts_revenue_type+' ) </div>\
+                                                    </div>\
+                                            </kct-hbox>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            {   text: 'Aging', width: 300, dataIndex: 'ts_date_opportunity',
+                                renderer: (params)=>{
+                                    if(params.data){                                        
+                                        return '<kct-hbox>\
+                                                    <div>\
+                                                        <div class="label-amounts">'+params.data.aging+' days</div>\
+                                                        <div class="label-revenue-type flex p-l">Expected close at ( '+params.data.ts_expected_date_closed+' ) </div>\
+                                                    </div>\
+                                            </kct-hbox>';
+                                    }
+                                    return '';
+                                }
+                            },
+                        ])
+                    },
+                }
+            }
+            static get observers() {
+                return [
+                    '__sheetChanged(sheet)',
+                    '__summariesChanged(summaries.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__busy = false;
+            }
+            activate() {
+                this.__loadWorksheets();
+            }
+            
+            ready() {
+              super.ready();
+            }
+            __queryChanged(){
+                this._debouncer = Polymer.Debouncer.debounce(
+                   this._debouncer,
+                   Polymer.Async.timeOut.after(500),
+                   this.__loadKanban.bind(this)
+                );
+                 
+            }
+
+            __listVisible(displayKanban){
+                return displayKanban ? 'none' : 'block';
+            }
+
+            __kanbanVisible(displayKanban){
+                return displayKanban ? 'flex' : 'none';
+            }
+
+            __loadWorksheets() {
+                this.set('worksheets', []);
+                this.set('gridWorksheets', []);
+
+                if (this.user && this.user.su_id) {
+                    this.$.ajax1.GET('/users/users-kanban?user=' + this.user.su_id).then((res) => {
+                        let worksheets = res.data;
+                        this.set('worksheets', worksheets);
+                        this.set('gridWorksheets', worksheets);
+                        if (worksheets.length) {
+                            this.set('sheet', worksheets[0].ks_id);
+                            this.set('gridSheet', worksheets[0].ks_id);
+                        }
+                    });
+                }
+            }
+            __loadKanban() {
+                this.set('kanban', {});
+                this.set('workspaces', []);
+
+                if (this.sheet) {
+                    let xhr = this.$.ajax1;
+                    
+                    xhr.GET('/kanban/kanban-settings/' + this.sheet).then((res) => {
+                        let kanban = res.data;
+                        this.set('kanban', kanban);
+                        this.__loadWorkspaces();
+                        this.__loadPanels(0);
+                    });
+                }
+                
+            }
+
+            __loadWorkspaces() {
+                this.set('workspaces', []);
+                if (this.kanban) {
+                    this.$.ajax2.GET('/kanban/kanban-workspaces?kanban=' + this.kanban.ks_id).then((res) => {
+                        this.set('workspaces', res.data);
+                    });
+                }
+            }
+
+            __loadPanels(index, panels = null) {
+                if ( ! panels) {
+                    panels = this.kanban.ks_panels;
+                }
+
+                if (index >= panels.length) {
+                    return;
+                }
+                
+                let panel = panels[index];
+
+                if (panel) {
+                    this.__loadPanelData(panel).then(() => {
+                        this.$.role.validate();
+                        index++;
+                        this.__loadPanels(index, panels);
+                    });
+                } else {
+                    return;
+                }
+            }
+
+            __computeInitial(item) {
+                return (item.text || '').substr(0, 1).toUpperCase();
+            }
+
+            __sheetChanged(worksheet) {
+                if (worksheet) {
+                    this.__loadKanban();
+                }
+            }
+
+            __summariesChanged() {
+                let summaries = this.get('summaries'),
+                    total = 0;
+
+                for (let k in summaries) {
+                    total += summaries[k];
+                }
+
+                this.set('total', total);
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--kanban-page-height': height + 'px'
+                });
+                if (this.$.kanban) {
+                    this.$.kanban.resize();
+                }
+            }
+            __onCreateTap() {
+                // simulate first worker;
+                let workspace = this.workspaces[0];
+                this.set('workspace', workspace);
+
+                if (workspace) {
+                    let user = this.user && this.user.su_id,
+                        role = this.user && this.user.su_sr_id;
+
+                    let form = workspace.forms.find((f) => {
+                        if (f.bf_init) {
+                            let users = f.bf_users.map(u => u.bfu_su_id),
+                                grant = false;
+                            if (users.indexOf(user) !== -1) {
+                                grant = true;
+                            }
+
+                            if ( ! grant) {
+                                let roles = f.bf_roles.map(r => r.bfr_sr_id);
+                                if (roles.indexOf(role) !== -1) {
+                                    grant = true;
+                                }
+                            }
+
+                            if (grant) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    });
+
+                    this.set('record', {});
+                    this.set('action', 'CREATE');
+                    this.set('form', form);
+                    this.set('worker', workspace.worker);
+
+                    if (form) {
+                        this.$['kanban-create-form'].open();
+                    } else {
+                        this.toast("Warn", "This document doesn't have form", "warn");
+                    }
+                } else {
+                    this.toast("Warn", "Can't perform this action", "warn");
+                }
+            }
+            __onRecordUpdateTap(e) {
+                console.log('on tap');
+                let record = e.model.row;
+                console.log(record);
+
+                if (record.target && record.worker) {
+
+                    let workspace = this.workspaces.find((w) => {
+                        return w.worker == record.worker;
+                    });
+
+                    this.set('workspace', workspace);
+
+                    if (workspace) {
+                        let user = this.user && this.user.su_id,
+                            role = this.user && this.user.su_sr_id;
+
+                        let form = workspace.forms.find((f) => {
+                            if (f.bf_activity == record.target) {
+                                let users = f.bf_users.map(u => u.bfu_su_id),
+                                    grant = false;
+                                if (users.indexOf(user) !== -1) {
+                                    grant = true;
+                                }
+
+                                if ( ! grant) {
+                                    let roles = f.bf_roles.map(r => r.bfr_sr_id);
+                                    if (roles.indexOf(role) !== -1) {
+                                        grant = true;
+                                    }
+                                }
+
+                                if (grant) {
+                                    return true;
+                                }
+                            }
+
+                            return false;
+                        });
+
+                        this.set('record', record);
+                        this.set('action', 'UPDATE');
+                        this.set('form', form);
+                        this.set('worker', workspace.worker);
+
+                        if (form) {
+                            this.$['kanban-form'].open();
+                        } else {
+                            this.toast("Warn", "This document doesn't have form", "warn");
+                        }
+                    }
+                } else {
+                    this.toast("Warn", "Can't perform this action", "warn");
+                }
+            }
+            __onFormSave(e) {
+                let res = e.detail.response;
+                if (res && res.success && this.workspace) {
+                    let deploy = this.workspace.deploy,
+                        affected = res.data.affected || [],
+                        refresh = [];
+
+                    affected.forEach((s) => {
+                        if (deploy[s] !== undefined) {
+                            Array.prototype.push.apply(refresh, deploy[s]);
+                        }
+                    });
+
+                    let panels = [];
+
+                    refresh.forEach((id) => {
+                        let panel = (this.kanban.ks_panels || []).find((p) => {
+                            return p.kp_id == id;
+                        });
+                        if (panel) {
+                            panels.push(panel);
+                        }
+                    });
+
+                    this.__loadPanels(0, panels);
+                }
+            }
+            
+            __onRefreshTap() {
+                this.__loadKanban();
+            }
+            __loadPanelData(panel) {
+                let statuses = (panel.kp_statuses || []).map(s => s.kst_status),
+                    panelIndex = (this.kanban.ks_panels || []).indexOf(panel),
+                    defer = this._defer();
+
+                let params = {};
+                params.statuses = JSON.stringify(statuses);
+                if(this.query){
+                    params.query = this.query;
+                    params.fields = this.fields || "*";
+                }
+
+                this.set('kanban.ks_panels.' + panelIndex + '.kp_busy', true);
+
+                this.$.ajax3.GET('/kanban', params).then((res) => {
+                    this.set('kanban.ks_panels.' + panelIndex + '.kp_data', res.data);
+                    this.set('kanban.ks_panels.' + panelIndex + '.kp_summaries', res.summaries);
+
+                    this.set('summaries.' + panelIndex, res.summaries.items);
+
+                    let t = setTimeout(() => {
+                        this.set('kanban.ks_panels.' + panelIndex + '.kp_busy', false);
+                        clearTimeout(t);
+                        t = null;
+                        defer.resolve();
+                    }, 100);
+                    
+                });
+
+                return defer.promise;
+            }
+            __onPanelReloadTap(e) {
+                this.__loadPanelData(e.model.panel);
+            }
+            
+            __onRecordDeleteTap(e) {
+                let row = e.model.row,
+                    panel = e.model.parentModel.panel;
+
+                this.$.ajax4.DELETE('/kanban/' + row.status).then(() => {
+                    this.__loadPanelData(panel);
+                });
+            }
+
+            __onDisplayChange(e) {
+                let item = e.target,
+                    name = item.getAttribute('name'),
+                    icon = item.getAttribute('icon');
+                console.log(this.gridWorksheets);
+                console.log(this.gridSheet);
+                this.set('display.icon', icon);
+                this.set('display.name', name);
+                this.set('displayAsKanban', name == 'kanban');
+            }
+
+            // ------------- custom document --------------------- //
+            
+            __loadCustomers() {
+                let ajax = this.$.ajax4;
+                ajax.GET('/customers').then(res => {
+                    this.set('customers', res.data);
+                });
+            }
+
+            __loadProducts() {
+                let ajax = this.$.ajax5;
+                ajax.GET('/products').then(res => {
+                    this.set('products', res.data);
+                });
+            }
+
+            ____onCreateTap() {
+                this.__loadCustomers();
+                this.__loadProducts();
+
+                this.set('sales', {});
+                this.set('sales.products',[{}]);
+                this.$['create-dialog'].open();
+            }
+
+            __addProduct() {
+                this.push('sales.products',{});
+            }
+
+            __removeProduct(e) {
+                this.splice('sales.products',e.model.index, 1);
+            }
+
+            __onCreateSaveTap() {
+                this.$['create-dialog'].close();
+
+                let data = this.sales,
+                    ajax = this.$.ajax4;
+                    console.log(data);
+                if (data.tl_id) {
+                    ajax.PUT('/sales/' + data.ts_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/sales', data).then(done.bind(this))
+                }
+                
+                function done(res) {
+                    if (res.success) {
+                        // simulate first workspace
+                        let workspace = this.workspaces[0];
+
+                        if (workspace) {
+                            let affected = (res.data.ts_statuses || []),
+                                refresh = [];
+
+                            affected.forEach((s) => {
+                                if (workspace.deploy[s] !== undefined) {
+                                    Array.prototype.push.apply(refresh, workspace.deploy[s]);
+                                }
+                            });
+
+                            let panels = [];
+
+                            refresh.forEach((id) => {
+                                let panel = (this.kanban.ks_panels || []).find((p) => {
+                                    return p.kp_id == id;
+                                });
+                                if (panel) {
+                                    panels.push(panel);
+                                }
+                            });
+                            
+                            this.__loadPanels(0, panels);
+                        }
+
+                        
+                    }
+                }
+            }
+
+            __onCreateCloseTap() {
+                this.$['create-dialog'].close();
+            }
+
+            __onSearch(e) {
+                console.log(e.detail);
+                this.set('query',e.detail.query);
+                this.set('fields',e.detail.fields);
+                this.__loadKanban();
+                // this.__loadUsers(e.detail);
+            }
+
+            __onSearchTap(e) {
+                e.stopPropagation();
+                this.$.search.open();
+            }
+
+            __onGridSearch(e) {
+                console.log(e.detail);
+                this.set('gridParams.query',e.detail.query);
+                this.set('gridParams.fields',e.detail.fields);
+                console.log(this.$.productsGrid);
+                this.$.productsGrid.load();
+                // this.__loadKanban();
+                // this.__loadUsers(e.detail);
+            }
+
+            __onGridSearchTap(e) {
+                e.stopPropagation();
+                this.$.gridSearch.open();
+            }
+
+            __onRowClicked(e){
+                let source = e.detail.event.event.path[0].nodeName,
+                    record = e.detail.row;
+                console.log('row clicked', record);
+
+                if(source == 'IRON-ICON'){
+                    console.log(record.statuses.length);
+                    if(record.statuses.length > 1){
+                        this.set('selectStatuses',record.statuses);
+                        this.$['kanban-status-dialog'].open();
+                    }else{
+                        if (record.statuses[0].target && record.statuses[0].worker) {
+
+                            let workspace = this.workspaces.find((w) => {
+                                return w.worker == record.statuses[0].worker;
+                            });
+
+                            this.set('workspace', workspace);
+
+                            if (workspace) {
+                                let user = this.user && this.user.su_id,
+                                    role = this.user && this.user.su_sr_id;
+
+                                let form = workspace.forms.find((f) => {
+                                    if (f.bf_activity == record.statuses[0].target) {
+                                        let users = f.bf_users.map(u => u.bfu_su_id),
+                                            grant = false;
+                                        if (users.indexOf(user) !== -1) {
+                                            grant = true;
+                                        }
+
+                                        if ( ! grant) {
+                                            let roles = f.bf_roles.map(r => r.bfr_sr_id);
+                                            if (roles.indexOf(role) !== -1) {
+                                                grant = true;
+                                            }
+                                        }
+
+                                        if (grant) {
+                                            return true;
+                                        }
+                                    }
+
+                                    return false;
+                                });
+
+                                this.set('record', record);
+                                this.set('action', 'UPDATE');
+                                this.set('form', form);
+                                this.set('worker', workspace.worker);
+
+                                if (form) {
+                                    this.$['kanban-form'].open();
+                                } else {
+                                    this.toast("Warn", "This document doesn't have form", "warn");
+                                }
+                            }
+                        } else {
+                            this.toast("Warn", "Can't perform this action", "warn");
+                        }
+                    }
+                }
+            }
+
+            __onKanbanStatusCloseTap() {
+                this.$['kanban-status-dialog'].close();
+            }
+        }
+        customElements.define(KanbanPage.is, KanbanPage);
+    </script>
+</dom-module>

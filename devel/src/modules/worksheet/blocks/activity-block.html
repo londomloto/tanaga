@@ -1,0 +1,509 @@
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+<link rel="import" href="../../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
+
+<dom-module id="activity-block">
+    <template>
+        <style include="theme-helper">
+            :host([loading]) {
+                display: none;
+            }
+            .timeline {
+                padding: 0;
+                border-left: 4px solid #dfdfdf;
+                margin-left: 30px;
+            }
+
+            .timeline-title {
+                font-weight: 500;
+                font-size: 13px;
+                text-transform: uppercase;
+                margin-bottom: 15px;
+            }
+
+            .timeline-item {
+                position: relative;
+            }
+
+            .timeline-item.timeline-comment {
+                z-index: 1024;
+            }
+
+            .timeline-item ~ .timeline-item {
+                margin-top: 15px;
+            }
+
+            .timeline-item::before {
+                content: '';
+                position: absolute;
+                height: 0;
+                border-top: 2px dotted #dfdfdf;
+                margin-top: -2px;
+                left: 0;
+                right: 0;
+                top: 50%;
+            }
+
+            .timeline-icon {
+                position: absolute;
+                left: -18px;
+                top: 50%;
+                margin-top: -16px;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 1px solid var(--paper-cyan-300);
+                color: var(--paper-cyan-300);
+                box-sizing: border-box;
+                padding: 6px;
+                background-color: #fff;
+            }
+
+            .timeline-icon iron-icon {
+                position: relative;
+                top: -2px;
+                width: 100%;
+                height: 100%;
+            }
+
+            .timeline-body {
+                margin-left: 30px;
+                background-color: #fff;
+                height: 100%;
+                position: relative;
+                z-index: 2;
+            }
+
+            .msgbox-wrapper {
+                border: 1px solid #dfdfdf;
+                border-radius: 4px;
+            }
+            .msgbox-body {
+                padding: 10px;
+            }
+            .msgbox-footer {
+                padding: 0 10px 10px 10px;
+            }
+            .msgbox-footer iron-icon {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+            }
+            .msgbox-footer paper-button {
+                margin: 0;
+                text-transform: none;
+            }
+
+            #msgbox {
+                border: 1px solid #2A9AF2;
+                height: 150px;
+            }
+
+            .history-wrapper,
+            .comment-wrapper {
+                border: 1px solid #dfdfdf;
+                background-color: var(--paper-grey-100);
+                border-radius: 4px;
+            }
+
+            .comment-wrapper {
+                position: relative;
+                z-index: 100;
+            }
+
+            .history-body {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            .comment-header {
+                font-size: 12px;
+                padding: 10px;
+                border-bottom: 1px solid #dfdfdf;
+            }
+
+            .comment-body {
+                font-size: 15px;
+                padding: 15px 10px;
+            }
+
+            kct-html {
+                --strong: { font-weight: 500; };
+                --image: { cursor: pointer;  }
+            }
+
+            .comment-body kct-html {
+                --paragraph: { margin: 0; };
+                --space: 15px;
+            }
+
+            .comment-body kct-html[hidden] {
+                display: none;
+            }
+
+            .comment-footer {
+                padding: 10px;
+                font-size: 12px;
+            }
+
+            .comment-footer > paper-button,
+            .comment-footer > label {
+                float: left;
+            }
+
+            .comment-footer paper-button {
+                margin: 0 5px 0 0;
+                text-transform: none;
+                font-size: 12px;
+                border: 1px solid #dfdfdf;
+
+            }
+
+            .comment-footer paper-button[checked] {
+                border-color: var(--paper-red-200);
+                color: var(--paper-red-500);
+            }
+
+            .comment-footer paper-button.btn-icon {
+                min-width: auto;
+            }
+
+            .comment-footer paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -1px;
+            }
+
+            .comment-footer > label {
+                margin-top: 8px;
+            }
+
+            .comment-edit {
+                border-radius: 2px;
+                background-color: #fff;
+                border: 1px solid #dfdfdf;
+            }
+
+            .comment-edit paper-textarea {
+                padding: 0;
+                --paper-input-container: { padding: 0; };
+                --paper-input-container-underline: { display: none; };
+                --paper-input-container-underline-focus: { display: none; };
+            }
+
+            .comment-edit kct-html-editor {
+                height: 150px;
+                --wysiwyg-toolbar-background: #fff;
+                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
+                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
+                --wysiwyg-toolbar: {
+                    border-bottom: 1px solid #dfdfdf;
+                };
+            }
+
+            .paginator {
+                display: block;
+                margin: 20px 0;
+                text-align: center;
+            }
+
+            .paginator[hidden] {
+                display: none;
+            }
+
+            .paginator paper-button {
+                font-size: 13px;
+                padding: 8px 16px;
+                text-transform: none;
+                color: var(--paper-cyan-500);
+                border: 1px solid var(--paper-cyan-300);
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-file id="file" filename="{{ filename }}" on-change="__onFileChange"></kct-file>
+        <kct-confirm id="confirm"></kct-confirm>
+
+        <h3 class="timeline-title">Activities</h3>
+
+        <div class="timeline">
+            
+            <div class="timeline-item timeline-comment">
+                <div class="timeline-icon">
+                    <iron-icon icon="add"></iron-icon>
+                </div>
+                <div class="timeline-body">
+                    <div class="msgbox-wrapper">
+                        <div class="msgbox-body">
+                            <kct-html-editor id="msgbox"></kct-html-editor>
+                        </div>
+
+                        <div class="msgbox-footer">
+                            <kct-hbox>
+                                <div>
+                                    <paper-button on-tap="__onAttachTap">
+                                        <iron-icon icon="attachment"></iron-icon>&nbsp;Attachment
+                                    </paper-button>
+                                </div>
+                                <div class="flex text-right">
+                                    <paper-button class="btn-cyan" on-tap="__onSubmitTap">
+                                        Submit Comment
+                                    </paper-button>
+                                </div>
+                            </kct-hbox>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <template is="dom-repeat" items="[[ activities ]]">
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <iron-icon icon="[[ item.tta_icon ]]"></iron-icon>
+                    </div>
+                    <div class="timeline-body">
+                        <template is="dom-if" if="[[ item.tta_is_history ]]">
+                            <div class="history-wrapper">
+                                <div class="history-body">
+                                    <kct-html html="[[ item.tta_verb ]]"></kct-html>
+                                </div>
+                            </div>
+                        </template>
+                        <template is="dom-if" if="[[ item.tta_is_comment ]]">
+                            <div class="comment-wrapper">
+                                <div class="comment-header">
+                                    <kct-html html="[[ item.tta_verb ]]"></kct-html>
+                                </div>
+                                <div class="comment-body">
+                                    <div class="comment-view" hidden$="[[ item.tta_editing ]]">
+                                        <kct-html html="[[ item.tta_text ]]"></kct-html>    
+                                    </div>
+                                    <div class="comment-edit" hidden$="[[ !item.tta_editing ]]">
+                                        <kct-html-editor value="{{ item.tta_data }}"></kct-html-editor>
+                                    </div>
+                                </div>
+                                <div class="comment-footer" hidden$="[[ item.tta_editing ]]">
+                                    <!-- <paper-button checked><iron-icon icon="thumb-up"></iron-icon>&nbsp;5 Likes</paper-button>  -->
+                                    <paper-button on-tap="__onEditCommentTap" hidden$="[[ !item.tta_is_editable ]]"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button> 
+                                    <label hidden$="[[ !item.tta_is_editable ]]">&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onRemoveCommentTap">delete comment</a></label>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <div class="comment-footer" hidden$="[[ !item.tta_editing ]]">
+                                    <paper-button on-tap="__onSaveCommentTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                                    <label>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0)" on-tap="__onCancelEditCommentTap">cancel editing</a></label>
+                                    <div class="clearfix"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+        </div>
+
+        <div class="paginator" hidden$="[[ __hidePaginator ]]">
+            <paper-button on-tap="__onPaginatorTap">Load more activities...</paper-button>
+        </div>
+
+    </template>
+    <script>
+        class ActivityBlock extends Polymer.Element {
+            static get is() {
+                return 'activity-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object, notify: true },
+                    message: { type: String },
+                    activities: { 
+                        type: Array, 
+                        value: () => ([]), 
+                        notify: true 
+                    },
+                    paginator: {
+                        type: Object,
+                        value: () => ({
+                            start: 0,
+                            limit: 20
+                        })
+                    },
+                    loading: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__hidePaginator = true;
+            }
+            
+            initialize() {
+                this.load({ start: 0 });
+            }
+
+            load(options = {}) {
+
+                let start, limit;
+
+                if (options.start !== undefined) {
+                    start = options.start;
+                    this.set('paginator.start', start);
+                } else {
+                    start = this.paginator.start;
+                }
+
+                limit = this.paginator.limit;
+
+                let taskId = this.record && this.record.task && this.record.task.tt_id;
+
+                if ( ! taskId) {
+                    this.set('activities', []);
+                    return;
+                }
+
+                let payload = {
+                    params: {
+                        tta_tt_id: taskId
+                    },
+                    sort: [
+                        { property: 'tta_created', direction: 'desc' }
+                    ],
+                    start: start,
+                    limit: limit
+                };
+
+                this.$.ajax.GET('/tasks/tasks-activities', payload).then(res => {
+                    if (start == 0) {
+                        this.set('activities', []);
+                    }
+
+                    let activities = this.activities.slice();
+                    Array.prototype.push.apply(activities, res.data);
+                    this.set('activities', activities);
+
+                    start = this.paginator.start + this.paginator.limit;
+                    this.set('paginator.start', start);
+
+                    if (start >= res.total) {
+                        this.set('__hidePaginator', true);
+                    } else {
+                        this.set('__hidePaginator', false);
+                    }
+
+                });
+            }
+
+            __handleZIndex(button) {
+                this.__zindex = this.__zindex === undefined 
+                    ? 500 
+                    : (this.__zindex === 1024 
+                        ? 500 
+                        : this.__zindex);
+
+                this.__zindex++;
+
+                let item = button.parentNode.parentNode.parentNode.parentNode;
+                item.style.zIndex = this.__zindex + '';
+            }
+
+            __onSubmitTap() {
+                let message = this.$.msgbox.value;
+                
+                if ( ! message) {
+                    if ( ! this.attachment) {
+                        return;
+                    }
+                }
+
+                let data = {
+                    tta_type: 'comment',
+                    tta_data: message,
+                    tta_tt_id: this.record.task.tt_id
+                };
+
+                this.$.ajax.POST('/tasks/tasks-activities', data).then(res => {
+                    if (res.success) {
+                        let activity = res.data;
+                        // this.unshift('activities', activity);
+                        this.load({start: 0});
+                        this.$.msgbox.value = '';
+                    }
+                });
+                
+            }
+
+            __onAttachTap() {
+                this.$.file.browse();
+            }
+
+            __onFileChange() {
+                let attachment = this.$.file.file().files[0];
+
+                if (attachment) {
+                    let payload = {
+                        files: [
+                            { name: 'userfile', file: attachment }
+                        ]
+                    };
+
+                    this.$.ajax.UPLOAD('/tasks/tasks-activities/upload', payload).then(res => {
+                        if (res.success) {
+                            let code = res.data.code;
+                            let html = this.$['msgbox'].value;
+                            
+                            html += code;
+                            this.$['msgbox'].value = html;
+                        }
+                        this.$.file.reset();
+                    });
+                }
+            }
+
+            __onEditCommentTap(e) {
+                let index = e.model.index;
+                this.set('activities.' + index + '.tta_editing', true);
+                this.__handleZIndex(e.target);
+            }
+
+            __onSaveCommentTap(e) {
+                let data = e.model.item;
+                this.$.ajax.PUT('/tasks/tasks-activities/' + data.tta_id, data).then(res => {
+                    if (res.success) {
+                        this.set('activities.' + e.model.index + '.tta_data', res.data.tta_data);    
+                        this.set('activities.' + e.model.index + '.tta_text', res.data.tta_text);
+                    }
+                    this.set('activities.' + e.model.index + '.tta_editing', false);
+                });
+            }
+
+            __onCancelEditCommentTap(e) {
+                let index = e.model.index;
+                this.set('activities.' + index + '.tta_editing', false);
+            }
+
+            __onRemoveCommentTap(e) {
+                this.$.confirm.title = 'Confirm';
+                this.$.confirm.message = 'Are you sure want to remove this comment?';
+                this.$.confirm.open().then(y => {
+                    if (y == 'yes') {
+                        this.$.ajax.DELETE('/tasks/tasks-activities/' + e.model.item.tta_id).then(res => {
+                            // this.splice('activities', e.model.index, 1);
+                            this.load({start: 0});
+                        });
+                    }
+                }); 
+            }
+
+            __onPaginatorTap() {
+                this.load();
+            }
+        }
+        
+        customElements.define(ActivityBlock.is, ActivityBlock);
+    </script>
+</dom-module>

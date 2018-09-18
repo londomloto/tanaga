@@ -1,0 +1,14 @@
+{
+  "name": "graph-interactjs",
+  "homepage": "https://github.com/londomloto/graph-interactjs",
+  "version": "1.0.0",
+  "_release": "1.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.0.0",
+    "commit": "26420370194ec3d69215456233f40e6d36e98ac9"
+  },
+  "_source": "https://github.com/londomloto/graph-interactjs.git",
+  "_target": "1.0.0",
+  "_originalSource": "graph-interactjs"
+}

@@ -1,0 +1,252 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="invitation-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .container {
+                padding: 30px;
+                background-color: #fff;
+                border-bottom: 1px solid #dfdfdf;
+            }
+            .header h3 {
+                font-size: 24px;
+                font-weight: 200;
+            }
+            .header h3 b { font-weight: 400; }
+            .header p { font-size: 18px; font-weight: 300; margin: 15px 0;  }
+            .message {
+                margin: 30px auto;
+                max-width: 500px;
+                text-align: center;
+                padding: 15px 0;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 400;
+                color: #888;
+            }
+            .message.error {
+                background-color: var(--paper-amber-200);
+            }
+            .message.success {
+                border: 1px solid #f0f0f0;
+            }
+            .form {
+                margin: 15px auto;
+                max-width: 500px;
+            }
+            paper-input {
+                --paper-input-container-label: {
+                    font-size: 16px;
+                    font-weight: 300;
+                };
+                --paper-input-container-input: {
+                    font-weight: 500;
+                    font-size: 16px;
+                };
+            }
+            .form-action {
+                margin-top: 30px;
+            }
+            .form-action paper-button {
+                margin: 0;
+                display: block;
+                background-color: var(--paper-blue-500);
+                color: #fff;
+                font-size: 18px;
+                text-transform: none;
+                text-align: center;
+            }
+            .footer {
+                text-align: center;
+                padding: 15px;
+            }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-300);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-auth id="auth" config="[[ config ]]" user="{{ user }}"></kct-auth>
+
+        <div class="container">
+            <div class="header text-center">
+                <h3>Awesome, user!</h3>
+                <h3>We are so exicited to see you join <b>Worksaurus Team</b> application</h3>
+                <p>Please, complete your profile to activate your account</p>    
+            </div>
+
+            <div class="message error" hidden$="[[ __valid ]]">
+                [[ __message ]]
+            </div>
+
+            <div class="message success" hidden$="[[ !__activated ]]">
+                <span style="color: var(--paper-blue-500);">Your account has been activated.</span><br>
+                <span style="margin: 5px; font-size: 12px;">Redirecting to application in ... [[ __counter ]] second(s)</span>
+            </div>
+
+            <div class="form" hidden$="[[ __hideForm(__valid, __activated) ]]">
+                
+                <paper-input value="{{ record.su_email }}" type="email" label="Your email address" readonly required auto-validate error-message="Valid email address is required"></paper-input>
+                <paper-input value="{{ record.su_fullname }}" label="Type your full name" required auto-validate error-message="Full name is required"></paper-input>
+                <paper-input value="{{ password1 }}" type="password" label="Your password" minlength="3" required auto-validate error-message="Password is required (min. 3 characters)"></paper-input>
+                <paper-input id="password2" value="{{ password2 }}" type="password" label="Confirm your password"></paper-input>
+
+                <div class="form-action">
+                    <paper-button on-tap="__onSubmitTap" class="btn-submit" raised disabled$="[[ invalid ]]">Complete Activation</paper-button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="footer">
+            <img hieght="48" src$="[[ resolveUrl('../../../images/logo/worksaurus-1.png') ]]">
+        </div>
+
+    </template>
+    <script>
+        class InvitationPage extends KctView {
+            static get is() {
+                return 'invitation-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Invitation', notify: true },
+                    token: { type: String },
+                    invalid: { type: Boolean, value: false },
+                    record: { type: Object, value: () => ({}) },
+                    password1: { type: String },
+                    password2: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__validationChanged(record.su_email, record.su_fullname, password1, password2)',
+                    '__passwordChanged(password2)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__message = '';
+                this.__counter = 3;
+                this.__valid = false;
+                this.__activated = false;
+            }
+
+            handleRouteParams() {
+                let token = this.route.query.code;
+                this.set('token', token);
+                this.__validate();
+            }
+
+            __hideForm(valid, activated) {
+                if (activated) {
+                    return true;
+                }
+
+                if (valid) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            __passwordChanged(password2) {
+                let password1 = this.password1;
+
+                this.$.password2.invalid = false;
+                this.$.password2.errorMessage = '';
+
+                if (password1) {
+                    if (password1 != password2) {
+                        this.$.password2.invalid = true;
+                        this.$.password2.errorMessage = `Password doesn't match`;    
+                    }
+                }
+            }
+
+            __validationChanged(email, fullname, password1, password2) {
+                let valid = true;
+                
+                valid = valid && email;
+                valid = valid && fullname;
+                valid = valid && password1 && password1.length >= 3 && (password1 == password2);
+
+                this.set('invalid', !valid);
+            }
+
+            __redirecting(url) {
+                let counter = this.__counter;
+
+                let timer = setInterval(() => {
+                    counter--;
+                    this.set('__counter', counter);
+                    if (counter == 0) {
+                        clearInterval(timer);
+                        timer = null;
+
+                        location.href = url;
+                    }
+                }, 1000);
+            }
+
+            __validate() {
+                if ( ! this.token) {
+                    return;
+                }
+                
+                let payload = {
+                    token: this.token
+                };
+
+                this.$.ajax.POST('/users/validate-activation', payload).then(res => {
+                    if (res.success) {
+                        this.set('__valid', true);
+                        this.set('__message', '');
+
+                        this.set('record', res.data);
+                    } else {
+                        this.set('__valid', false);
+                        this.set('__message', res.message);
+                    }
+                });
+            }
+
+            __onSubmitTap() {
+                let data = Object.assign({}, this.record);
+                data.password = this.password1;
+
+                // logout any active user
+                this.$.auth.logout();
+
+                this.mask();
+
+                this.$.ajax.POST('/users/activate', data).then(res => {
+                    if (res.success) {
+                        this.$.auth.login(data.su_email, data.password, false, false).then((user) => {
+                            this.unmask();
+                            if (user) {
+                                this.set('__activated', true);
+                                this.__redirecting(res.data.redir);
+                            }
+                        });
+                    } else {
+                        this.unmask();
+                    }
+                });
+            }
+        }
+
+        customElements.define(InvitationPage.is, InvitationPage);
+    </script>
+</dom-module>

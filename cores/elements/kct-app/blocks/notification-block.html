@@ -1,0 +1,222 @@
+<link rel="import" href="../../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../kct-ajax/kct-ajax.html">
+<link rel="import" href="../../kct-html/kct-html.html">
+
+<dom-module id="notification-block">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .container {
+                position: relative;
+            }
+            .popup {
+                color: #666;
+                background-color: #fff; 
+                padding: 8px 0; 
+                width: var(--popup-width, 300px);
+                height: var(--popup-height, auto);
+            }
+            paper-menu-button {
+                padding: 0;
+            }
+            paper-icon-button {
+                padding: 8px;
+                width: 40px;
+                height: 40px;
+                color: var(--paper-blue-grey-300);;
+                --paper-icon-button-ink-color: var(--paper-blue-grey-500);
+            }
+            
+            paper-item {
+                cursor: pointer;
+                font-weight: normal;
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+            paper-item:hover {
+                background-color: #f4f4f4;
+            }
+            paper-item + paper-item {
+                border-top: 1px solid #f0f0f0;
+            }
+            paper-item iron-icon {
+                --iron-icon-width: 24px;
+                --iron-icon-height: 24px;
+            }
+            .header {
+                padding: 0 15px 8px 15px;
+                font-size: 13px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .footer {
+                text-align: right;
+                padding: 15px 15px 8px 15px;
+                font-size: 13px;
+                border-top: 1px solid #f0f0f0;
+            }
+            .icon {
+                display: block;
+                width: 24px;
+                height: 24px;
+                margin-right: 10px;
+            }
+            .time {
+                font-size: 11px;
+                color: #999;
+            }
+            .text {
+                font-size: 12px;
+                --paragraph: { margin: 2px 0; };
+                --strong: { font-weight: 500; color: var(--paper-purple-900); };
+            }
+            .badge {
+                display: block;
+                position: absolute;
+                top: 5px;
+                right: 10px;
+                padding: 2px 3px;
+                font-size: 11px;
+                line-height: 1;
+                color: #fff;
+                border-radius: 3px;
+                background-color: var(--paper-red-400);
+                opacity: 0;
+                pointer-events: none;
+            }
+            :host([dirty]) .badge {
+                animation-name: bouncing;
+                animation-duration: 450ms;
+                animation-timing-function: linear;
+                animation-fill-mode: forwards;
+            }
+            @keyframes bouncing {
+                0%{ opacity: 0; transform: scale(0.3) translate3d(0,0,0); }
+                50%{ opacity: 0.9; transform: scale(1.1); }
+                80%{ opacity: 1; transform: scale(0.89); }
+                100%{ opacity: 1; transform: scale(1) translate3d(0,0,0); }
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="container">
+            <paper-menu-button 
+                id="menu" 
+                horizontal-align="right" 
+                horizontal-offset="[[ offsetX ]]" 
+                vertical-offset="[[ offsetY ]]" 
+                on-paper-dropdown-open="__onPopupOpen" 
+                no-animations 
+                no-overlap>
+                <paper-icon-button slot="dropdown-trigger" class="nav-notif" icon="social:notifications"></paper-icon-button>    
+                <div class="popup" slot="dropdown-content">
+                    <div class="header">
+                        You have new notifications
+                    </div>
+                    <template is="dom-repeat" items="[[ items ]]">
+                        <paper-item on-tap="__onItemTap">
+                            <div class="icon">
+                                <iron-icon icon="[[ item.tta_icon ]]"></iron-icon>
+                            </div>
+                            <paper-item-body>
+                                <div class="time">[[ item.tta_time ]]</div>
+                                <kct-html class="text" html="[[ item.tta_verb ]]"></kct-html>
+                            </paper-item-body>
+                        </paper-item>    
+                    </template>
+                    
+                    <div class="footer">
+                        <a href="javascript:;" on-tap="__onReadAllTap">See all notifications</a>
+                    </div>
+                </div>
+            </paper-menu-button>
+            <span class="badge">!</span>
+        </div>
+        
+    </template>
+    <script>
+        class NotificationBlock extends Polymer.Element {
+            static get is() {
+                return 'notification-block';
+            }
+
+            static get properties() {
+                return {
+                    items: { type: Array, value: () => ([]) },
+                    total: { type: Number, value: 0 },
+                    dirty: { type: Boolean, value: false, reflectToAttribute: true},
+                    screen: { type: String },
+                    offsetX: { type: Number, value: 0 },
+                    offsetY: { type: Number, value: 0 }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__screenChanged(screen)'
+                ];
+            }
+
+            load() {
+                this.$.ajax.GET('/notifications?display=top').then(res => {
+                    this.set('total', res.data.length);
+                    this.set('items', res.data);
+
+                    this.$.menu.$.dropdown.notifyResize();
+                });
+            }
+
+            __screenChanged(screen) {
+                switch(screen) {
+                    case 'xl':
+                    case 'lg':
+                    case 'md':
+                        this.updateStyles({ '--popup-width': '300px' });
+                        this.updateStyles({ '--popup-height': 'auto' });
+                        this.set('offsetX', 0);
+                        this.set('offsetY', 0);
+                        break;
+                    case 'sm':
+
+                        // get viewport width
+                        let width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+                        let height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+
+                        this.updateStyles({ '--popup-width': width + 'px' });
+                        this.updateStyles({ '--popup-height': (height - 60) + 'px' });
+
+                        this.set('offsetX', -130);
+                        this.set('offsetY', 40);
+
+                        break;
+                }
+            }
+
+            __onReadAllTap() {
+                this.$.menu.close();
+                this.set('route.path', '/notifications');
+            }
+
+            __onItemTap(e) {
+                this.$.menu.close();
+
+                let item = e.model.item;
+
+                if (item.tta_link) {
+                    this.set('route.data.task', null);
+                    this.set('route.path', item.tta_link);
+                }
+            }
+
+            __onPopupOpen() {
+                this.set('dirty', false);
+                this.load();
+            }
+        }
+        customElements.define(NotificationBlock.is, NotificationBlock);
+    </script>
+</dom-module>

@@ -1,0 +1,210 @@
+<link rel="import" href="user-dock.html">
+
+<dom-module id="task-item-kanban">
+    <template>
+        <style include="theme-helper">
+            :host {
+                margin-bottom: 8px;
+            };
+            :host([drag-active]) {
+                margin-bottom: 0;
+            }
+            .item {
+                border-radius: 3px;
+                margin-bottom: 0;
+            }
+            .box {
+                position: relative;
+                overflow: hidden;
+                --webkit-transition: opacity 0.1s ease-out;
+                         transition: opacity 0.1s ease-out;
+            }
+            :host([drag-active]) .box {
+                --webkit-transition: height 0.2s ease-out;
+                         transition: height 0.2s ease-out;
+            }
+            .box-body {
+                padding: 8px 12px 0 12px;
+            }
+            .item .box-foot {
+                padding: 5px 10px;
+                font-size: 11px;
+                pointer-events: none;
+                color: var(--paper-grey-500);
+            }
+            .item .box-foot iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                margin-right: 3px;
+                position: relative;
+                top: -1px;
+            }
+            .item-user {
+                position: relative;
+                overflow: hidden;
+                width: 30px;
+                height: 30px;
+                border-radius: 3px;
+                float: left;
+                margin-left: 2px;
+            }
+            .item-badge {
+                float: left;
+            }
+            .item-badge + .item-badge {
+                margin-left: 20px;
+            }
+            .item-title {
+                font-weight: 400;
+                color: var(--paper-blue-grey-500);
+                font-size: 15px;
+                cursor: pointer;
+            }
+            .item-title:hover {
+                text-decoration: underline;
+            }
+            .item-desc {
+                font-size: 13px;
+                color: #999;
+            }
+            .item-meta {
+                font-size: 11px;
+                font-weight: 300;
+                color: #999;
+            }
+            .item-meta b {
+                font-weight: 500;
+            }
+            .box-user {
+                position: absolute;
+                right: 10px;
+                bottom: 6px;
+            }
+            .box-label {
+                pointer-events: none;
+                margin: 5px 0;
+            }
+            .item-label {
+                font-size: 11px;
+                font-weight: 300;
+                float: left;
+                background-color: var(--paper-grey-500);
+                color: #fff;
+                padding: 2px 5px;
+                border-radius: 2px;
+                margin: 0 1px;
+            }
+            .item-clear {
+                display: block;
+                clear: both;
+            }
+
+
+        </style>
+        
+        <div id="box" class="box box-shadow-z2 item drag-handle" style$="border-left: 2px solid [[ accent ]]">
+            <div class="box-body drag-handle">
+                <h3 class="item-title" on-tap="__onItemTap">[[ record.task.tt_title ]]</h3>
+                <div class="box-label">
+                    <template is="dom-repeat" items="[[ record.labels ]]">
+                        <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
+                    </template>
+                    <span class="item-clear"></span>
+                </div>
+            </div>
+            <div class="box-user">
+                <user-dock items="[[ record.users ]]"></user-dock>
+            </div>
+            <div class="box-foot">
+                <div class="item-badge">
+                    <iron-icon icon="today"></iron-icon>&nbsp;Due [[ record.task.tt_due_date_relative ]]    
+                </div>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class TaskItemKanban extends Polymer.Element {
+            static get is() {
+                return 'task-item-kanban';
+            }
+
+            static get properties() {
+                return {
+                    accent: { type: String },
+                    record: { type: Object },
+                    
+                    draggable: { type: Boolean, value: false, reflectToAttribute: true },
+                    dragActive: { type: Boolean, value: false, reflectToAttribute: true },
+
+                    droppable: { type: Boolean, value: false, reflectToAttribute: true },
+                    dropActive: { type: Boolean, value: false, reflectToAttribute: true },
+
+                    itemKey: { type: String, value: '', reflectToAttribute: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__dragdropChanged(draggable, droppable)',
+                    '__dragActiveChanged(dragActive)',
+                    '__computeItemKey(record.status.tts_id)'
+                ];
+            }
+
+            clone() {
+                let copy = document.createElement('task-item-kanban');
+                
+                copy.record = this.record;
+                copy.accent = this.accent;
+
+                return copy;
+            }
+
+            hide() {
+                this.$.box.style.opacity = '0';
+                this.$.box.style.height = '0px';
+            }
+
+            show() {
+                this.$.box.style.opacity = '1';
+                this.$.box.style.height = 'auto';
+            }
+
+            __computeItemKey(status) {
+                status = status === undefined ? '' : status;
+                this.set('itemKey', status);
+            }
+
+            __dragdropChanged(drag, drop) {
+                if (drag) {
+                    this.classList.add('draggable');
+                } else {
+                    this.classList.remove('draggable');
+                }
+
+                if (drop) {
+                    this.classList.add('droppable');
+                } else {
+                    this.classList.remove('droppable');
+                }
+            }
+
+            __dragActiveChanged(active) {
+                if (active) {
+                    this.$.box.style.height = this.$.box.clientHeight + 'px';
+                } else {
+                    this.$.box.style.height = 'auto';
+                }
+            }
+
+            __onItemTap() {
+                this.dispatchEvent(new CustomEvent('item-tap'));
+            }
+
+        }
+
+        customElements.define(TaskItemKanban.is, TaskItemKanban);
+    </script>
+</dom-module>

@@ -1,0 +1,315 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../blocks/header-block.html">
+<link rel="import" href="../plugins/task-search.html">
+
+<dom-module id="project-view">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .display-button {
+                padding: 4px;
+            }
+            .display-button.active {
+                color: #fff;
+                background-color: var(--paper-blue-500);
+                border-radius: 50%;
+            }
+            #view-switcher {
+                display: block;
+                height: 100%;
+            }
+            .main {
+                background-color: #fff;
+            }
+            #combo-project {
+
+            }
+            #button-create-task {
+                background-color: var(--paper-blue-500);
+                color: #fff;
+                padding: 6px 12px 6px 8px;
+                position: relative;
+                top: -1px;
+            }
+            .reload-button {
+                width: 32px;
+                height: 32px;
+                margin-top: 10px;
+                margin-right: 5px;
+            }
+            .reload-button paper-icon-button {
+                width: 100%;
+                height: 100%;
+                padding: 6px;
+            }
+
+            .container.sm .hidden-sm { display: none;  }
+            .container.md .hidden-md { display: none;  }
+            .container.lg .hidden-lg { display: none;  }
+
+            .container.sm #button-create-task,
+            .container.md #button-create-task {
+                padding-left: 5px;
+                padding-right: 5px;
+                min-width: auto;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <kct-vbox class$="container [[ screen ]]">
+            <header-block text="Switch Project" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
+                <kct-combobox 
+                    id="combo-project" 
+                    slot="header-value" 
+                    url="/projects?display=granted" 
+                    label="Select or search project..." 
+                    value="[[ project ]]" 
+                    page-size="10" 
+                    item-label-path="sp_title" 
+                    item-value-path="sp_name" 
+                    on-beforeload="__onComboProjectBeforeload" 
+                    on-change="__onComboProjectChange" 
+                    list-width="400" 
+                    hide-clear 
+                    no-label-float>
+
+                    <paper-button slot="toolbar" on-tap="__onCreateProjectTap"><iron-icon icon="add"></iron-icon>&nbsp;Create Project</paper-button>
+                    <paper-button slot="toolbar" on-tap="__onComboProjectCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+
+                    <template>
+                        <style>
+                            .logo {
+                                color: #fff;
+                                float: left;
+                                width: 32px;
+                                height: 32px;
+                                line-height: 32px;
+                                border-radius: 50%;
+                                text-align: center;
+                                font-weight: 600;
+                                margin-top: 4px;
+                            }
+                            .text {
+                                margin-left: 40px;
+                            }
+                            .name {
+                                font-weight: 500;
+                            }
+                            .time {
+                                font-size: 11px;
+                                color: #999;
+                                white-space: pre-wrap;
+                            }
+                        </style>
+                        <div>
+                            <div class="logo" style$="background-color: [[ item.sp_accent ]]">[[ item.sp_logo ]]</div>
+                            <div class="text">
+                                <div class="name">[[ item.sp_title ]]</div>
+                                <div class="time">[[ item.sp_desc ]]</div>
+                            </div>
+                        </div>
+                    </template>        
+                </kct-combobox>
+
+                <div class="separator hidden-sm hidden-md hidden-lg" slot="left-toolbar"></div>
+
+                <div slot="left-toolbar" class="reload-button" hidden$="[[ busy ]]">
+                    <paper-icon-button on-tap="__onReloadTap" icon="refresh" title="Reload"></paper-icon-button>
+                </div>
+
+                <paper-spinner-lite slot="left-toolbar" active$="[[ busy ]]" hidden$="[[ !busy ]]"></paper-spinner-lite>
+                
+                <paper-button id="button-create-task" on-tap="__onCreateTaskTap" slot="left-toolbar">
+                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon><span class="hidden-sm hidden-md">&nbsp;Create Task</span>
+                </paper-button>
+
+                <task-search project="[[ project ]]" search="{{ search }}" slot="center-toolbar"></task-search>
+
+                <paper-icon-button title="Kanban View" data-view="kanban" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('kanban', view) ]]" icon="view-column" slot="right-toolbar"></paper-icon-button>
+                <paper-icon-button title="List View" data-view="list" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('list', view) ]]" icon="view-list" slot="right-toolbar"></paper-icon-button>
+            </header-block>
+
+            <div class="flex main">
+
+                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" lazy-load>
+                    <project-view-kanban 
+                        import="project-view-kanban.html" 
+                        busy="{{ busy }}" 
+                        name="kanban" 
+                        route="{{ route }}" 
+                        state="[[ state ]]" 
+                        params="[[ search ]]" 
+                        on-load="__onKanbanLoad"></project-view-kanban>
+                    <project-view-grid 
+                        import="project-view-grid.html" 
+                        busy="{{ busy }}" 
+                        name="list" 
+                        route="{{ route }}" 
+                        state="[[ state ]]" 
+                        params="[[ search ]]"></project-view-grid>
+                </kct-pages>
+
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class ProjectView extends KctView {
+            static get is() {
+                return 'project-view';
+            }
+            static get properties() {
+                return {
+                    busy: { type: Boolean },
+                    view: { type: String },
+                    project: { type: String }
+                };
+            }
+
+            handleRouteParams(project, action, type) {
+                if (project === undefined  || project == 'tour' || project == 'create') return;
+                if (action != 'view') return;
+
+                switch(type) {
+                    case 'list':
+                        this.set('view', 'list');
+                        break;
+                    default:
+                        this.set('view', 'kanban');
+                }
+                
+                this.__loadReferences().then(() => {
+                    this.set('project', project);
+                });
+
+            }
+
+            handleResizing(width, height) {
+                let viewItem = this.$['view-switcher'].selectedItem;
+                if (viewItem && viewItem.handleResizing) {
+                    viewItem.handleResizing(width, height);
+                }
+            }
+
+            getActiveView() {
+                return this.$['view-switcher'].selectedItem;
+            }
+
+            __hideHeader(screen) {
+                return screen != 'xl' ? true : false;
+            }
+
+            __startTour() {
+                let options = {
+                    id: 'tour-project-view',
+                    isTourBubble: false,
+                    steps: [
+                        {
+                            title: 'Start Working',
+                            content: 'Start working by creating new task by clicking this button',
+                            target: this.$['button-create-task'],
+                            showNextButton: false,
+                            placement: 'bottom',
+                            showCTAButton: true,
+                            ctaLabel: 'Disable Guide',
+                            onCTA: () => {
+                                this.set('config.app_tour_enabled', false);
+                                this.__stopTour();
+                            }
+                        }
+                    ]
+                }
+
+                hopscotch.startTour(options);
+            }
+
+            __stopTour() {
+                hopscotch.endTour(true);
+            }
+
+            __loadReferences() {
+                return Promise.all([
+                    this.$['combo-project'].load()
+                ]);
+            }
+
+            __computeSelectedDisplay(type, view) {
+                return type == view ? 'active' : '';
+            }
+
+            __onKanbanLoad(e) {
+                let total = e.detail.total;
+
+                if (total == 0) {
+                    let tour = this.config.app_tour_enabled;
+                    tour = tour === undefined ? true : tour;
+                    if (tour) {
+                        this.__startTour();
+                    }
+                }
+            }
+            
+            __onComboProjectBeforeload(e) {
+                let options = e.detail.options;
+                options.sort = [{ property: 'sp_title', direction: 'asc' }];
+            }
+
+            __onComboProjectChange(e) {
+                let project = e.target.value;
+                if (project) {
+                    this.set('route.path', '/worksheet/' + project + '/view/' + this.view);    
+                } else {
+                    e.target.value = this.project;
+                }
+            }
+
+            __onDisplayTap(e) {
+                let view = e.target.dataset.view;
+                this.set('route.path', '/worksheet/' + this.project + '/view/' + view);
+            }
+
+            __onCreateTaskTap() {
+                this.__stopTour();
+
+                this.set('route.data.back', '/worksheet/' + this.project + '/view/' + this.view);
+                this.set('route.path', '/worksheet/' + this.project + '/task/create');
+            }
+
+            __onCreateProjectTap() {
+                this.$['combo-project'].close();
+                this.set('route.data.back', '/worksheet/' + this.project + '/view/' + this.view);
+                this.set('route.path', '/worksheet/create');
+            }
+
+            __onComboProjectCloseTap() {
+                this.$['combo-project'].close();
+            }
+            
+            __onReloadTap() {
+                this.set('notify', false);
+
+                let view = this.getActiveView();
+
+                if (view && view.reload) {
+                    view.reload();
+                }
+            }
+
+            __onBackTap() {
+                this.__stopTour();
+                this.set('route.path', '/worksheet');
+            }
+        }
+
+        customElements.define(ProjectView.is, ProjectView);
+    </script>
+</dom-module>

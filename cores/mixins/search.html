@@ -1,0 +1,474 @@
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../vendors/moment/moment.html">
+<link rel="import" href="../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../elements/kct-search/kct-search-combo.html">
+<link rel="import" href="../elements/kct-search/kct-search-date.html">
+<link rel="import" href="../elements/kct-search/kct-search-styles.html">
+<link rel="import" href="mixins.html">
+
+<script>
+    Mixins.Search = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            constructor() {
+                super();
+                this.__hideNav = true;
+            }
+
+            resize() {
+                let columnWidth = this.$['column-search'].getBoundingClientRect().width;
+
+                if (columnWidth > 0) {
+                    let scrollerWidth = columnWidth - 48;
+                    let styles = {};
+
+                    styles['--scroller-width'] = scrollerWidth + 'px';
+                    styles['--list-width'] = (scrollerWidth * 3) + 'px';
+                    
+                    this.updateStyles(styles);
+                    this.$.scroller.dataset.width = scrollerWidth;
+                }
+            }
+
+            __onContainerReady() {
+                this.resize();
+            }
+
+            open() {
+                let def = this.__deferred();
+
+                this.__open = Polymer.Debouncer.debounce(
+                    this.__open,
+                    Polymer.Async.timeOut.after(1),
+                    () => {
+                        let combo = this.$.selector.selectedItem;
+                        if (combo) {
+                            combo.focus();
+                            combo.load().then(() => {
+                                combo.open();
+                                def.resolve();
+                            });
+                        }
+                    }
+                );
+
+                Polymer.enqueueDebouncer(this.__open);
+
+                return def.promise;
+            }
+
+            focus() {
+                this.__focus = Polymer.Debouncer.debounce(
+                    this.__focus,
+                    Polymer.Async.timeOut.after(1),
+                    () => {
+                        let combo = this.$.selector.selectedItem;
+                        if (combo) {
+                            combo.focus();
+                        }
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__focus);
+            }
+
+            __deferred() {
+                let def = {};
+                def.promise = new Promise((res, rej) => {
+                    def.resolve = res;
+                    def.reject = rej;
+                });
+                return def;
+            }
+
+            __getContentWidth() {
+                let width = 0;
+
+                this.shadowRoot.querySelectorAll('.selectable-item').forEach(node => {
+                    width += node.getBoundingClientRect().width;
+                });
+
+                return width;
+            }
+
+            __doLayout() {
+                let def = this.__deferred();
+
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+                    func.bind(this)(def);
+                }, 100);
+
+                return def.promise;
+
+                function func(def) {
+                    let scroller = this.$.scroller;
+                    let left = scroller.scrollLeft;
+                    let total, limit, size;
+
+                    if (left > 0) {
+                        if (scroller.dataset.scroll === undefined) {
+                            scroller.dataset.scroll = 0;
+                        }
+
+                        let old = +scroller.dataset.scroll,
+                            cur = this.__getContentWidth(),
+                            dif = old - cur;
+                        
+                        scroller.dataset.scroll = cur;
+
+                        if (dif > 0) {
+                            this.__scroll('left', false ,dif).then(() => {
+                                this.set('__hideNav', false);  
+                                def.resolve();
+                            });
+                        } else {
+                            this.set('__hideNav', false);  
+                            def.resolve();
+                        }
+                    } else {
+                        if (scroller.dataset.width !== undefined) {
+                            limit = +this.$.scroller.dataset.width;
+                            total = this.__getContentWidth();
+
+                            scroller.dataset.scroll = total;
+                            this.set('__hideNav', total < limit);
+                        }
+                        def.resolve();
+                    }
+                }
+            }
+
+            __getFeatureModel(field) {
+                return this.features.find(c => c.field == field);
+            }
+
+            __getFilterModel(field) {
+                return this.filters.find(f => f.field == field);
+            }
+
+            __scroll(dir = 'left', edge = false, value = 100) {
+                let scroller = this.$.scroller;
+                let def = this.__deferred();
+                let timer, left;
+
+                left = scroller.scrollLeft;
+
+                if (edge) {
+                    if (left > 0) {
+                        scroller.scroll({ left: -left });
+
+                        timer = setTimeout(() => {
+                            clearTimeout(timer);
+                            timer = null;
+                            def.resolve();
+                        }, 400);
+                    } else {
+                        def.resolve();
+                    }
+                } else {
+                    
+                    let width = scroller.scrollWidth;
+
+                    switch(dir) {
+                        case 'right':
+                            left += value;
+                            if (left >= width) {
+                                left = width;
+                            }
+                            break;
+
+                        case 'left':
+                            left -= value;
+                            if (left <= 0) {
+                                left = 0;
+                            }
+                            break;
+                    }
+
+                    scroller.scroll({ left: left });
+
+                    timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        timer = null;
+                        def.resolve();
+                    }, 400);
+                }
+
+                return def.promise;
+            }
+
+            __onNavTap(e) {
+                let nav = e.target.dataset.nav;
+                this.__scroll(nav, false);
+            }
+
+            __onRemoveTap(e) {
+                e.stopPropagation();
+
+                let valueIndex = e.model.index,
+                    filterIndex = e.model.parentModel.index;
+
+                if (filterIndex !== -1 && valueIndex !== -1) {
+                    this.splice('filters.' + filterIndex + '.values', valueIndex, 1);
+
+                    if ( ! this.filters[filterIndex].values.length) {
+                        this.splice('filters', filterIndex, 1);
+                        this.set('selectedFeature', 'search');
+                    }
+
+                    this.__doLayout();
+                }
+                this.__buildSearch();
+            }
+
+            __onCommandChange(e) {
+                let combo = e.target,
+                    model = combo.getModelForValue(combo.value);
+
+                combo.value = '';
+
+                if (model) {
+                    let field = model.field;
+
+                    if (field == 'search') {
+                        this.__buildSearch();
+                    } else {
+                        this.set('selectedFeature', field);
+
+                        let filter = this.__getFilterModel(field);
+                        if ( ! filter) {
+                            let feature = this.__getFeatureModel(field);
+                            if (feature) {
+                                this.push('filters', {
+                                    field: feature.field,
+                                    label: feature.label,
+                                    values: []
+                                });
+                            }
+                        }
+                        this.open();
+                    }
+                }
+            }
+
+            __onComboBeforeload(e) {
+                let combo = e.target,
+                    filter = this.__getFilterModel(combo.name),
+                    options = e.detail.options;
+
+                if (filter) {
+                    let excludes = filter.values.map(f => f.value);
+                    
+                    if ( ! combo.paging.enabled && combo.__items !== undefined) {
+                        combo.items = combo.__items.slice();
+                    }
+
+                    if (excludes.length) {
+                        if (combo.paging.enabled) {
+                            options.params = options.params || {};
+                            options.params[combo.itemValuePath] = ['NOT IN', excludes];    
+                        } else {
+                            let items = [];
+                            
+                            combo.items.forEach(e => {
+                                let v = e[combo.itemValuePath];
+                                if (excludes.indexOf(v) === -1) {
+                                    items.push(e);
+                                }
+                            });
+
+                            combo.items = items;
+                        }
+                    }
+                }
+
+            }
+
+            __onComboChange(e) {
+                let combo = e.target,
+                    model = combo.getModelForValue(combo.value);
+
+                if ( ! model) return;
+
+                let value = {
+                    value: model[combo.itemValuePath],
+                    label: model[combo.itemLabelPath]
+                };
+
+
+                let filter = this.__getFilterModel(this.selectedFeature);
+                
+                if (filter) {
+                    let index = this.filters.indexOf(filter);
+                    if (index !== -1) {
+                        this.push('filters.' + index + '.values', value);
+                    }
+                } else {
+                    let feature = this.__getFeatureModel(this.selectedFeature);
+                    if (feature) {
+                        this.push('filters', {
+                            field: feature.field,
+                            label: feature.label,
+                            values: [value]
+                        });
+                    }
+                }
+
+                this.__buildSearch();
+                this.set('selectedFeature', 'search');
+                combo.clear();
+
+                this.__doLayout().then(() => {
+                    this.focus();    
+                });
+            }
+
+            __onDatePickerChange(e) {
+                let picker = e.target;
+
+                let value = {
+                    value: picker.value,
+                    label: moment(picker.value).format('DD MMM YYYY')
+                };
+
+                let filter = this.__getFilterModel(this.selectedFeature);
+
+                if (filter) {
+                    let index = this.filters.indexOf(filter);
+                    if (index !== -1) {
+                        this.push('filters.' + index + '.values', value);
+                    }
+                } else {
+                    let feature = this.__getFeatureModel(this.selectedFeature);
+                    if (feature) {
+                        this.push('filters', {
+                            field: feature.field,
+                            label: feature.label,
+                            values: [value]
+                        });
+                    }
+                }
+
+                this.__buildSearch();
+                this.set('selectedFeature', 'search');
+
+                this.__doLayout().then(() => {
+                    this.focus();
+                });
+            }
+
+            __onFilterTap(e) {
+                // remove value and open popup
+                let valueIndex = e.model.index,
+                    filterIndex = e.model.parentModel.index,
+                    feature = e.model.parentModel.item.field;
+
+                if (filterIndex !== -1 && valueIndex !== -1) {
+                    this.splice('filters.' + filterIndex + '.values', valueIndex, 1);
+                    this.set('selectedFeature', feature);
+                    this.open();
+                }
+            }
+
+            __onClearTap() {
+                this.set('filters', []);
+
+                this.shadowRoot.querySelectorAll('kct-search-combo').forEach(combo => {
+                    combo.clear();
+                });
+
+                this.set('selectedFeature', 'search');
+                this.__buildSearch();
+
+                this.__scroll('left', true).then(() => {
+                    this.__doLayout().then(() => {
+                        this.open();
+                    });
+                });
+            }
+
+            __onSortCheckChange(e) {
+                // uncheck all
+                if (this.sorters && this.sorters.length) {
+                    this.sorters.forEach((s, i) => {
+                        let p = 'sorters.' + i + '.checked';
+                        this.set(p, false);
+                    });
+                }
+                this.set('sorters.' + e.model.index + '.checked', true);
+                this.set('selectedSorter', e.model.item);
+                this.__buildSearch();
+            }
+
+            __onClearSorterTap() {
+                this.set('selectedSorter', null);
+                // uncheck all
+                if (this.sorters && this.sorters.length) {
+                    this.sorters.forEach((s, i) => {
+                        let p = 'sorters.' + i + '.checked';
+                        this.set(p, false);
+                    });
+                }
+            }
+
+            __onCommandKeydown(e) {
+                if (e.key == 'Enter') {
+                    this.__buildSearch();
+                }
+            }
+
+            __buildSearch() {
+                let result = {};
+
+                if (this.filters && this.filters.length) {
+                    let params = {};
+                    this.filters.forEach(f => {
+                        let values = f.values.map(e => e.value);
+                        params[f.field] = ['IN', values];
+                    });
+                    result.params = params;
+                }
+
+                if (this.selectedSorter) {
+                    let sorter = {};
+                    sorter.property = this.selectedSorter.field;
+                    sorter.direction = this.selectedSorter.sort;
+
+                    result.sort = [sorter];
+                }
+
+                let combo = this.$['combo-search'];
+                if (combo && combo.inputElement) {
+                    let value = combo.inputElement.value;
+                    if (value) {
+                        result.query = value;
+                        result.fields = this.features.map(f => f.field);
+                        result.fields = result.fields.filter(f => f != 'search');
+                    }
+                }
+
+                this.set('search', result);
+
+                let evt = new CustomEvent('search', {
+                    detail: result
+                });
+                
+                this.dispatchEvent(evt);
+            }
+
+        }
+
+    });
+</script>

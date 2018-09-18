@@ -1,0 +1,29 @@
+<link rel="import" href="../../vendors/moment/moment.html">
+
+<script>
+    class NodeHelper {
+
+        static formatDatePicker(picker, format = 'DD/MM/YYYY') {
+
+            picker.i18n = picker.i18n || {};
+
+            picker.i18n.formatDate = (date) => {
+                return moment(date).format(format);
+            };
+            
+            picker.i18n.parseDate = (dateString) => {
+                let parts = dateString.split(/\//);
+                
+                if (parts.length === 3) {
+                    let date = parts[2] + '-' + parts[1] + '-' + parts[0];
+                    date = moment(date, 'YYYY-MM-DD').toDate();
+                    return date;
+                }
+
+                return '';
+            };
+
+        }
+
+    }
+</script>

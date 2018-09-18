@@ -1,0 +1,68 @@
+<link rel="import" href="../../bower_components/iron-media-query/iron-media-query.html">
+
+<dom-module id="kct-media">
+    <template>
+
+        <!-- small device (landscape phone) -->
+        <iron-media-query query="(min-width: 576px)" query-matches="{{ sm }}"></iron-media-query>
+
+        <!-- medium device (tablet) -->
+        <iron-media-query query="(min-width: 768px)" query-matches="{{ md }}"></iron-media-query>
+        
+        <!-- large device (desktop) -->
+        <iron-media-query query="(min-width: 992px)" query-matches="{{ lg }}"></iron-media-query>
+        
+        <!-- extra large device (desktop) -->
+        <iron-media-query query="(min-width: 1200px)" query-matches="{{ xl }}"></iron-media-query>
+
+    </template>
+    <script>
+        class kctMedia extends Polymer.Element {
+            static get is() {
+                return 'kct-media';
+            }
+
+            static get properties() {
+                return {
+                    screen: { type: String, notify: true, value: 'xl' }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__queryChanged(xl, lg, md, sm)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+            }
+
+            __queryChanged(xl, lg, md, sm) {
+                this.__resizing = Polymer.Debouncer.debounce(
+                    this.__resizing,
+                    Polymer.Async.timeOut.after(200),
+                    () => {
+                        let screen;
+
+                        if (xl) {
+                            screen = 'xl';
+                        } else if (lg) {
+                            screen = 'lg';
+                        } else if (md) {
+                            screen = 'md';
+                        } else {
+                            screen = 'sm';
+                        }
+                        
+                        this.set('screen', screen);
+                    }
+                );
+                
+            }
+        }
+
+        customElements.define(kctMedia.is, kctMedia);
+    </script>
+</dom-module>

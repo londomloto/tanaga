@@ -1,0 +1,42 @@
+<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-dropdown">
+    <template>
+        <style>
+            :host {
+                position: relative;
+                z-index: 2;
+            }
+            paper-listbox ::slotted(paper-item) {
+                cursor: pointer;
+                font-size: 15px;
+                --paper-item-min-height: 40px;
+            }
+        </style>
+        <paper-menu-button no-animations horizontal-align="[[ halign ]]" vetical-align="[[ valign ]]">
+            <paper-icon-button icon="[[ icon ]]" slot="dropdown-trigger"></paper-icon-button>
+            <paper-listbox slot="dropdown-content">
+                <slot></slot>
+            </paper-listbox>
+        </paper-menu-button>
+    </template>
+    <script>
+        class KctDropdown extends Polymer.Element {
+            static get is() {
+                return 'kct-dropdown';
+            }
+            static get properties() {
+                return {
+                    halign: { type: String, value: 'left' },
+                    valign: { type: String, valign: 'top' },
+                    icon: { type: String, value: 'expand-more' }
+                };
+            }
+        }
+        customElements.define(KctDropdown.is, KctDropdown)
+    </script>
+</dom-module>

@@ -1,0 +1,40 @@
+<link rel="import" href="kct-tree-node.html">
+
+<dom-module id="kct-tree">
+    <template>
+        
+        <template is="dom-repeat" items="[[ items ]]">
+            
+            <div>[[ item.text ]]</div>
+
+        </template>
+
+    </template>
+    <script>
+        
+        class KctTree extends Polymer.Element {
+
+            static get is() { return 'kct-tree'; }
+
+            static get properties() {
+
+                return {
+                    items: {
+                        type: Array,
+                        value: [
+                            {id: 1, text: 'Dashboard'},
+                            {id: 2, text: 'Kanban'},
+                            {id: 3, text: 'Setting'},
+                            {id: 4, text: 'Profile'}
+                        ]
+                    }
+                };
+
+            }
+
+        }
+
+        customElements.define(KctTree.is, KctTree);
+
+    </script>
+</dom-module>

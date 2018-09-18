@@ -1,0 +1,63 @@
+<link rel="import" href="../../../../cores/bower_components/paper-styles/shadow.html">
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="users-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" lazy-load>
+            <users-index-page  import="users-index-page.html"  name="index"  route="{{ route }}" state="[[ state ]]"></users-index-page>
+            <users-editor-page import="users-editor-page.html" name="editor" route="{{ route }}" state="[[ state ]]"></users-add-page>
+        </kct-pages>
+
+    </template>
+    <script>
+        class UsersPage extends KctView {
+            static get is() {
+                return 'users-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Application Users' },
+                    page: { type: String, value: 'index' }
+                };
+            }
+
+            handleResizing(width, height) {
+                let pageNode = this.$.pages.selectedItem;
+                
+                if (pageNode && pageNode.handleResizing) {
+                    pageNode.handleResizing(width, height);
+                }
+            }
+
+            handleRouteParams(setting, action, id) {
+                if (setting != 'users') {
+                    return;
+                }
+
+                switch(action) {
+                    case 'add':
+                    case 'edit':
+                        this.set('page', 'editor');
+                        break;
+                    default:
+                        this.set('page', 'index');
+                }
+            }
+            
+        }
+        customElements.define(UsersPage.is, UsersPage);
+    </script>
+</dom-module>

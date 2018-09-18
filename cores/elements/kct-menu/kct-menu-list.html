@@ -1,0 +1,195 @@
+<dom-module id="kct-menu-list">
+    <template>
+        <style>
+            :host {
+                display: block;
+                min-width: var(--kct-menu-list-min-width, 100px);
+            }
+            paper-listbox {
+                display: block;
+            }
+            paper-listbox > paper-menu-button {
+                padding: 0;
+                display: block;
+            }
+            paper-listbox > paper-menu-button.iron-selected > paper-item {
+                background-color: #f2f2f2;  
+            }
+            paper-listbox > kct-menu-list {
+                
+            }
+            paper-item:hover {
+                background-color: #f0f0f0;
+            }
+            paper-item {
+                font-weight: normal;
+                cursor: pointer;
+                padding-left: 8px;
+                padding-right: 8px;
+                --paper-item-min-height: 32px;
+                --paper-item-focused: {
+                    background-color: #f2f2f2;
+                };
+                --paper-item-focused-before: {
+                    background-color: transparent;
+                };
+                --paper-item-selected: {
+                    background-color: #f2f2f2;
+                };
+            }
+            paper-item > * {
+                pointer-events: none;
+            }
+            paper-item > iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                margin-right: 20px;
+            }
+            .caret {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+                transform: rotate(-90deg);
+                position: absolute; 
+                right: 5px;
+                top: 50%;
+                margin-top: -9px;
+            }
+            .separator {
+                content: '';
+                height: 1px;
+                border-bottom: 1px solid #dfdfdf;
+                margin: 5px 0;
+            }
+            .vertical-separator {
+                display: block;
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 34px;
+                width: 1px;
+                border-right: 1px solid #f0f0f0;
+                pointer-events: none;
+            }
+            .vertical-separator[hidden] {
+                display: none;
+            }
+        </style>
+        <paper-listbox id="list" selected="{{ value }}">
+            <div class="vertical-separator" hidden$="[[ !__hasIcon ]]"></div>
+            <template is="dom-repeat" items="[[ items ]]">
+                <template is="dom-if" if="[[ item.separator ]]">
+                    <div class="separator"></div>
+                </template>
+                <template is="dom-if" if="[[ item.leaf ]]">
+                    <paper-item class="item" on-tap="__onItemTap">
+                        <iron-icon icon="[[ item.icon ]]" hidden$="[[ !item.icon ]]"></iron-icon>
+                        <label>[[ item.text ]]</label>
+                    </paper-item>
+                </template>
+                <template is="dom-if" if="[[ !item.leaf ]]">
+                    <paper-menu-button  
+                        horizontal-align="left" 
+                        horizontal-offset="[[ offsetX ]]"
+                        vertical-offset="-8" 
+                        on-paper-dropdown-open="__onPopupOpen" 
+                        ignore-select 
+                        no-animations>
+                        <paper-item slot="dropdown-trigger">
+                            <iron-icon icon="[[ item.icon ]]" hidden$="[[ !item.icon ]]"></iron-icon>
+                            <label>[[ item.text ]]&nbsp;<iron-icon class="caret" icon="arrow-drop-down"></iron-icon></paper-item></label>
+                        <kct-menu-list slot="dropdown-content" items="[[ item.children ]]"></kct-menu-list>
+                    </paper-menu-button>
+                </template>
+            </template>
+        </paper-listbox>
+    </template>
+    <script>
+        class KctMenuList extends Polymer.Element {
+            static get is() {
+                return 'kct-menu-list';
+            }
+
+            static get properties() {
+                return {
+                    items: { type: Array, value: () => ([]) },
+                    value: { type: Number },
+                    offsetX: { type: Number, value: 200 }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__itemsChanged(items.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__hasIcon = false;
+            }
+
+            close() {
+                this.set('value', -1);
+
+                this.shadowRoot.querySelectorAll('kct-menu-list').forEach(e => {
+                    e.close();
+                });
+
+                this.shadowRoot.querySelectorAll('paper-menu-button').forEach(e => {
+                    e.close();
+                });
+            }
+
+            resize() {
+                if (this.__resized) {
+                    return;
+                }
+
+                this.$.list.style.visibility = 'hidden';
+
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = undefined;
+                    let width = this.$.list.clientWidth;
+                    this.set('offsetX', width);
+                    this.$.list.style.visibility = 'visible';
+                    this.__resized = true;
+                }, 100);
+            }
+
+            __itemsChanged(changed) {
+                if (changed.path == 'items') {
+                    let hasIcon = false;
+                    let items = this.items || [];
+
+                    for (let i = 0, j = items.length; i < j; i++ ) {
+                        if (items[i].icon) {
+                            hasIcon = true;
+                            break;
+                        }
+                    }
+
+                    this.set('__hasIcon', hasIcon);
+                }
+            }
+
+            __onItemTap(e) {
+                this.dispatchEvent(new CustomEvent('item-tap', {
+                    composed: true,
+                    bubbles: true,
+                    detail: {
+                        item: e.model.item
+                    }
+                }));
+            }
+
+            __onPopupOpen() {
+                this.shadowRoot.querySelectorAll('kct-menu-list').forEach(e => {
+                    e.resize();
+                });
+            }
+        }
+
+        customElements.define(KctMenuList.is, KctMenuList);
+    </script>
+</dom-module>

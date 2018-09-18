@@ -1,0 +1,257 @@
+
+<link rel="import" href="../../bower_components/polymer/lib/utils/flattened-nodes-observer.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-form">
+    <template>
+        <slot id="slot"></slot>
+        <kct-ajax id="ajax"></kct-ajax>
+    </template>    
+    <script>
+        class KctForm extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+            static get is() {
+                return 'kct-form';
+            }
+
+            static get properties() {
+                return {
+                    mask: { type: Boolean, value: false },
+                    invalid: { type: Boolean, notify: true, value: false },
+                    autoValidate: { type: Boolean, value: false },
+
+                    action: { type: String, reflectToAttribute: true },
+                    method: { type: String, reflectToAttribute: true, value: 'GET' },
+                    contentType: { type: String, reflectToAttribute: true, value: 'application/json' }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__changeListeners = {};
+                this.__submitedElements = {};
+            }
+
+            disconnectedCallback() {
+                this.__observer.disconnect();
+                for (let name in this.__changeListeners) {
+                    this.__changeListeners[name].elem.removeEventListener('change', this.__changeListeners[name].fn);
+                    delete this.__changeListeners[name];
+                }
+                super.disconnectedCallback();
+            }
+
+            ready() {
+                super.ready();
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    let nodes = this.$.slot.assignedNodes({flatten: true}).filter((node) => { 
+                        return node.nodeName == 'FORM';
+                    });
+                    if ( ! nodes[0]) {
+                        throw new Error('No form defined inside <kct-form>');
+                    }
+                    this.__form = nodes[0];
+                    this.__form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                    });
+                    this.__setup();
+                });
+            }
+
+            validate() {
+                if (this.novalidate) {
+                    return true;
+                }
+
+                let valid = this.__form.checkValidity();
+                
+                for (let name in this.__submitedElements) {
+                    valid = valid && this.__submitedElements[name].valid;
+                }
+
+                this.set('invalid', !valid);
+                return valid;
+            }
+
+            submit() {
+                if ( ! this.validate()) {
+                    return Promise.resolve({
+                        success: false,
+                        message: 'Form is not valid'
+                    });
+                }
+
+                return this.__sendAjaxRequest();
+            }
+
+            __isValidElement(elem) {
+                let valid = !elem.disabled,
+                    types = [
+                        'input',
+                        'select',
+                        'textarea',
+                        'paper-input',
+                        'paper-checkbox',
+                        'paper-dropdown-menu',
+                        'paper-radio-button',
+                        'paper-radio-group',
+                        'paper-slider',
+                        'paper-toggle-button',
+                        'kct-checkbox'
+                    ];
+
+                valid = valid && elem.name;
+                valid = valid && types.indexOf(elem.localName) !== -1;
+
+                return valid;
+            }
+
+            __setup() {
+                this.__observer = new Polymer.FlattenedNodesObserver(this.__form, (info) => {
+                    for (let node of info.addedNodes) {
+                        if (node.querySelectorAll) {
+
+                            let elems = Array.prototype.slice.call(node.querySelectorAll('*')) || [];
+                            elems.push(node);
+
+                            for (let i = 0, ii = elems.length; i < ii; i++) {
+                                if (this.__isValidElement(elems[i])) {
+                                    let name = elems[i].name;
+                                    if ( ! this.__changeListeners[name]) {
+                                        let valid = elems[i].validate 
+                                            ? elems[i].validate() 
+                                            : true;
+
+                                        this.__submitedElements[name] = {
+                                            elem: elems[i],
+                                            name: name,
+                                            valid: valid
+                                        };
+
+                                        if (this.autoValidate) {
+                                            let fn = () => {
+                                                this.__validateElement(name, elems[i]);
+                                            };
+                                            
+                                            elems[i].addEventListener('change', fn);
+
+                                            this.__changeListeners[name] = {
+                                                elem: elems[i],
+                                                fn: fn
+                                            };
+                                        }
+                                    }
+                                }
+                            }    
+                        }
+                    }
+
+                    for (let node of info.removedNodes) {
+                        if (node.querySelectorAll) {
+                            let elems = Array.prototype.slice.call(node.querySelectorAll('*')) || [];
+                            elems.push(node);
+                            for (let i = 0, ii = elems.length; i < ii; i++) {
+                                let name = elems[i].name;
+                                if (name && this) {
+                                    if (this.__changeListeners[name]) {
+                                        delete this.__changeListeners[name];
+                                    }
+                                    if (this.__submitedElements[name]) {
+                                        delete this.__submitedElements[name];
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // run validation
+                    this.validate();
+                });
+            }
+
+            __validateElement(name, elem) {
+                if (elem.validate) {
+                    let valid = elem.validate && elem.validate();
+                    if (this.__submitedElements[name]) {
+                        this.__submitedElements[name].valid = valid;
+                    }
+                }
+                this.validate();
+            }
+
+            __serializeValues() {
+                let values = {};
+                for (let name in this.__submitedElements) {
+                    let elem = this.__submitedElements[name].elem;
+                    let value;
+
+                    switch(elem.localName) {
+                        case 'select':
+                            if (elem.multiple) {
+                                value = [];
+                                for (let opt of elem.options) {
+                                    if (opt.selected) {
+                                        value.push(opt.value);
+                                    }
+                                }
+                            } else {
+                                value = elem.value;
+                            }
+                            break;
+                        default:
+                            if (elem.type == 'file') continue;
+                            value = elem.value;
+                    }
+
+                    if (value === undefined) {
+                        value = '';
+                    }
+                    values[name] = value;
+                }
+                return values;
+            }
+
+            __getFiles() {
+                let files = [];
+                for (let name in this.__submitedElements) {
+                    let elem = this.__submitedElements[name].elem;
+                    if (elem.type == 'file') {
+                        files.push({name: name, file: elem});
+                    }
+                }
+                return files;
+            }
+
+            __sendAjaxRequest() {
+                let method = this.__form.getAttribute('method') || this.method;
+                let action = this.__form.getAttribute('action') || this.action;
+                let contentType = this.__form.getAttribute('enctype') || this.contentType;
+
+                method = method.toUpperCase();
+
+                if ( ! action) {
+                    return Promise.resolve({
+                        success: false,
+                        message: 'No action'
+                    });
+                }
+
+                let options = {};
+
+                this.dispatchEvent(new CustomEvent('before-submit', {detail: {options: options}}));
+
+                let files = this.__getFiles(),
+                    data = this.__serializeValues();
+
+                if (files.length) {
+                    data.files = files;
+                    return this.$.ajax.UPLOAD(action, data, options);
+                } else {
+                    return this.$.ajax[method](action, data, options);
+                }
+            }
+        }
+
+        customElements.define(KctForm.is, KctForm);
+    </script>
+</dom-module>

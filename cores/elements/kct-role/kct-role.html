@@ -1,0 +1,176 @@
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-role">
+    <template>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+    </template>
+
+    <script>
+        {
+            cachedPermissions = null;
+            cachedAccesses = null;
+            cachedAccessPermissions = null;
+
+            class KctRole extends Polymer.Element {
+                static get is() {
+                    return 'kct-role';
+                }
+                static get properties() {
+                    return {
+                        mode: { type: String, value: 'remove' },
+                        autoValidate: { type: Boolean, value: false, reflectToAttribute: true }
+                    };
+                }
+                constructor() {
+                    super();
+                    this.__init = true;
+                    this.__context = null;
+                }
+                ready() {
+                    super.ready();
+                    this._ensureAttribute('hidden', true);
+
+                    Polymer.RenderStatus.afterNextRender(this, () => {
+                        if (this.autoValidate) {
+                            this.validate();
+                        }
+                    });  
+                }
+
+                access(state) {
+                    let path = state.module_path;
+                    
+                    return this.__loadAccesses().then(() => {
+                        let authorized = cachedAccesses[path] === undefined ? true : cachedAccesses[path];
+                        return authorized;
+                    });
+                }
+
+                validate(context = null) {
+                    if ( ! context) {
+                        context = this.__findContext();
+                    }
+
+                    if (this.__init) {
+                        this.__init = false;
+
+                        context.shadowRoot.querySelectorAll('[data-perm]').forEach(node => {
+                            node.dataset.display = node.style.display;
+                            node.style.display = 'none';
+                        });
+                    }
+
+                    Promise.all([
+                        this.__loadAccesses(),
+                        this.__loadPermissions()
+                    ]).then(() => {
+                        context.shadowRoot.querySelectorAll('[data-perm]').forEach(elem => {
+                            let perm = elem.dataset.perm,
+                                mode = elem.getAttribute('data-perm-mode') || this.mode;
+                            
+                            if (elem.dataset.display === undefined) {
+                                elem.dataset.display = elem.style.display;
+                            } 
+
+                            // complex rule
+                            // ex: create|read|(update&delete)
+
+                            let expr = perm.replace(/([^|&() ]+)/g, e => {
+                                if (cachedAccessPermissions[e] !== undefined) {
+                                    return cachedAccessPermissions[e] ? 'true' : 'false';
+                                }
+                                return cachedPermissions[e] ? 'true' : 'false';
+                            });
+
+                            expr = expr.replace(/\|/g, '||').replace(/&/g, '&&');
+
+                            // don't use `eval`
+                            let func = this.__compile(expr);
+                            let auth = func();
+
+                            func = null;
+
+                            if (auth) {
+                                elem.style.display = elem.dataset.display;
+                            } else {
+                                if (mode == 'remove') {
+                                    elem.parentNode.removeChild(elem);
+                                } else if (mode == 'lock') {
+                                    elem.classList.add("locked");
+                                    // elem.className += " locked ";
+                                    elem.style.display = elem.dataset.display;   
+                                    elem.disabled = true;
+                                } else {
+                                    elem.style.display = 'none';    
+                                }
+                            }
+                            
+                        });
+                    });
+                }
+
+                __compile(expr) {
+                    return Function(`"use strict"; return (${expr});`);
+                }
+
+                __loadAccesses() {
+                    if ( ! cachedAccesses) {
+                        return this.$.ajax.GET('/users/users-accesses').then(res => {
+                            let accesses = {};
+                            let accessPermissions = {};
+
+                            (res.data || []).forEach(e => {
+                                accesses[e.module_path] = e.authorized;
+                                accessPermissions[e.permission] = e.authorized;
+                            });
+
+                            cachedAccesses = accesses;
+                            cachedAccessPermissions = accessPermissions;
+                        });
+                    } else {
+                        return Promise.resolve();
+                    }
+                }
+
+                __loadPermissions() {
+                    if ( ! cachedPermissions) {
+                        return this.$.ajax.GET('/users/users-permissions?display=authorized').then(r => {
+                            let perms = {};
+                            
+                            r.data.forEach(e => {
+                                perms[e.permission] = e.authorized;
+                            });
+
+                            cachedPermissions = perms;
+                        });    
+                    } else {
+                        return Promise.resolve();
+                    }
+                }
+                __findContext() {
+                    if ( ! this.__context) {
+                        let node = this.parentNode;
+                        let host;
+
+                        while(true) {
+                            host = node.host;
+                            
+                            if (host || node.localName == 'body') {
+                                break;
+                            } else {
+                                node = node.parentNode;
+                            }
+                        }
+                        
+                        this.__context = host || node;
+                    }
+
+                    return this.__context;
+                }
+            }
+
+            customElements.define(KctRole.is, KctRole);
+        }
+        
+    </script>
+</dom-module>

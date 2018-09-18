@@ -1,0 +1,206 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="profile-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--profile-page-height, 582px);
+                background-color: var(--paper-grey-100);
+            }
+            .sidebar {
+                width: 200px;
+                padding-right: 1rem;
+                position: relative;
+            }
+            .profile-avatar {
+                height: 200px;
+                background-color: #dfdfdf;
+                overflow: hidden;
+            }
+            .profile-avatar img {
+                height: 100%;
+                display: block;
+            }
+            .profile-name {
+                background-color: var(--paper-blue-grey-500);
+                color: #fff;
+            }
+            .fab-camera {
+                position: absolute;
+                top: 172px;
+                left: 50%;
+                margin-left: -28px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <setting-header-block icon="face" text="Profile" desc="[[ user.su_fullname ]]" hide-nav></setting-header-block>
+            <!-- <page-header-block icon="face" title="Profile" description$="[[ user.su_fullname ]]"></page-header-block> -->
+            <div class="flex scroll-y padding">
+                <kct-hbox> 
+                    <div class="sidebar">
+                        <div class="rel">
+                            <div class="profile-avatar">
+                                <img src$="[[ user.su_avatar_thumb ]]&w=200&h=200">
+                                <kct-file id="avatar" on-change="__onAvatarChange"></kct-file>
+                            </div>
+                            <div class="profile-name p-a text-center">&nbsp;</div>
+                            <paper-fab class="fab-raised fab-blue fab-camera" icon="image:camera-alt" title="Change photo" on-tap="__onAvatarTap"></paper-fab>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <paper-card class="block">
+                            <div class="card-content">
+                                <h3 class="block-title">Personal Information</h3>
+                                <paper-input label="Full Name" value="{{ user.su_fullname }}" required auto-validate error-message="Full name is required"></paper-input>
+                                <paper-input label="Gender" value="{{ user.su_sex }}"></paper-input>
+                                <vaadin-date-picker label="Birthday" value="{{ user.su_dob }}"></vaadin-date-picker>
+                                <paper-input label="Job Description" value="{{ user.su_job_title }}"></paper-input>
+                                <div class="m-t">
+                                    <paper-button disabled$="[[ __profileInvalid ]]" class="btn-primary" on-tap="__onSaveBasicTap">Update Profile</paper-button> 
+                                </div>
+                            </div>
+                        </paper-card>
+
+                        <paper-card class="block">
+                            <div class="card-content">
+                                <h3 class="block-title">Account Information</h3>
+                                <paper-input label="Email address" value="{{ user.su_email }}" readonly></paper-input>
+                                <paper-input label="Group Access (Role)" value="{{ user.sr_name }}" readonly></paper-input>
+                                <paper-input label="Password" type="password" value="{{ __account.password1 }}" id="password1" error-message="Password doesn't match"></paper-input>
+                                <paper-input label="Password confirm" type="password" value="{{ __account.password2 }}" id="password2" error-message="Password doesn't match"></paper-input>
+                                <div class="m-t">
+                                    <paper-button disabled$="[[ __accountInvalid ]]" class="btn-primary" on-tap="__onSaveAccountTap">Update Account</paper-button>
+                                </div>
+                            </div>
+                        </paper-card>
+                        
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class ProfilePage extends KctView {
+            static get is() {
+                return 'profile-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Profile' }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__profileValidation(user.su_fullname)',
+                    '__accountValidation(__account.password1, __account.password2)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__account = {
+                    password1: null,
+                    password2: null
+                };
+
+                this.__profileInvalid = true;
+                this.__accountInvalid = true;
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--profile-page-height': height + 'px' });
+            }
+
+            __profileValidation(name) {
+                let valid = true;
+                valid = valid && name;
+                this.set('__profileInvalid', !valid);
+            }
+
+            __accountValidation(password1, password2) {
+                let valid = true;
+
+                this.$.password1.invalid = false;
+                this.$.password2.invalid = false;
+
+                if (password2 && password2 != password1) {
+                    this.$.password2.invalid = true;
+                    valid = false;
+                } else if (password1 && !password2) {
+                    valid = false;
+                }
+
+                this.set('__accountInvalid', !valid);
+            }
+
+            __onSaveBasicTap() {
+                let data = Object.assign({}, this.user);
+
+                this.$.ajax.PUT('/profile/' + data.su_id, data).then(() => {
+                    this.__reset = Object.assign({}, this.user);
+                    this.toast('Save changed', 'Your basic information has been saved');
+                });
+            }
+
+            __onSaveAccountTap() {
+                if (this.__account.password1 && (this.__account.password1 == this.__account.password2)) {
+                    let data = { su_passwd: this.__account.password1 };
+                    this.$.ajax.PUT('/profile/' + this.user.su_id, data).then(() => {
+                        this.toast('Save changed', 'Your account information has been saved');     
+                    });
+                }
+            }
+
+            __onResetBasicTap() {
+                for(let key in this.__reset) {
+                    this.set('user.' + key, this.__reset[key]);
+                }
+            }
+
+            __onAvatarTap(e) {
+                this.shadowRoot.querySelector('#avatar').browse();
+            }
+
+            __onAvatarChange(e) {
+                let file = this.shadowRoot.querySelector('#avatar').file();
+
+                let data = {
+                    files: [
+                        { name: 'avatar', file: file }
+                    ]
+                };
+
+                this.$.ajax.UPLOAD('/profile/' + this.user.su_id + '/upload', data).then((res) => {
+                    if (res.data) {
+                        for (let key of ['su_avatar', 'su_avatar_url', 'su_avatar_thumb']) {
+                            this.set('user.' + key, res.data[key]);
+                        }
+                    }
+                });
+            }
+        }
+
+        customElements.define(ProfilePage.is, ProfilePage);
+    </script>
+</dom-module>

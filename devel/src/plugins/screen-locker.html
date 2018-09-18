@@ -1,0 +1,399 @@
+<link rel="import" href="../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../cores/elements/kct-auth/kct-auth.html">
+<link rel="import" href="../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="screen-locker">
+    <template>
+        <style>
+            :host {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #555;
+                background-image: url(../images/blury-background.jpg);
+                background-size: cover;
+                background-repeat: no-repeat;
+                z-index: 9999999;
+
+                --light-opacity-1: rgba(255,255,255,.2);
+                --light-opacity-2: rgba(255,255,255,.5);
+                --dark-opacity-1: rgba(0,0,0,.5);
+                --dark-opacity-2: rgba(0,0,0,.2);
+            }
+            :host([opened]) {
+                display: block;
+                -webkit-animation: sl-fade-in 0.5s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+                        animation: sl-fade-in 0.5s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+            }
+            :host([busy]) {
+                cursor: wait;
+            }
+            a {
+                color: var(--paper-yellow-500);
+            }
+            .overlay {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: 0;
+                background-color: rgba(0,0,0,.5);
+            }
+            .form {
+                box-sizing: border-box;
+                padding: 2em;
+                width: 360px;
+                margin: 100px auto;
+                color: #f4f4f4;
+                position: relative;
+                z-index: 2;
+            }
+            .form-foot {
+                text-align: center;
+                margin-top: 2em;
+            }
+            .avatar {
+                text-align: center;
+                margin-bottom: 3em;
+            }
+            .avatar > span {
+                display: inline-block;
+                width: 64px;
+                height: 64px;
+                border: 4px solid var(--light-opacity-1);
+                border-radius: 50%;
+                position: relative;
+                overflow: hidden;
+                text-align: center;
+            }
+            .avatar iron-icon {
+                --iron-icon-width: 50px;
+                --iron-icon-height: 50px;
+                position: relative;
+                top: 3px;
+            }
+            .notes {
+                text-align: center;
+                margin-bottom: 3em;
+                font-size: 16px;
+            }
+            .notes iron-icon {
+                --iron-icon-width: 40px;
+                --iron-icon-height: 40px;
+                margin-right: 8px;
+            }
+            .hbox {
+                @apply --layout-horizontal;
+            }
+            .flex {
+                @apply --layout-flex;
+            }
+            paper-input {
+                text-align: center;
+                --paper-input-container-label: {
+                    color: var(--light-opacity-2);
+                    font-size: 16px;
+                };
+
+                --paper-input-container-input: {
+                    color: #fff;
+                    font-size: 20px;
+                };
+
+                --paper-input-container-underline: {
+                    border-color: var(--light-opacity-1);
+                }
+
+                --paper-input-container-underline-focus: {
+                    border-color: #fff;
+                }
+            }
+            paper-button {
+                font-weight: normal;
+                background-color: var(--light-opacity-1);
+                padding: 8px 15px;
+                border-radius: 20px;
+                margin: 0 0 30px 0;
+            }
+            paper-button[disabled] {
+
+            }
+            .btn-close {
+                position: absolute;
+                top: 30px;
+                right: 30px;
+                width: 50px;
+                height: 50px;
+                color: #aaa;
+                cursor: pointer;
+                --webkit-transition: color .2s ease-out;
+                         transition: color .2s ease-out;
+            }
+            .btn-close:hover {
+                color: #f4f4f4;
+            }
+
+            .message {
+                position: absolute;
+                top: 0;
+                right: 0;
+                left: 0;
+                color: #f4f4f4;
+                padding: 10px;
+                background-color: var(--dark-opacity-2);
+                font-size: 15px;
+                text-align: center;
+
+                -webkit-animation: sl-slide-in-bottom 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+                        animation: sl-slide-in-bottom 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+            }
+
+            .message.show {
+                -webkit-animation: sl-slide-in-top 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+                        animation: sl-slide-in-top 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+            }
+
+            @-webkit-keyframes sl-fade-in {
+                0% { opacity: 0; }
+                100% { opacity: 1; }
+            }
+
+            @keyframes sl-fade-in {
+                0% { opacity: 0; }
+                100% { opacity: 1; }
+            }
+
+            @-webkit-keyframes sl-slide-in-top {
+              0% {
+                -webkit-transform: translateY(-100px);
+                        transform: translateY(-100px);
+                opacity: 0;
+              }
+              100% {
+                -webkit-transform: translateY(0);
+                        transform: translateY(0);
+                opacity: 1;
+              }
+            }
+            @keyframes slide-in-top {
+              0% {
+                -webkit-transform: translateY(-100px);
+                        transform: translateY(-100px);
+                opacity: 0;
+              }
+              100% {
+                -webkit-transform: translateY(0);
+                        transform: translateY(0);
+                opacity: 1;
+              }
+            }
+
+            @-webkit-keyframes sl-slide-in-bottom {
+              0% {
+                -webkit-transform: translateY(0);
+                        transform: translateY(0);
+                opacity: 1;
+              }
+              100% {
+                -webkit-transform: translateY(-100px);
+                        transform: translateY(-100px);
+                opacity: 0;
+              }
+            }
+            @keyframes slide-in-bottom {
+              0% {
+                -webkit-transform: translateY(0);
+                        transform: translateY(0);
+                opacity: 1;
+              }
+              100% {
+                -webkit-transform: translateY(-100px);
+                        transform: translateY(-100px);
+                opacity: 0;
+              }
+            }
+
+
+        </style>
+
+        <kct-auth id="auth" config="[[ config ]]" user="{{ user }}"></kct-auth>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+
+        <div class="overlay"></div>
+        
+        <div class="form">
+            <div class="avatar">
+                <span>
+                    <img src$="[[ avatar ]]">
+                    <!-- <iron-icon icon="perm-identity"></iron-icon> -->
+                </span>
+            </div> 
+
+            <div class="notes">
+                Your screen has been locked due to session expired. Enter your password to unlock your screen.
+            </div>
+
+            <div class="form-body">
+                <paper-input on-keypress="__onPasswordKeypress" value="{{ password }}" tabindex="0" type="password" label="Type your password..." no-label-float></paper-input>
+            </div>
+
+            <div class="form-foot">
+                <paper-button disabled$="[[ busy ]]" on-tap="__onAuthenticateTap">UNLOCK SCREEN</paper-button>
+                <div class="text-center">
+                    or <a on-tap="__onCloseTap" href="javascript:;">click here</a>  to login
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="message" class="message"></div>
+        
+        <!-- <paper-icon-button on-tap="__onCloseTap" class="btn-close" icon="close"></paper-icon-button>     -->
+
+        
+    </template>
+    <script>
+        class ScreenLocker extends Polymer.Element {
+            static get is() {
+                return 'screen-locker';
+            }
+
+            static get properties() {
+                return {
+                    busy: { type: Boolean, value: false, reflectToAttribute: true },
+                    opened: { type: Boolean, value: false, reflectToAttribute: true },
+                    avatar: { type: String, computed: '__computeAvatar(user.su_avatar_thumb)' },
+                    password: { type: String }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__contextMenuHandler = this.__onContextMenu.bind(this);
+            }
+
+            __computeAvatar(thumb) {
+                if (thumb) {
+                    return thumb + '&w=64&h=64';
+                }
+                return '';
+            }
+
+            open() {
+                document.body.addEventListener('contextmenu', this.__contextMenuHandler);
+                this.set('password', '');
+                this.set('opened', true);
+            }
+
+            close() {
+                document.body.removeEventListener('contextmenu', this.__contextMenuHandler);
+                this.set('opened', false);
+            }
+
+            __showInfo(msg) {
+                let elem = this.$.message;
+                elem.innerHTML = msg;
+
+                if ( ! elem.classList.contains('show')) {
+                    elem.classList.add('show');
+                }
+            }
+
+            __hideInfo() {
+                let elem = this.$.message;
+                let promise, resolve;
+
+                promise = new Promise(a => (resolve = a));
+
+                if (elem.classList.contains('show')) {
+
+                    let timer = setTimeout(() => {
+                        
+                        clearTimeout(timer);
+                        timer = null;
+                        elem.classList.remove('show');
+
+                        resolve();
+                    }, 1000);
+
+                } else {
+                    resolve();
+                }
+
+                return promise;
+            }
+
+            login() {
+
+                this.set('busy', true);
+                this.__showInfo('Authenticating...');
+
+                let username = this.user.su_email,
+                    password = this.password,
+                    session  = this.config.app_session || '';
+
+                // fetch captcha
+                this.$.ajax.GET('/auth/captcha?type=code&session=' + session).then(res => {
+                    let captcha = res.data;
+
+                    this.$.auth.login(username, password, captcha).then(user => {
+                        if ( ! user) {
+                            this.__showInfo("User doesn't not authenticated");
+                        }
+
+                        this.__hideInfo().then(() => {
+                            this.set('busy', false);    
+                            if (user) {
+
+                                this.__trigger('authenticate', {
+                                    success: true,
+                                    user: this.$.auth.user
+                                });
+
+                                this.close();    
+                            } else {
+                                this.__trigger('authenticate', {
+                                    success: false,
+                                    user: this.$.auth.user
+                                });
+                            }
+                        });    
+                    });    
+
+                });
+            }
+
+            __trigger(name, data) {
+                this.dispatchEvent(new CustomEvent(name, {
+                    detail: data
+                }));
+            }
+
+            __onPasswordKeypress(e) {
+                if (e.code == 'Enter') {
+                    this.login();
+                }
+            }
+
+            __onAuthenticateTap() {
+                this.login();
+            }
+
+            __onCloseTap(e) {
+                e.preventDefault();
+
+                this.close();
+                this.__trigger('close');
+            }
+
+            __onContextMenu(e) {
+                e.preventDefault();
+            }
+        }
+        customElements.define(ScreenLocker.is, ScreenLocker);
+    </script>
+</dom-module>

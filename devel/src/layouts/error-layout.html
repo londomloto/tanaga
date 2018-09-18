@@ -1,0 +1,113 @@
+<link rel="import" href="../../../cores/bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="error-layout">
+    <template>
+        <style>
+            :host {
+                font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            }
+            .container {
+                height: 100vh;
+                @apply --layout-vertical;
+            }
+            .center {
+                @apply --layout-flex-2;
+                @apply --shadow-elevation-2dp;
+                background-color: var(--error-background-color, #ff5252);
+                padding: 30px;
+            }
+            .south {
+                @apply --layout-flex;
+            }
+            .title h3 {
+                font-size: 50px;
+                font-weight: 600;
+                color: #fff;
+                margin: 0;
+                padding-bottom: 15px;
+                display: block;
+                border-bottom: 1px solid #ff9393;
+            }
+            .title p {
+                font-size: 22px;
+                font-weight: 300;
+                color: #f4f4f4;
+            }
+            a {
+                text-decoration: none;
+                font-weight: 600;
+                color: #fff;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+            .powered {
+                text-align: center;
+                color: #ccc;
+                padding-top: 30px;
+            }
+            .powered iron-icon {
+                --iron-icon-width: 56px;
+                --iron-icon-height: 56px;
+            }
+            .powered p {
+                margin: 0;
+            }
+        </style>
+        <div class="container">
+            <div class="center">
+                <template is="dom-if" if="[[ errors ]]">
+                    <div class="title">
+                        <h3>[[ errors.code ]] [[ errors.name ]]</h3>
+                        <p>
+                            [[ errors.message ]]<br>
+                            Would you like to go to <a href="javascript:;" on-click="__onHomeClick">homepage</a> instead?
+                        </p>
+                    </div>
+                </template>
+            </div>
+            <div class="south">
+                <div class="powered">
+                    <img src$="[[ resolveUrl('../images/powered.png') ]]">
+                    <p>POWERED BY <strong>WORKSAURUS</strong></p>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        class ErrorLayout extends Polymer.Element {
+            static get is() {
+                return 'error-layout';
+            }
+
+            static get properties() {
+                return {
+                    name: { type: String, value: 'error' },
+                    errros: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__routeEventChanged(route.event)'
+                ];
+            }
+
+            __routeEventChanged(event) {
+                if (event != 'finish') return;
+
+                if (this.state.layout == this.name && this.state.data) {
+                    let errors = this.state.data.errors;
+                    this.set('errors', errors);
+                }
+            }
+
+            __onHomeClick(e) {
+                e.preventDefault();
+                this.set('route.path', '/home');
+            }
+        }
+
+        customElements.define(ErrorLayout.is, ErrorLayout);
+    </script>
+</dom-module>

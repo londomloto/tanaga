@@ -1,0 +1,147 @@
+<link rel="import" href="mixins.html">
+<script>
+    Mixins.Storage = Polymer.dedupingMixin((superclass) => {
+        return class extends superclass {
+            
+            constructor() {
+                super();
+                
+                this.__storage = window.localStorage;
+                this.__storageEvent = false;
+                this.__storageEventHandler = this._onStorageChange.bind(this);
+            }
+
+            disconnectedCallback() {
+                super.disconnectedCallback();
+
+                if (this.__storageEvent) {
+                    this._unbindStorageEvent();
+                }
+            }
+
+            /**
+             * @protected
+             */
+            _bindStorageEvent() {
+                this.__storageEvent = true;
+                window.addEventListener('storage-change', this.__storageEventHandler);
+            }
+
+            /**
+             * @protected
+             */
+            _unbindStorageEvent() {
+                this.__storageEvent = false;
+                window.removeEventListener('storage-change', this.__storageEventHandler);
+            }
+
+            /**
+             * @protected
+             */
+            _fireStorageEvent(key) {
+                let evt = document.createEvent('StorageEvent'),
+                    url = window.location.protocol + '//' + window.location.hostname;
+
+                evt.initStorageEvent(
+                    'storage-changed',
+                    false,
+                    false,
+                    key,
+                    null,
+                    null,
+                    url,
+                    this.__storage
+                );
+
+                window.dispatchEvent(evt);
+            }
+
+            /**
+             * @protected
+             */
+            _initStorage(key, data) {
+                if ( ! this.__storage.getItem(key)) {
+                    data = JSON.stringify(data);
+                    this.__storage.setItem(key, data);
+                    this.dispatchEvent(new CustomEvent('init-storage', { detail: { name: key} }));
+                }
+            }
+
+            /**
+             * @protected
+             */
+            _saveStorage(key, data) {
+                if (this.__storage.getItem(key)) {
+                    data = JSON.stringify(data);
+                    this.__storage.setItem(key, data);
+                }
+            }
+
+            /**
+             * @protected
+             */
+            _getStorageKey(key, namespace) {
+                if (key) {
+                    switch(namespace) {
+                        case 'kct-auth':
+                            return key + ':user';
+                        default:
+                            return key + ':data';
+                    }    
+                }
+                return key;
+            }
+
+            /**
+             * @protected
+             */
+            _getStorageItem(key, prop, defval) {
+                let data = this.__storage.getItem(key);
+                
+                if ( ! data) {
+                    return defval;
+                }
+
+                try {
+                    data = JSON.parse(data);
+
+                    if ( ! prop) {
+                        return data;
+                    }
+
+                    return data[prop] !== undefined ? data[prop] : defval;    
+                } catch(ex) {}
+
+                return defval;
+            }
+            
+            /**
+             * @protected
+             */
+            _setStorageItem(key, prop, value) {
+                let data = this.__storage.getItem(key);
+                if (data) {
+                    try {
+                        data = JSON.parse(data);
+                        if (value === undefined) {
+                            Object.assign(data, prop);
+                        } else {
+                            data[prop] = value;
+                        }
+
+                        this.__storage.setItem(key, JSON.stringify(data));
+                    } catch(ex) {}
+                }
+            }
+
+            /**
+             * Override this method
+             *
+             * @protected
+             */
+            _onStorageChange(evt) {
+
+            }
+        }
+    });
+</script>

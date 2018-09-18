@@ -1,0 +1,93 @@
+<dom-module id="ponpes-home">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .menu {
+                text-align: center;
+                border-radius: 3px;
+            }
+            .menu .icon {
+                background-color: var(--google-red-300);
+                color: #fff;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                margin: 0 auto;
+                margin-bottom: 10px;
+            }
+            .menu .text {
+                font-size: 14px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="Pesantren" desc="Pesantren [[ record.nama_ponpes ]]" on-back-tap="__onBackTap"></module-header-block>
+            <div class="flex scroll-y padding">
+                <kct-column columns="5">
+                    <template is="dom-repeat" items="[[ menus ]]">
+                        <div class="menu box box-shadow">
+                            <div class="box-body" on-tap="__onMenuTap">
+                                <div class="icon">
+                                    <paper-icon-button icon="[[ item.icon ]]"></paper-icon-button>
+                                </div>
+                                <div class="text">
+                                    [[ item.text ]]
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </kct-column>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class PonpesHome extends KctView {
+            static get is() {
+                return 'ponpes-home';
+            }
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { name: 'identitas', text: 'Identitas', icon: 'communication:business' },
+                            { name: 'tenaga', text: 'Ketenagaan', icon: 'social:people' },
+                            { name: 'lembaga', text: 'Kelembagaan', icon: 'social:school' },
+                            { name: 'santri', text: 'Santri', icon: 'social:group' }
+                        ])
+                    },
+                    identity: { type: String },
+                    record: { 
+                        type: Object,
+                        value: () => ({
+                            nama_ponpes: 'Loading...'
+                        }) 
+                    }
+                };
+            }
+            handleRouteParams(id, action) {
+                if ( ! +id) return;
+
+                this.set('identity', id);
+                this.loadRecord();
+            }
+            loadRecord() {
+                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
+                    this.set('record', res.data);
+                }); 
+            }
+            __onMenuTap(e) {
+                let item = e.model.item;
+            }
+            __onBackTap() {
+                this.set('route.path', '/ponpes');
+            }
+        }
+        customElements.define(PonpesHome.is, PonpesHome);
+    </script>
+</dom-module>

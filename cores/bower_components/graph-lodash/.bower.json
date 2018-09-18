@@ -1,0 +1,14 @@
+{
+  "name": "graph-lodash",
+  "homepage": "https://github.com/londomloto/graph-lodash",
+  "version": "1.0.0",
+  "_release": "1.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.0.0",
+    "commit": "e400ba4d3414f4ffa9a47c30b181b100d97d562d"
+  },
+  "_source": "https://github.com/londomloto/graph-lodash.git",
+  "_target": "1.0.0",
+  "_originalSource": "graph-lodash"
+}

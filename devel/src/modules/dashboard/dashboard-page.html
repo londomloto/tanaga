@@ -1,0 +1,212 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-charts/vaadin-pie-chart.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../../../../cores/mixins/theme.html">
+<link rel="import" href="blocks/dashboard-header-block.html">
+<link rel="import" href="boards/status-board.html">
+<link rel="import" href="boards/assignment-board.html">
+<link rel="import" href="boards/creation-board.html">
+
+<dom-module id="dashboard-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+                background-image: url(../../../images/dashboard-background.jpg);
+                background-repeat: no-repeat;
+                background-size: cover;
+            }
+            paper-card {
+                display: block;
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .card-content {
+                padding: 10px;
+            }
+            .dashboard-header {
+                display: none;
+                /*padding: 15px;*/
+            }
+            .dashboard-body {
+                /*padding: 15px 15px 15px 15px;*/
+            }
+            .board-wrapper + .board-wrapper {
+                /*margin-left: 15px;*/
+            }
+            .board-wrapper paper-card {
+                height: 100%;
+            }
+            paper-card h3 {
+                font-weight: 300;
+
+            }
+            .info-item .info-icon {
+                float: left;
+                width: 40px;
+                background-color: var(--paper-amber-300);
+                color: #fff;
+                width: 40px;
+                height: 40px;
+                box-sizing: border-box;
+                padding: 8px;
+                border-radius: 50%;
+            }   
+            .info-item .info-icon iron-icon {
+                width: 100%;
+                height: 100%;
+            }
+            .info-item .info-text {
+                margin-left: 50px;
+                position: relative;
+                top: 5px;
+            }
+            .info-item .label {
+                font-size: 11px;
+                text-transform: uppercase;
+                color: var(--paper-grey-500);
+            }
+            .info-item .value {
+                font-size: 14px;
+                font-weight: 400;
+                color: var(--paper-cyan-500);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-vbox>
+            <dashboard-header-block icon="dashboard" text="Module" desc="Dashboard" hide-nav>
+                <paper-button on-tap="__onReloadTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Reload</paper-button>
+            </dashboard-header-block>
+            <!-- <page-header-block icon="dashboard" title="Module" description="Dashboard Module">
+                <paper-button on-tap="__onReloadTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Reload</paper-button>
+            </page-header-block> -->
+            <div class="flex scroll-y">
+                <kct-vbox>
+                    <div class="dashboard-header b-b">
+                        <paper-card>
+                            <div class="card-content">
+                                <kct-hbox class="project-info">
+                                    <div class="flex">
+                                        <div class="info-item">
+                                            <div class="info-icon" style="background-color: var(--paper-purple-500)"><iron-icon icon="work"></iron-icon></div>
+                                            <div class="info-text">
+                                                <div class="label">Project Name</div>
+                                                <div class="value">[[ __computePlaceholder(projectRecord.sp_title) ]]</div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="info-item">
+                                            <div class="info-icon" style="background-color: var(--paper-blue-500)"><iron-icon icon="social:person"></iron-icon></div>
+                                            <div class="info-text">
+                                                <div class="label">Creator</div>
+                                                <div class="value">[[ __computePlaceholder(projectRecord.sp_creator_fullname) ]]</div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="info-item">
+                                            <div class="info-icon" style="background-color: var(--paper-amber-500)"><iron-icon icon="today"></iron-icon></div>
+                                            <div class="info-text">
+                                                <div class="label">Created</div>
+                                                <div class="value">[[ __computePlaceholder(projectRecord.sp_created_date_formatted) ]]</div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex">
+                                        <div class="info-item">
+                                            <div class="info-icon" style="background-color: var(--paper-pink-500)"><iron-icon icon="view-carousel"></iron-icon></div>
+                                            <div class="info-text">
+                                                <div class="label">Template</div>
+                                                <div class="value">[[ __computePlaceholder(projectRecord.sp_worksheet_name) ]]</div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </div>
+                                </kct-hbox>
+                            </div>
+                        </paper-card>
+                    </div>
+                    <div class="dashboard-body flex">
+                        <kct-hbox fit>
+                            <div class="board-wrapper flex b-r">
+                                <status-board title="Statuses" class="board-item" flat></status-board>
+                            </div>
+                            <div class="board-wrapper flex b-r">
+                                <assignment-board title="Assignment" class="board-item" flat></assignment-board>
+                            </div>
+                            <div class="board-wrapper flex">
+                                <creation-board title="Created By" class="board-item" project="[[ projectRecord ]]" flat></creation-board>
+                            </div>
+                        </kct-hbox>
+                    </div>
+                </kct-vbox>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class DashboardPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'dashboard-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Dashboard' },
+                    projectRecord: { type: Object, value: () => ({}) },
+                    boards: { type: Array }
+                };
+            }
+
+            handleRouteParams() {
+                let combo = this.$['combo-project'];
+                if (combo) {
+                    combo.load().then(res => {
+                        let projects = combo.items;
+                        if (projects.length) {
+                            combo.value = projects[0].sp_id;
+                            combo.dispatchEvent(new CustomEvent('change'));
+                        }
+                    });
+                }
+            }
+
+            __computePlaceholder(value) {
+                return value || '-';
+            }
+
+            __onComboProjectBeforeload(e) {
+                let options = e.detail.options;
+                options.sort = [{ property: 'sp_title', direction: 'asc' }];
+            }
+
+            __onComboProjectChange(e) {
+                let project = e.target.getModelForValue(e.target.value);
+                this.set('projectRecord', Object.assign({}, project));
+            }
+
+            __onReloadTap() {
+                this.shadowRoot.querySelectorAll('.board-item').forEach(b => {
+                    b.render();
+                });
+            }
+
+        }
+        customElements.define(DashboardPage.is, DashboardPage);
+    </script>
+</dom-module>

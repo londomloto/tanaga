@@ -1,0 +1,57 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="modules-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name" lazy-load>
+            <modules-index-page name="index" route="{{ route }}" state="[[ state ]]"></modules-index-page>
+            <modules-editor-page name="editor" route="{{ route }}" state="[[ state ]]"></modules-editor-page>
+        </kct-pages>
+
+    </template>
+    <script>
+        class ModulesPage extends KctView {
+            static get is() {
+                return 'modules-page';
+            }
+            static get properties() {
+                return {
+                    page: { type: String, value: 'index' }
+                };
+            }
+            handleResizing(width, height) {
+                let pageNode = this.$.pages.selectedItem;
+
+                if (pageNode && pageNode.handleResizing) {
+                    pageNode.handleResizing(width, height);
+                }
+            }
+            handleRouteParams(setting, action) {
+                if (setting != 'modules') return;
+                
+                switch(action) {
+                    case 'add':
+                    case 'edit':
+                        this.set('page', 'editor');
+                        break;
+                    default:
+                        this.set('page', 'index');
+                        break;
+                }
+            }
+        }
+
+        customElements.define(ModulesPage.is, ModulesPage);
+    </script>
+</dom-module>

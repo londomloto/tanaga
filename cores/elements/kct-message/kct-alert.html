@@ -1,0 +1,112 @@
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/dialog.html">
+<link rel="import" href="../../mixins/language.html">
+
+<dom-module id="kct-alert">
+    <template>
+        <style include="theme-helper"></style>
+        <style>
+            paper-dialog {
+                min-width: 280px;
+            }
+            h2, ::slotted(h2) {
+                font-weight: 400;
+                margin-bottom: 15px !important;
+            }
+            p, ::slotted(h2), ::slotted(p) {
+                font-size: 16px;
+                font-weight: 300;
+                margin-bottom: 15px !important;
+            }
+
+            .body > iron-icon {
+                color: var(--accent, var(--app-danger));
+                margin-bottom: 30px;
+                --iron-icon-width: 48px;
+                --iron-icon-height: 48px;
+            }
+            .footer {
+                background-color: var(--accent, var(--app-danger));
+                margin-bottom: 0;
+                color: #ffffff;
+                text-align: center;
+                text-transform: uppercase;
+                padding: 8px;
+            }
+            paper-button {
+                padding-top: 0.5em;
+                padding-bottom: 0.5em;
+            }
+        </style>
+        <paper-dialog id="dialog" always-on-top on-iron-overlay-closed="__onClose" modal>
+            <div class="body text-center">
+                <iron-icon icon="[[ icon ]]"></iron-icon>
+                <slot name="title">
+                    <h2>{{ _(title) }}</h2>
+                </slot>
+                <slot>
+                    <p>{{ _(message) }}</p>
+                </slot>
+            </div>
+            <div class="footer">
+                <paper-button on-tap="__onDismissTap" autofocus>{{ _(button) }}</paper-button>
+            </div>
+        </paper-dialog>
+    </template>    
+    <script>
+        class KctAlert extends Mixins(Polymer.Element).use(
+            Mixins.Dialog, 
+            Mixins.Resolver,
+            Mixins.Language
+        ) {
+            static get is() {
+                return 'kct-alert';
+            }
+            static get properties() {
+                return {
+                    icon: { type: String, value: 'warning' },
+                    title: { type: String, value: 'Oh Snap!' },
+                    accent: { type: String, value: 'danger' },
+                    button: { type: String, value: 'Dismiss' },
+                    message: { type: String }
+                }
+            }
+            static get observers() {
+                return [
+                    '__accentChanged(accent)'
+                ];
+            }
+            open() {
+                this._relocate();
+
+                this.__d = this._defer();
+                this.$.dialog.open();
+                
+                return this.__d.promise;
+            }
+
+            __accentChanged(accent) {
+                if (accent) {
+                    this.updateStyles({
+                        '--accent': 'var(--app-' + accent + ')'
+                    });
+                }
+            }
+
+            __onDismissTap(e) {
+                this.$.dialog.close();
+            }
+
+            __onClose() {
+                this._restore();
+
+                this.dispatchEvent(new CustomEvent('close'));
+                this.__d.resolve();
+            }
+        }
+        customElements.define(KctAlert.is, KctAlert);
+    </script>
+</dom-module>

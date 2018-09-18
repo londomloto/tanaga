@@ -1,0 +1,71 @@
+<link rel="import" href="mixins.html">
+<script>
+    {
+        let cached = {};
+
+        Mixins.DOM = Polymer.dedupingMixin(superclass => {
+
+            return class extends superclass {
+
+                _elementMatches(element, selector) {
+                    if (element.matches) {
+                        return element.matches(selector);
+                    } else {
+                        let fn = element.matchesSelector || 
+                                 element.webkitMatchesSelector || 
+                                 element.mozMatchesSelector || 
+                                 element.msMatchesSelector || 
+                                 element.oMatchesSelector || 
+                                 function (s) {
+                                    let m = document.querySelectorAll(s),
+                                        n = m.length;
+                                    while(--n >= 0 && m.item(n) !== element) {}
+                                    return n > -1;
+                                 };
+
+                        return fn(selector);
+                    }
+                }
+
+                _getElementSize(element) {
+                    let size = {
+                        width: element.clientWidth,
+                        height: element.clientHeight
+                    }
+                    return size;
+                }
+
+                _getScrollerSize() {
+                    if (cached.scrollSize === undefined) {
+                        let outer, inner, width1, width2;
+                    
+                        outer = document.createElement('div');
+                        outer.style.visibility = 'hidden';
+                        outer.style.width = '100px';
+                        outer.style.msOverflowStyle = 'scrollbar';
+                        
+                        document.body.appendChild(outer);
+                        
+                        width1 = outer.offsetWidth;
+
+                        outer.style.overflow = 'scroll';
+
+                        inner = document.createElement('div');
+                        inner.style.width = '100%';
+                        
+                        outer.appendChild(inner);
+
+                        width2 = inner.offsetWidth;
+
+                        outer.parentNode.removeChild(outer);
+                        cached.scrollSize = width1 - width2;
+                    }
+
+                    return cached.scrollSize;
+                }
+
+            };
+        });
+    }
+    
+</script>

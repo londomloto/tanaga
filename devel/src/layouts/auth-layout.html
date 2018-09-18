@@ -1,0 +1,104 @@
+<link rel="import" href="../../../cores/bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../cores/elements/kct-page/kct-page.html">
+<link rel="import" href="base-layout.html">
+
+<dom-module id="auth-layout">
+    <template>
+        <iron-pages selected="[[ page ]]" attr-for-selected="name">
+            <template is="dom-repeat" items="[[ pages ]]">
+                <kct-page 
+                    type="[[ item.type ]]" 
+                    name="[[ item.name ]]" 
+                    path="[[ item.path ]]" 
+                    state="[[ item.state ]]"
+                    config="{{ config }}"
+                    route="{{ route }}"></kct-page>
+            </template>
+        </iron-pages>
+    </template>
+
+    <script>
+        class AuthLayout extends BaseLayout {
+
+            static get is() { return 'auth-layout'; }
+
+            static get properties() {
+                return {
+                    name: { type: String, value: 'auth' },
+                    page: { type: String },
+                    pages: { 
+                        type: Array, 
+                        notify: true, 
+                        value: () => {
+                            return [];
+                        }
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__routeEventChanged(route.event)'
+                ];
+            }
+
+            renderPage(element, options = {}) {
+                let page;
+                page = this.__findPage(options.name);
+
+                if ( ! page) {
+                    page = document.createElement(element);
+                    
+                    Object.assign(options, {
+                        state: this.state,
+                        route: this.route
+                    });
+
+                    page.setProperties(options);
+                    this.$.pages.appendChild(page);
+                }
+
+                this.set('page', page.name);
+            }
+
+            __findPage(name) {
+                return this.pages.find((page) => { return page.name == name });
+            }
+
+            __routeEventChanged(event) {
+                if (event != 'finish') {
+                    return;
+                }
+
+                if (this.state.layout == this.name) {
+                    this._resolvePageFromState(this.state).then((spec) => {
+                        let page = this.__findPage(spec.name);
+                        if ( ! page) {
+                            
+                            let pageState = Object.assign({}, this.state);
+
+                            Polymer.importHref(
+                                spec.file,
+                                () => {
+                                    spec.path = this.route.path;
+                                    spec.state = pageState;
+
+                                    this.push('pages', spec);
+                                    this.set('page', spec.name);
+                                },
+                                (err) => {
+                                    this.set('route.path', '/not-found');
+                                }
+                            );
+                        } else {
+                            this.set('page', spec.name);
+                        }
+                    });
+                }
+                
+            }
+        }
+
+        customElements.define(AuthLayout.is, AuthLayout);
+    </script>
+</dom-module>

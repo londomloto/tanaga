@@ -1,0 +1,302 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../../cores/elements/kct-search/kct-search-advance.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+<link rel="import" href="../blocks/header-block.html">
+
+<dom-module id="project-list">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .main {
+                background-color: var(--page-background-color);
+            }
+            .container {
+                @apply --layout-horizontal;
+                @apply --layout-wrap;
+            }
+            .item {
+                cursor: pointer;
+                width: 200px;
+                height: 200px;
+                margin: 8px;
+                border-radius: 0;
+                box-shadow: none;
+                border: 1px solid #f0f0f0;
+                /*box-shadow:0 1px 2px rgba(0,0,0,0.1),0 -1px 0px rgba(0,0,0,0.02);*/
+            }
+            .item:hover {
+                border-color: #fff;
+                @apply --paper-material-elevation-1;
+            }
+            .item .card-content {
+                text-align: center;
+            }
+            .item-create:hover {
+                border-color: var(--paper-blue-200);
+                background-color: var(--paper-blue-200);
+                box-shadow: none;
+                color: #fff;
+            }
+            .item-create .card-content {
+                padding-top: 60px;
+                font-weight: 500;
+                font-size: 13px;
+            }
+            .item-create .card-content paper-icon-button {
+                width: 64px;
+                height: 64px;
+                pointer-events: none;
+            }
+            .logo {
+                display: inline-block;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                line-height: 56px;
+                font-weight: 300;
+                font-size: 20px;
+                text-align: center;
+                color: #fff;
+                margin-bottom: 10px;
+            }
+            .text {
+                font-size: 14px;
+                font-weight: 600;
+            }
+            .meta {
+                font-size: 11px;
+                color: #999;
+            }
+            .open paper-button {
+                font-weight: 600;
+            }
+            .tool {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+            }
+            .tool paper-icon-button {
+                color: #ccc;
+                width: 32px;
+                height: 32px;
+            }
+            header-block[hidden] {
+                display: none;
+            }
+
+            /** tour animated */
+            .animated {
+                animation-duration: 1s;
+                animation-fill-mode: both;
+                animation-iteration-count: infinite;
+            }
+
+            .animated.bounce {
+                animation-name: bounce;
+                transform-origin: center bottom;
+            }
+
+            @keyframes bounce {
+                from, 20%, 53%, 80%, to {
+                    animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+                    transform: translate3d(0,0,0);
+                }
+
+                40%, 43% {
+                    animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                    transform: translate3d(0, -20px, 0);
+                }
+
+                70% {
+                    animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                    transform: translate3d(0, -10px, 0);
+                }
+
+                90% {
+                    transform: translate3d(0,-4px,0);
+                }
+            }
+
+            #button-create.bounce:hover {
+                animation-name: none;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-role id="role"></kct-role>
+
+        <kct-event-subscriber 
+            on-project-saved="__onProjectSaved" 
+            on-project-removed="__onProjectRemoved"></kct-event-subscriber>
+
+        <kct-vbox>
+            <header-block hide-nav hide-header hidden></header-block>
+            <div class="flex main">
+                <div class="container padding">
+
+                    <paper-card id="button-create" on-tap="__onCreateProjectTap" class="item item-create animated">
+                        <div class="card-content">
+                            <div><paper-icon-button icon="add"></paper-icon-button></div>
+                            <div>CREATE PROJECT</div>
+                        </div>
+                    </paper-card>
+
+                    <template is="dom-repeat" items="[[ projects ]]" on-dom-change="__onRepeaterChange">
+                        <paper-card class="item" on-tap="__onOpenProjectTap">
+                            <div class="card-content">
+                                <div class="tool">
+                                    <paper-icon-button data-perm="manage_project@worksheet" on-tap="__onProjectSettingTap" icon="settings"></paper-icon-button>
+                                </div>
+
+                                <div class="logo" style$="background-color: [[ item.sp_accent ]]">
+                                    <span>[[ item.sp_logo ]]</span>
+                                </div>
+                                <div class="text">
+                                    <span>[[ item.sp_title ]]</span>
+                                </div>
+                                <div class="meta">
+                                    <span>Created by <b>[[ item.sp_creator_fullname ]]</b> at <br>[[item.sp_created_date_formatted]]</span>
+                                </div>
+                                <div class="open m-t">
+                                    <paper-button class="btn-sm btn-cyan">Open Project</paper-button>
+                                </div>
+                            </div>
+                        </paper-card>    
+                    </template>
+                    
+                </div>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class ProjectList extends KctView {
+            static get is() {
+                return 'project-list';
+            }
+
+            static get properties() {
+                return {
+                    projects: { type: Array }
+                };
+            }
+
+            handleRouteParams(project) {
+                if (project) return;
+
+                if ( ! this.__projectLoaded) {
+                    this.__projectLoaded = true;
+                    this.__loadProjects();
+
+                }
+                
+            }
+
+            __loadProjects() {
+
+                let payload = {
+                    display: 'granted',
+                    sort: [ { property: 'sp_title', direction: 'asc' } ]
+                };
+
+                return this.$.ajax.GET('/projects', payload).then(res => {
+                    this.set('projects', res.data);
+                });
+            }
+
+            __startTour() {
+                let buttonCreate = this.$['button-create'];
+                
+                let options = {
+                    id: 'tour-project-list',
+                    isTourBubble: false,
+                    steps: [
+                        {
+                            title: 'Getting Started',
+                            target: buttonCreate,
+                            content: 'Click on create button to start creating new project',
+                            placement: 'right',
+                            yOffset: 40,
+                            showNextButton: false,
+                            showCTAButton: true,
+                            ctaLabel: 'Disable Guide',
+                            onCTA: () => {
+                                this.set('config.app_tour_enabled', false);
+                                this.__stopTour();
+                            },
+                            onShow: () => {
+                                buttonCreate.classList.add('bounce');
+                            }
+                        }
+                    ],
+                    onClose: () => {
+                        buttonCreate.classList.remove('bounce');
+                    },
+                    onEnd: () => {
+                        buttonCreate.classList.remove('bounce');
+                    }
+                };
+                
+                hopscotch.startTour(options);
+            }
+
+            __stopTour() {
+                this.$['button-create'].classList.remove('bounce');
+                hopscotch.endTour(true);
+            }
+
+            __onRepeaterChange(e) {
+                this.$.role.validate();
+                
+                // need to start tour ?
+                let count = (this.projects || []).length;
+
+                if (count == 0  || (count == 1 && this.projects[0].sp_id == 1) ) {
+                    let tour = this.config.app_tour_enabled;
+                    tour = tour === undefined ? true : tour;    
+
+                    if (tour) {
+                        this.__startTour();
+                    }
+                }
+                
+            }
+
+            __onCreateProjectTap() {
+                this.__stopTour();
+                this.set('route.path', '/worksheet/create');
+            }
+
+            __onOpenProjectTap(e) {
+                this.__stopTour();
+                let projectRecord = e.model.item;
+                this.set('route.path', '/worksheet/' + projectRecord.sp_name + '/view/kanban');
+            }
+
+            __onProjectSettingTap(e) {
+                e.stopPropagation();
+                
+                let projectItem = e.model.item;
+                this.set('route.path', '/worksheet/' + projectItem.sp_name + '/setting');
+            }
+
+            __onProjectSaved() {
+                this.__loadProjects();
+            }
+
+            __onProjectRemoved() {
+                this.__loadProjects();
+            }
+        }
+
+        customElements.define(ProjectList.is, ProjectList);
+    </script>
+</dom-module>

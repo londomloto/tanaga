@@ -1,0 +1,340 @@
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../kct-layouts/kct-vbox.html">
+
+<dom-module id="kct-dialog">
+    <template>
+        <style>
+            :host{ 
+                display: block; 
+            }
+
+            paper-dialog {
+                width: var(--kct-dialog-width);
+                height: var(--kct-dialog-height);
+            }
+
+            .dialog-content {
+                padding: 0;
+                margin: 0;
+            }
+            .dialog-header {
+                padding: 1.5rem;
+                @apply --dialog-header;
+            }
+            .dialog-header h3 {
+                font-size: 14px;
+                font-weight: 400;
+                margin: 0;
+                text-transform: uppercase;
+            }
+            .dialog-body {
+                padding: 0 1.5rem 1.5rem 1.5rem;
+            }
+
+            :host([scrollable]) .dialog-body {
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            :host([fit-content]) .dialog-body { padding: 0; }
+            :host([fit-content]) .dialog-body-content, 
+            :host([fit-content]) .dialog-body-content > div { height: 100%; }
+
+            .dialog-body::-webkit-scrollbar { -webkit-appearance: none; }
+            .dialog-body::-webkit-scrollbar:vertical { width: 8px; }
+            .dialog-body::-webkit-scrollbar:horizontal { height: 8px; }
+            .dialog-body::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, .3); }
+            .dialog-body::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, .2); }
+
+            .dialog-body paper-tabs {
+                --paper-tabs-selection-bar-color: var(--app-danger);
+                --paper-tab-content: {
+                    font-size: 15px;
+                    font-weight: 300;
+                };
+            }
+
+            .dialog-footer {
+                background-color: var(--app-danger);
+                padding: 8px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            .dialog-footer paper-button {
+                color: #ffffff;
+            }
+            .dialog-footer paper-button[disabled] {
+                background: transparent;
+                opacity: .3;
+                cursor: not-allowed;
+            }
+        </style>
+
+        <slot id="slot"></slot>
+    </template>
+
+    <template id="dialog-template">
+        <paper-dialog id="dialog" modal>
+            <kct-vbox class="dialog-content">
+                <div class="dialog-header"></div>
+                <div class="dialog-body flex">
+                    <div class="dialog-body-content"></div>
+                </div>
+                <div class="dialog-footer"></div>
+            </kct-vbox>
+        </paper-dialog>
+    </template>
+
+    <script>
+        {
+            let __ID = 0;
+
+            class KctDialog extends Polymer.Element {
+                static get is() {
+                    return 'kct-dialog';
+                }
+                static get properties() {
+                    return {
+                        title: { type: String, value: 'Dialog' },
+                        width: { type: String },
+                        height: { type: String },
+                        scrollable: { type: Boolean, value: false },
+                        fitContent: { type: Boolean, value: false, reflectToAttribute: true }
+                    }
+                }
+                static get observers() {
+                    return [
+                        '__sizeChanged(width, height)',
+                        '__titleChanged(title)'
+                    ];
+                }
+
+                static get dialogTemplate() {
+                    let template = document.createElement('template');
+                    template.innerHTML = `
+                        <paper-dialog id="dialog" modal>
+                            <kct-vbox class="dialog-content">
+                                <div class="dialog-header"></div>
+                                <div class="dialog-body flex">
+                                    <div class="dialog-body-content"></div>
+                                </div>
+                                <div class="dialog-footer"></div>
+                            </kct-vbox>
+                        </paper-dialog>
+                    `;
+                    return template;
+                }
+
+                constructor() {
+                    super();
+
+                    this.__context = null;
+                    this.__guid = 'kct_dialog_' + (++__ID);
+
+                    this.__stamp = { done: false };
+                    this.__stamp.promise = new Promise((res, rej) => {
+                        this.__stamp.resolve = res;
+                        this.__stamp.reject = rej;
+                    });
+
+                    this.__has = {
+                        header: false,
+                        body: false,
+                        footer: false
+                    };
+
+                    this.__openedHandler = this.__onDialogOpened.bind(this);
+                    this.__closedHandler = this.__onDialogClosed.bind(this);
+                    this.__relocating = false;
+                }
+                
+                ready() {
+                    super.ready();
+                    this.__context = (this.parentNode && this.parentNode.host) || this;
+
+                    Polymer.RenderStatus.afterNextRender(this, () => {
+                        this.__stampDialog();
+                    });
+                }
+
+                __stamping() {
+                    if (this.__stamp.done) {
+                        return Promise.resolve();
+                    } else {
+                        return this.__stamp.promise;
+                    }
+                }
+
+                __stampDialog() {
+                    let customTemplate = this.$.slot.assignedNodes().find((e) => { 
+                        return e instanceof HTMLTemplateElement; 
+                    });
+
+                    let dialogTemplate = KctDialog.dialogTemplate;
+
+                    if ( ! customTemplate) {
+                        customTemplate = document.createElement('template');
+                        if (this.constructor.customTemplate) {
+                            customTemplate.innerHTML = this.constructor.customTemplate;
+                        }
+                    }
+
+                    // parse styles
+                    let styleContext = this.__context || this;
+                    let styleBaseURI = styleContext.constructor.importPath 
+                        ? Polymer.ResolveUrl.resolveUrl(styleContext.constructor.importPath) : '';
+
+                    let styleContent = Polymer.StyleGather.cssFromTemplate(customTemplate, styleBaseURI);
+
+                    if (styleContent) {
+                        let customStyle = document.createElement('style');
+                        customStyle.textContent = styleContent;
+                        dialogTemplate.content.insertBefore(customStyle, dialogTemplate.content.firstChild);
+                    }
+
+                    if (window.ShadyCSS) {
+                        window.ShadyCSS.prepareTemplate(dialogTemplate, styleContext.localName);
+                    }
+
+                    let customHeader = customTemplate.content.querySelector('[slot="dialog-header"]'),
+                        customBody = customTemplate.content.querySelector('[slot="dialog-body"]'),
+                        customFooter = customTemplate.content.querySelector('[slot="dialog-footer"]');
+
+                    if (customHeader) {
+                        this.__has.header = true;
+                        dialogTemplate.content.querySelector('.dialog-header').appendChild(customHeader);
+                    } else {
+                        dialogTemplate.content.querySelector('.dialog-header').innerHTML = '<h3>[[ '+ this.__install('title', this.title) +' ]]<h3>';
+                    }
+
+                    if (customBody) {
+                        this.__has.body = true;
+                        dialogTemplate.content.querySelector('.dialog-body-content').appendChild(customBody);
+                    }
+
+                    if (customFooter) {
+                        this.__has.footer = true;
+                        dialogTemplate.content.querySelector('.dialog-footer').appendChild(customFooter);
+                    }
+
+                    if (this.__context) {
+                        let dialogInstance = this.__context._stampTemplate(dialogTemplate);
+
+                        dialogInstance.$ = dialogInstance.$ || {};
+                        this.__context.$ = this.__context.$ || {};
+
+                        for (let id in dialogInstance.$) {
+                            if (id != 'dialog') {
+                                this.__context.$[id] = dialogInstance.$[id];
+                            } else {
+                                this.$.dialog = dialogInstance.$[id];
+                            }
+                        }
+                        
+                        this.shadowRoot.appendChild(dialogInstance);
+
+                        this.$.dialog.addEventListener('iron-overlay-closed', this.__closedHandler);
+                        this.$.dialog.addEventListener('iron-overlay-opened', this.__openedHandler);
+                    }
+
+                    this.__stamp.done = true;
+                    this.__stamp.resolve();
+                }
+
+                disconnectedCallback() {
+
+                    if ( ! this.__relocating && this.$.dialog) {
+                        this.$.dialog.removeEventListener('iron-overlay-opened', this.__openedHandler);
+                        this.$.dialog.removeEventListener('iron-overlay-closed', this.__closedHandler);
+                    }
+
+                    super.disconnectedCallback();
+                }
+
+                open() {
+                    this.__relocate();
+                    this.$.dialog.open();
+                }
+
+                recenter() {
+                    this.$.dialog.notifyResize();
+                }
+
+                close() {
+                    this.__restore();
+                    this.$.dialog.close();
+                }   
+
+                __relocate() {
+                    let owner = (this.parentNode && this.parentNode.host) || this.parentNode;
+
+                    if (owner.localName != 'body') {
+                        this.__relocating = true;
+                        this.__owner = owner;
+                        document.body.appendChild(this);
+                        this.__relocating = false;
+                    }
+                    
+                }
+
+                __restore() {
+                    if (this.__owner) {
+                        this.__relocating = true;
+                        this.__owner.appendChild(this);
+                        this.__owner = null;
+                        this.__relocating = false;
+                    }
+                }
+
+                __titleChanged(title) {
+                    this.__stamping().then(() => {
+                        if ( ! this.__has.header) {
+                            this.delegate('title', this.title);
+                        }
+                    });
+                }
+
+                __sizeChanged(width, height) {
+                    let dim;
+
+                    if (width) {
+                        dim = /(%|px)/.test(width) ? '' : 'px';
+                        this.updateStyles({ '--kct-dialog-width': width + dim });
+                    }
+
+                    if (height) {
+                        dim = /(%|px)/.test(height) ? '' : 'px';
+                        this.updateStyles({ '--kct-dialog-height': height + dim });   
+                    }
+                }
+
+                __install(prop, value) {
+                    let name = `${this.__guid}_${prop}`;
+
+                    if (this.__context) {
+                        this.__context[name] = value;
+                    }
+
+                    return name;
+                }
+
+                __onDialogOpened() {
+                    this.dispatchEvent(new CustomEvent('opened'));
+                }
+
+                __onDialogClosed() {
+                    this.dispatchEvent(new CustomEvent('closed'));
+                }
+
+                delegate(prop, value) {
+                    let name = `${this.__guid}_${prop}`;
+                    if (this.__context) {
+                        this.__context.set(name, value);
+                    }
+                }
+            } 
+            customElements.define(KctDialog.is, KctDialog);
+        }
+        
+    </script>
+</dom-module>

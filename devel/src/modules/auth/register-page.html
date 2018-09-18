@@ -1,0 +1,26 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+
+<dom-module id="register-page">
+    <template>
+        <style include="theme-helper">
+            
+        </style>
+    </template>
+    <script>
+        class RegisterPage extends KctView {
+            static get is() {
+                return 'register-page';
+            }
+
+            static get properties() {
+                return {}
+            }
+
+            static get observers() {
+                return [];
+            }
+        }
+
+        customElements.define(RegisterPage.is, RegisterPage);
+    </script>
+</dom-module>

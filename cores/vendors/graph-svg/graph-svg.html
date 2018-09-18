@@ -1,0 +1,103 @@
+<script src="../../bower_components/graph-lodash/lodash.min.js"></script>
+<script src="../../bower_components/graph-jquery/jquery.min.js"></script>
+<script src="../../bower_components/graph-interactjs/interact.js"></script>
+<script src="../../bower_components/graph-svg/dist/graph.min.js"></script>
+
+<!-- 
+<script src="../../bower_components/graph-svg/src/poly.js"></script>
+<script src="../../bower_components/graph-svg/src/core.js"></script>
+<script src="../../bower_components/graph-svg/src/util.js"></script>
+
+<script src="../../bower_components/graph-svg/src/lang/class.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/error.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/event.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/point.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/line.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/curve.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/bbox.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/path.js"></script>
+<script src="../../bower_components/graph-svg/src/lang/matrix.js"></script>
+
+<script src="../../bower_components/graph-svg/src/collection/point.js"></script>
+<script src="../../bower_components/graph-svg/src/collection/vector.js"></script>
+<script src="../../bower_components/graph-svg/src/collection/shape.js"></script>
+<script src="../../bower_components/graph-svg/src/collection/tree.js"></script>
+<script src="../../bower_components/graph-svg/src/collection/link.js"></script>
+
+<script src="../../bower_components/graph-svg/src/dom/element.js"></script>
+
+<script src="../../bower_components/graph-svg/src/svg/vector.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/ellipse.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/circle.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/rect.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/path.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/polyline.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/polygon.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/group.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/text.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/image.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/line.js"></script>
+<script src="../../bower_components/graph-svg/src/svg/paper.js"></script>
+
+<script src="../../bower_components/graph-svg/src/registry/vector.js"></script>
+<script src="../../bower_components/graph-svg/src/registry/link.js"></script>
+<script src="../../bower_components/graph-svg/src/registry/shape.js"></script>
+<script src="../../bower_components/graph-svg/src/registry/pallet.js"></script>
+
+<script src="../../bower_components/graph-svg/src/layout/layout.js"></script>
+
+<script src="../../bower_components/graph-svg/src/router/router.js"></script>
+<script src="../../bower_components/graph-svg/src/router/directed.js"></script>
+<script src="../../bower_components/graph-svg/src/router/orthogonal.js"></script>
+
+<script src="../../bower_components/graph-svg/src/link/link.js"></script>
+<script src="../../bower_components/graph-svg/src/link/directed.js"></script>
+<script src="../../bower_components/graph-svg/src/link/orthogonal.js"></script>
+
+<script src="../../bower_components/graph-svg/src/util/sweeplink.js"></script>
+
+<script src="../../bower_components/graph-svg/src/plugin/plugin.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/manager.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/definer.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/reactor.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/transformer.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/animator.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/resizer.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/rotator.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/collector.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/dragger.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/dropper.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/network.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/history.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/panzoom.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/linker.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/toolmanager.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/pencil.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/editor.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/snapper.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/toolpad.js"></script>
+<script src="../../bower_components/graph-svg/src/plugin/clipper.js"></script>
+
+<script src="../../bower_components/graph-svg/src/shape/shape.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/start.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/final.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/action.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/router.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/fork.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/join.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/lane.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/activity/pool.js"></script>
+<script src="../../bower_components/graph-svg/src/shape/common/label.js"></script>
+
+<script src="../../bower_components/graph-svg/src/data/exporter.js"></script>
+<script src="../../bower_components/graph-svg/src/data/importer.js"></script>
+
+<script src="../../bower_components/graph-svg/src/diagram/manager.js"></script>
+<script src="../../bower_components/graph-svg/src/diagram/parser.js"></script>
+<script src="../../bower_components/graph-svg/src/diagram/pallet/activity.js"></script>
+<script src="../../bower_components/graph-svg/src/diagram/type/diagram.js"></script>
+<script src="../../bower_components/graph-svg/src/diagram/type/activity.js"></script>
+
+<script src="../../bower_components/graph-svg/src/popup/dialog.js"></script>
+
+<script src="../../bower_components/graph-svg/src/init.js"></script> -->

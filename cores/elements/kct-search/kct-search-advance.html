@@ -1,0 +1,653 @@
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../kct-layouts/kct-hbox.html">
+<link rel="import" href="kct-search-combo.html">
+
+<dom-module id="kct-search-advance">
+    <template>
+        
+        <style>
+            :host {
+                display: block;
+            }
+            .container {
+                
+            }
+            .list {
+                margin-left: 5px;
+            }
+            .item {
+                margin: 5px 0;
+                font-size: 13px;
+            }
+            .selectable {
+                margin-right: 5px;
+                cursor: pointer;
+            }
+            .selectable .label {
+                padding: 5px 7px;
+                background-color: var(--paper-amber-100);
+                margin-right: 1px;
+                border-radius: 3px 0 0 3px;
+            }
+            .selectable:hover .label {
+                background-color: var(--paper-amber-200);
+            }
+            .selectable .value {
+                background-color: var(--paper-grey-200);
+                border-radius: 0 3px 3px 0;
+            }
+            .selectable .value[hidden] {
+                display: none;
+            }
+            .selectable:hover .value {
+                background-color: var(--paper-grey-300);
+            }
+            .selectable .item-value {
+                float: left;
+                padding: 6px;
+                display: block;
+            }
+            .selectable .item-value + .item-value {
+                /*border-left: 1px solid #fff;*/
+            }
+            .selectable .item-value-label,
+            .selectable .item-value-trash {
+                float: left;
+            }
+            .selectable .item-value-trash {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                display: block;
+                position: relative;
+                top: -1px;
+                margin-left: 7px;
+            }
+            .selectable:hover .item-value-trash {
+                color: var(--paper-red-500);
+            }
+            .column-search {
+                background-color: #fff;
+                border: 1px solid #dfdfdf;
+                border-width: 1px 0 1px 0;
+            }
+            .column-history {
+                background-color: #fff;
+                border: 1px solid #dfdfdf;
+                padding-top: 2px;
+                border-radius: 3px 0 0 3px;
+            }
+            .column-clear {
+                background-color: #fff;
+                padding-top: 4px;
+                padding-right: 3px;
+                border: 1px solid #dfdfdf;
+                border-width: 1px 1px 1px 0;
+            }
+            .column-history paper-icon-button {
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+                pointer-events: none;
+            }
+            .column-clear paper-icon-button {
+                width: 28px;
+                height: 28px;
+                padding: 6px;
+            }
+            .column-sorter paper-menu-button {
+                padding: 0;
+            }
+
+            .column-sorter paper-item {
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 400;
+                --paper-item-min-height: 32px;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+
+            .column-sorter paper-button {
+                font-weight: 400;
+                background-color: #fff;
+                border-radius: 0 3px 3px 0;
+                padding: 12px 10px 13px 10px;
+                border: 1px solid #dfdfdf;
+                font-size: 12px;
+                text-transform: none;
+                margin: 0 0 0 -1px;
+            }
+
+            /** popup */
+            .popup {
+                display: none;
+                max-width: 260px;
+                padding: 0;
+                --paper-input-container-underline: { display: none; };
+                --paper-input-container-underline-focus: { display: none; };
+            }
+            paper-input {
+                display: none;
+                padding: 0;
+                --paper-input-container: {
+                    padding: 5px 0;
+                };
+                --paper-input-container-underline: { display: none; };
+                --paper-input-container-underline-focus: { display: none; };
+            }
+
+            .popup.iron-selected,
+            paper-input.iron-selected {
+                display: block;
+            }
+            [hidden] {
+                display: none;
+            }
+            .separator {
+                border-top: 1px solid #dfdfdf;
+                margin: 5px 0;
+            }
+        </style>
+
+        <kct-hbox class="container">
+            <div class="column-history">
+                <paper-icon-button icon="search"></paper-icon-button>
+            </div>
+            <div class="column-search flex">
+                <kct-hbox class="list">
+                    <template is="dom-repeat" items="[[ filters ]]">
+                        <div class="item">
+                            <kct-hbox class="selectable" fit>
+                                <div class="label">[[ item.label ]]</div>
+                                <div class="value" hidden$="[[ !item.values.length ]]">
+                                    <template is="dom-repeat" items="[[ item.values ]]">
+                                        <div class="item-value">
+                                            <span class="item-value-label" on-tap="__onFilterTap">[[ item.label ]]</span>  
+                                            <span class="item-value-trash"><iron-icon on-tap="__onRemoveTap" icon="close"></iron-icon></span>    
+                                        </div>
+                                    </template>
+                                </div>
+                            </kct-hbox>
+                        </div>
+                    </template>
+                    <div class="item flex scroll-x">
+                        <iron-selector id="selector" attr-for-selected="name" selected="[[ selectedFeature ]]">
+                            <kct-search-combo 
+                                id="combo-search" 
+                                name="search" 
+                                class="popup" 
+                                items="[[ features ]]" 
+                                item-label-path="hint" 
+                                item-value-path="text" 
+                                placeholder="Search or filter result..." 
+                                overlay-vertical-offset="8" 
+                                on-change="__onCommandChange" 
+                                on-keydown="__onCommandKeydown" 
+                                no-label-float 
+                                hide-trigger>
+                                
+                                <template>
+                                    <style>
+                                        paper-item {
+                                            --paper-item-min-height: 34px;
+                                            font-size: 13px;
+                                            font-weight: 400;
+                                        }
+                                        paper-item iron-icon {
+                                            --iron-icon-width: 16px;
+                                            --iron-icon-height: 16px;
+                                            margin-right: 5px;
+                                        }
+                                        .hint { font-weight: 500;  }
+                                        [hidden] { display: none;  }
+                                    </style>
+
+                                    <paper-item>
+                                        <iron-icon icon="[[ item.icon ]]"></iron-icon>
+                                        <paper-item-body>
+                                            <span class="text">[[ item.text ]]</span><span class="hint" hidden$="[[ !item.hint ]]">: [[ item.hint ]]</span>
+                                        </paper-item-body>    
+                                    </paper-item>
+
+                                </template>
+
+                            </kct-search-combo>
+
+                            <kct-search-combo 
+                                name="author" 
+                                url="/users" 
+                                item-label-path="su_fullname" 
+                                item-value-path="su_id" 
+                                page-size="10" 
+                                on-change="__onComboChange">
+                                <template>
+                                    <style>
+                                        paper-item {
+                                            --paper-item-min-height: 34px;
+                                            font-size: 13px;
+                                            font-weight: 400;
+                                        }
+                                        paper-item iron-icon {
+                                            --iron-icon-width: 16px;
+                                            --iron-icon-height: 16px;
+                                            margin-right: 5px;
+                                        }
+                                    </style>
+
+                                    <paper-item>
+                                        <iron-icon icon="face"></iron-icon>
+                                        <paper-item-body>[[ item.su_fullname ]]</paper-item-body>    
+                                    </paper-item>
+
+                                </template>        
+                            </kct-search-combo>
+
+                            <kct-search-combo 
+                                name="assignee" 
+                                url="/users" 
+                                item-label-path="su_fullname" 
+                                item-value-path="su_id" 
+                                page-size="10" 
+                                on-change="__onComboChange">
+                                
+                                <template>
+                                    <style>
+                                        paper-item {
+                                            --paper-item-min-height: 34px;
+                                            font-size: 13px;
+                                            font-weight: 400;
+                                        }
+                                        paper-item iron-icon {
+                                            --iron-icon-width: 16px;
+                                            --iron-icon-height: 16px;
+                                            margin-right: 5px;
+                                        }
+                                    </style>
+
+                                    <paper-item>
+                                        <iron-icon icon="face"></iron-icon>
+                                        <paper-item-body>[[ item.su_fullname ]]</paper-item-body>    
+                                    </paper-item>
+
+                                </template>
+
+                            </kct-search-combo>
+
+                            <kct-search-combo 
+                                name="label" 
+                                url="/labels" 
+                                item-label-path="sl_label" 
+                                item-value-path="sl_label" 
+                                page-size="10" 
+                                on-change="__onComboChange">
+                                <template>
+                                    <style>
+                                        paper-item {
+                                            --paper-item-min-height: 34px;
+                                            font-size: 13px;
+                                            font-weight: 400;
+                                        }
+                                        paper-item iron-icon {
+                                            --iron-icon-width: 16px;
+                                            --iron-icon-height: 16px;
+                                            margin-right: 5px;
+                                        }
+                                    </style>
+
+                                    <paper-item>
+                                        <iron-icon icon="label-outline"></iron-icon>
+                                        <paper-item-body>[[ item.sl_label ]]</paper-item-body>    
+                                    </paper-item>
+
+                                </template>        
+                            </kct-search-combo>
+                        </iron-selector>
+                        
+                    </div>
+                </kct-hbox>
+            </div>
+            <div class="column-clear">
+                <paper-icon-button on-tap="__onClearTap" icon="clear"></paper-icon-button>
+            </div>
+            <div class="column-sorter">
+                <paper-menu-button horizontal-align="right" vertical-offset="42" no-animations>
+                    <paper-button slot="dropdown-trigger">
+                        <span>Order by [[ selectedSorter.label ]]</span>
+                    </paper-button>
+                    <paper-listbox selectable="paper-item" slot="dropdown-content">
+                        <!-- <paper-item on-tap="__onClearSorterTap">
+                            <iron-icon></iron-icon>
+                            <paper-item-body>&nbsp;Clear order by...</paper-item-body>
+                        </paper-item>
+                        <div class="separator"></div> -->
+                        <template is="dom-repeat" items="[[ sorters ]]">
+                            <paper-item on-tap="__onSortCheckChange">
+                                <iron-icon hidden$="[[ item.checked ]]"></iron-icon>
+                                <iron-icon icon="done" hidden$="[[ !item.checked ]]"></iron-icon>
+                                <paper-item-body>&nbsp;Order by [[ item.label ]]</paper-item-body>
+                            </paper-item>
+                        </template>
+                    </paper-listbox>
+                </paper-menu-button>
+            </div>
+        </kct-hbox>
+    </template>
+    <script>
+        class KctSearchAdvance extends Polymer.Element {
+
+            static get is() {
+                return 'kct-search-advance';
+            }
+
+            static get properties() {
+                return {
+                    search: { type: Object, notify: true },
+                    filters: { 
+                        type: Array,
+                        value: () => ([])
+                    },
+
+                    features: {
+                        type: Array,
+                        value: () => ([
+                            { field: 'search', label: '', icon: 'search', text: 'Press enter or click search', hint: '' },
+
+                            { field: 'assignee', label: 'Assignee', icon: 'social:sentiment-very-satisfied', text: 'Filter by assignee', hint: '@assignee' },
+                            { field: 'author', label: 'Creator', icon: 'social:person-outline', text: 'Filter by creator', hint: '&creator' },
+                            // { field: 'milestone', label: 'Milestone', icon: 'history', text: 'Filter by milestone', hint: '%milestone'},
+                            { field: 'label', label: 'Label', icon: 'label-outline', text: 'Filter by label', hint: '~label' }
+                        ])
+                    },
+
+                    selectedFeature: { type: String, value: 'search' },
+
+                    sorters: {
+                        type: Array,
+                        value: () => ([
+                            { field: 'su_fullname', label: 'Full Name' },
+                            { field: 'su_email', label: 'Email Address' },
+                            { field: 'ts_amounts', label: 'Amounts' }
+                        ])
+                    },
+
+                    selectedSorter: { type: Object }
+                };
+            }
+
+            ready() {
+                super.ready();
+                this.set('selectedSorter', this.sorters[0]);
+            }
+
+            open() {
+                let resolve, reject;
+
+                let promise = new Promise((a, b) => {
+                    resolve = a;
+                    reject = b;
+                });
+
+                this.__open = Polymer.Debouncer.debounce(
+                    this.__open,
+                    Polymer.Async.timeOut.after(1),
+                    () => {
+                        let combo = this.$.selector.selectedItem;
+                        if (combo) {
+                            combo.focus();
+                            combo.load().then(() => {
+                                combo.open();
+                                distinct.bind(this)(combo);
+                                resolve();
+                            });
+                        }
+                    }
+                );
+
+                Polymer.enqueueDebouncer(this.__open);
+
+                return promise;
+
+                function distinct(combo) {
+                    let filter = this.__getFilterModel(combo.name);
+                    if (filter) {
+                        let exists = filter.values.map(f => f.value);
+                        let items = combo.items.slice();
+
+                        switch(combo.name) {
+                            case 'assignee':
+                            case 'author':
+                                items = items.filter(i => exists.indexOf(i.su_id) === -1);
+                                break;
+                            case 'label':
+                                items = items.filter(i => exists.indexOf(i.sl_id) === -1);
+                                break;
+                        }
+
+                        combo.items = items;
+                    }
+                }
+            }
+
+            focus() {
+                this.__focus = Polymer.Debouncer.debounce(
+                    this.__focus,
+                    Polymer.Async.timeOut.after(1),
+                    () => {
+                        let combo = this.$.selector.selectedItem;
+                        if (combo) {
+                            combo.focus();
+                        }
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__focus);
+            }
+
+            __getFeatureModel(field) {
+                return this.features.find(c => c.field == field);
+            }
+
+            __getFilterModel(field) {
+                return this.filters.find(f => f.field == field);
+            }
+
+            __onRemoveTap(e) {
+                e.stopPropagation();
+
+                let valueIndex = e.model.index,
+                    filterIndex = e.model.parentModel.index;
+
+                if (filterIndex !== -1 && valueIndex !== -1) {
+                    this.splice('filters.' + filterIndex + '.values', valueIndex, 1);
+
+                    if ( ! this.filters[filterIndex].values.length) {
+                        this.splice('filters', filterIndex, 1);
+                        this.open();
+                    } else {
+                        this.focus();
+                    }
+                }
+                this.__buildSearch();
+            }
+
+            __onCommandChange(e) {
+                let combo = e.target,
+                    model = combo.getModelForValue(combo.value);
+
+                combo.value = '';
+
+                if (model) {
+                    let field = model.field;
+                    if (field == 'search') {
+                        this.__buildSearch();
+                    } else {
+                        this.set('selectedFeature', field);
+                        let filter = this.__getFilterModel(field);
+                        if ( ! filter) {
+                            let feature = this.__getFeatureModel(field);
+                            if (feature) {
+                                this.push('filters', {
+                                    field: feature.field,
+                                    label: feature.label,
+                                    values: []
+                                });
+                            }
+                        }
+                        this.open();
+                    }
+                }
+            }
+
+            __onComboChange(e) {
+                let combo = e.target,
+                    model = combo.getModelForValue(combo.value);
+
+                if ( ! model) return;
+
+                let value;
+
+                combo.value = '';
+
+                switch(this.selectedFeature) {
+                    case 'author':
+                    case 'assignee':
+
+                        value = {
+                            value: model.su_id,
+                            label: model.su_fullname
+                        };
+
+                        break;
+                    case 'label':
+                        value = {
+                            value: model.sl_id,
+                            label: model.sl_label
+                        };
+                        break;
+                }
+
+                if (value) {
+                    let filter = this.__getFilterModel(this.selectedFeature);
+                    if (filter) {
+                        let index = this.filters.indexOf(filter);
+                        if (index !== -1) {
+                            this.push('filters.' + index + '.values', value);
+                        }
+                    } else {
+                        let feature = this.__getFeatureModel(this.selectedFeature);
+                        if (feature) {
+                            this.push('filters', {
+                                field: feature.field,
+                                label: feature.label,
+                                values: [value]
+                            });
+                        }
+                    }
+                    this.__buildSearch();
+                }
+
+                this.set('selectedFeature', 'search');
+                this.focus();
+            }
+
+            __onFilterTap(e) {
+                // remove value and open popup
+                let valueIndex = e.model.index,
+                    filterIndex = e.model.parentModel.index,
+                    feature = e.model.parentModel.item.field;
+
+                if (filterIndex !== -1 && valueIndex !== -1) {
+                    this.splice('filters.' + filterIndex + '.values', valueIndex, 1);
+                    this.set('selectedFeature', feature);
+                    this.open();
+                }
+            }
+
+            __onClearTap() {
+                this.set('filters', []);
+                this.set('selectedFeature', 'search');
+                this.open();
+            }
+
+            __onSortCheckChange(e) {
+                // uncheck all
+                if (this.sorters && this.sorters.length) {
+                    this.sorters.forEach((s, i) => {
+                        let p = 'sorters.' + i + '.checked';
+                        this.set(p, false);
+                    });
+                }
+                this.set('sorters.' + e.model.index + '.checked', true);
+                this.set('selectedSorter', e.model.item);
+                this.__buildSearch();
+            }
+
+            __onClearSorterTap() {
+                this.set('selectedSorter', null);
+                // uncheck all
+                if (this.sorters && this.sorters.length) {
+                    this.sorters.forEach((s, i) => {
+                        let p = 'sorters.' + i + '.checked';
+                        this.set(p, false);
+                    });
+                }
+            }
+
+            __onCommandKeydown(e) {
+                if (e.key == 'Enter') {
+                    this.__buildSearch();
+                }
+            }
+
+            __buildSearch() {
+                let result = {};
+
+                if (this.filters && this.filters.length) {
+                    let params = {};
+                    this.filters.forEach(f => {
+                        let values = f.values.map(e => e.value);
+                        params[f.field] = ['IN', values];
+                    });
+                    result.params = params;
+                }
+
+                if (this.selectedSorter) {
+                    let sorter = {};
+                    sorter.property = this.selectedSorter.field;
+                    sorter.direction = 'ASC';
+
+                    result.sort = [sorter];
+                }
+
+                let combo = this.$['combo-search'];
+                if (combo && combo.inputElement) {
+                    let value = combo.inputElement.value;
+                    if (value) {
+                        result.query = value;
+                        result.fields = this.features.map(f => f.field);
+                        result.fields = result.fields.filter(f => f != 'search');
+                    }
+                }
+
+                this.set('search', result);
+
+                let evt = new CustomEvent('search', {
+                    detail: result
+                });
+                this.dispatchEvent(evt);
+            }
+
+        }
+
+        customElements.define(KctSearchAdvance.is, KctSearchAdvance);
+    </script>
+</dom-module>

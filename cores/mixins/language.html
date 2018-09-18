@@ -1,0 +1,197 @@
+<link rel="import" href="../vendors/i18next/i18next.html">
+<link rel="import" href="../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../elements/kct-event/kct-event-subscriber.html">
+<link rel="import" href="mixins.html">
+
+<script>
+
+    {
+        let Translator = {
+            path: null,
+            loading: false,
+            language: '',
+            translations: '',
+            consumers: [] 
+        };
+
+        Mixins.Language = Polymer.dedupingMixin(superclass => {
+
+            return class extends superclass {
+
+                static get properties() {
+                    return {
+                        lang: { type: String, value: '', reflectToAttribute: true },
+                        translations: { type: String },
+                        _: {
+                            type: String,
+                            computed: '__translate(lang, translations)'
+                        }
+                    };
+                }
+
+                static get observers() {
+                    return [
+                        '__langChanged(lang)'
+                    ];
+                }
+
+                ready() {
+                    super.ready();
+                    this.__initEventSubscriber();
+                    this.__initLanguage();
+                }
+
+                __initEventSubscriber() {
+                    let subscriber = this.shadowRoot.querySelector('#language-subscriber');
+
+                    if ( ! subscriber) {
+                        subscriber = document.createElement('kct-event-subscriber');
+                        subscriber.id = 'language-subscriber';
+                        
+                        subscriber.addEventListener('language-change', e => {
+                            let language = e.detail.language;
+                            
+                            if (language) {
+                                //this.set('translations', '');
+                                this.set('lang', language);
+                            }
+                        });
+
+                        this.shadowRoot.appendChild(subscriber);
+                    }
+                }
+
+                __initLanguage() {
+                    if ( ! this.lang) {
+                        let lang = Translator.language;
+
+                        if ( ! lang) {
+                            lang = this.__getLanguageParam();
+                            if ( ! lang) {
+                                lang = this.__getLanguageConfig();
+                            }
+                            Translator.language = lang;
+                        }
+                        this.set('lang', lang);
+                    }
+                }
+
+                __translate() {
+                    return (...args) => {
+                        let [key, params] = args;
+
+                        if ( ! this.lang || ! this.translations) {
+                            return key; 
+                        }
+                        return i18next.t(key);
+                    };
+                }
+
+                __getLanguageParam() {
+                    let regex = new RegExp('[?&]lang(=([^&#]*)|&|#|$)');
+                    let result = regex.exec(window.location.href);
+
+                    regex = null;
+
+                    if ( ! result) return null;
+                    if ( ! result[2]) return '';
+
+                    return decodeURIComponent(result[2].replace(/\+/g, ' '));
+                }
+
+                __getLanguageConfig() {
+                    let path = window.location.pathname,
+                        host = window.location.host,
+                        regx = new RegExp(document.querySelector('meta[name="application-test"]').content, 'g');
+                    
+                    let part = path.match(/([^/]+)/g);
+                    let name;
+
+                    if (regx.test(path)) {
+                        name = part[1] + '@' + part[0];
+                    } else {
+                        if (/\.\d/.test(host)) {
+                            name = part[0] + '@' + host;
+                        } else {
+                            name = part[0] + '@' + host.split(/\./)[0];
+                        }
+                    }
+
+                    let key = name + ':data';
+                    let data = localStorage.getItem(key) || '{}';
+                    let json = JSON.parse(data);
+                    let lang = json.app_language || 'en';
+
+                    regx = null;
+
+                    return lang;
+                }
+
+                __resolveLanguagePath() {
+                    if (Translator.path) {
+                        return Promise.resolve(Translator.path);
+                    }
+
+                    let ajax = document.createElement('kct-ajax');
+                    document.body.appendChild(ajax);
+
+                    return ajax.__resolveUrl('/config/translations').then(path => {
+                        document.body.removeChild(ajax);
+                        Translator.path = path;
+                        return path;
+                    });
+                }
+
+                __loadTranslator(lang) {
+                    if ( ! lang) return Promise.resolve();
+
+                    Translator.consumers.push(this);
+
+                    if (Translator.loading) {
+                        return Promise.resolve();
+                    }
+
+                    Translator.loading = true;
+
+                    let q = {};
+                    q.promise = new Promise(res => { q.resolve = res; });
+
+                    this.__resolveLanguagePath().then(path => {
+                        let translations = path + '/' + lang;
+
+                        i18next
+                            .use(i18nextXHRBackend)
+                            .init({
+                                nsSeparator: false,
+                                keySeparator: false,
+                                backend: {
+                                    loadPath: translations 
+                                }
+                            }, () => {
+                                Translator.loading = false;
+                                Translator.language = lang;
+                                Translator.translations = translations;
+
+                                // sync all consumer
+                                Translator.consumers.forEach(c => {
+                                    c.translations = translations;
+                                });
+
+                                Translator.consumers = [];
+
+                                q.resolve();
+                            });
+                    });
+
+                    return q.promise;
+                }
+
+                __langChanged(lang) {
+                    this.__loadTranslator(lang);
+                }
+
+            };
+
+        });
+    }
+</script>

@@ -1,0 +1,160 @@
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="mixins/chart.html">
+<link rel="import" href="styles/chart-styles.html">
+
+<dom-module id="kct-chart-pie">
+    <template>
+        <style include="chart-styles">
+            #container {
+                height: 400px;
+                max-width: 800px;
+                min-width: 320px;
+                margin: 0 auto;
+            }
+            .highcharts-pie-series .highcharts-point {
+                stroke: #EDE;
+                stroke-width: 2px;
+            }
+            .highcharts-pie-series .highcharts-data-label-connector {
+                stroke: silver;
+                stroke-dasharray: 2, 2;
+                stroke-width: 2px;
+            }
+        </style>
+        <div class="panel">
+            <!-- <div class="toolbar" hidden$="[[ !showToolbar ]]">
+                <slot name="toolbar"></slot>
+                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>        
+            </div> -->
+            <div id="chart"></div>
+        </div>
+    </template>
+    <script>
+        class KctChartPie extends Mixins(Polymer.Element).use(Mixins.Chart) {
+            static get is() {
+                return 'kct-chart-pie';
+            }
+            static get properties() {
+                return {
+                    series: { type: Array },
+                    donut: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+            static get observers() {
+                return [
+                    '__seriesChanged(series.*)'
+                ];
+            }
+            ready() {
+                super.ready();
+                this.__setup();
+            }
+            __setup() {
+
+                let legend = this.legend || {};
+                let showLegend = this.showLegend;
+                let showLabel = this.showLabel;
+
+                /*var pieColors = (function () {
+                    var colors = [],
+                        base = Highcharts.getOptions().colors[0],
+                        i;
+
+                    for (i = 0; i < 10; i += 1) {
+                        // Start out with a darkened base color (negative brighten), and end
+                        // up with a much brighter color
+                        colors.push(Highcharts.Color(base).brighten((i - 3) / 7).get());
+                    }
+                    return colors;
+                }());*/
+
+                let options = Highcharts.merge(this.styles, {
+                    chart: {
+                        type: 'pie',
+                        renderTo: this.$.chart,
+                        reflow: false,
+                        width: 500
+                    },
+                    title: false,
+                    subtitle: false,
+                    tooltip: {
+                        pointFormat: '{point.y} of {point.total} ({point.percentage:.1f}%)'
+                    },
+                    legend: legend,
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            // colors: pieColors,
+                            dataLabels: showLabel ? {
+                                distance: 5,
+                                enabled: true,
+                                format: showLegend ? '{point.percentage:.1f} %' : '<b>{point.name}</b><br> {point.percentage:.1f} %'
+                            } : false,
+                            showInLegend: showLegend
+                        },
+                        series: {
+                            events: {
+                                click: e => {
+                                    let evt = new CustomEvent('series-click', {
+                                        detail: {
+                                            e
+                                        }
+                                    });
+
+                                    this.dispatchEvent(evt);
+                                }
+                            }
+                        }
+                    },
+                    exporting: {
+                        enabled: false
+                    },
+                    series: [
+                        {
+                            name: 'serie',
+                            colorByPoint: true,
+                            data: []
+                        }
+                    ]
+                });
+
+                // if (this.title) {
+                //     options.title.text = this.title;
+                // }
+
+                // if (this.subtitle) {
+                //     options.subtitle.text = this.subtitle;
+                // }
+
+                // if ( ! this.showHeaders) {
+                //     options.title.style.display = 'none';
+                //     options.subtitle.style.display = 'none';
+                // }
+
+                this.chart = new Highcharts.Chart(options);
+            }
+
+            __updateSeries() {
+                if ( ! this.chart) return;
+                
+                let serie = ((this.series || []).slice().shift() || {});
+
+                serie.data = serie.data || [];
+                serie.colorByPoint = true;
+                serie.innerSize = '0%';
+
+                while(this.chart.series.length > 0) {
+                    this.chart.series[0].remove(true);
+                }
+                
+                this.chart.addSeries(serie);
+            }
+
+            __seriesChanged(changed) {
+                this.__updateSeries();
+            }
+        }
+        customElements.define(KctChartPie.is, KctChartPie);
+    </script>
+</dom-module>

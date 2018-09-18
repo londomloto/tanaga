@@ -1,0 +1,216 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+
+<dom-module id="header-block">
+    <template>
+        <style include="theme-helper">
+            :host {
+                border-bottom: 1px solid #dfdfdf;
+            }
+            .container {
+                padding: 0;
+            }
+            .columns-container {
+                min-height: 53px;
+            }
+            .col-navigation {
+                /*border-right: 1px solid #dfdfdf;*/
+                position: relative;
+                width: 40px;
+                padding: 0 2px;
+                cursor: pointer;
+            }
+            .button-back {
+                position: absolute;
+                top: 50%;
+                margin-top: -20px;
+            }
+            .col-header {
+                position: relative;
+                padding: 0 10px;
+                /*border-right: 1px solid #dfdfdf;*/
+            }
+            .col-header-icon {
+                width: 40px;
+            }
+            .col-header-info {
+                padding-top: 5px;
+            }
+            .header-icon {
+                background-color: var(--paper-amber-500);
+                color: #fff;
+                border-radius: 50%;
+                padding: 4px;
+                width: 32px;
+                height: 32px;
+                box-sizing: border-box !important;
+                --iron-icon-width: 100%;
+                --iron-icon-height: 100%;
+                position: absolute;
+                top: 50%;
+                margin-top: -16px;
+            }
+            .header-label {
+                text-transform: uppercase;
+                font-size: 10px;
+                font-weight: 600;
+                position: relative;
+                top: 4px;
+            }
+            .header-value ::slotted(kct-combobox),
+            .header-value kct-combobox {
+                padding: 0;
+                /*min-width: 300px;*/
+                --paper-input-container-input: {
+                    font-size: 17px;
+                    font-weight: 400;
+                };
+                --paper-input-container-label: {
+                    font-size: 17px;
+                    font-weight: 400;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .header-value ::slotted(h3),
+            .header-value h3 {
+                font-size: 17px;
+                font-weight: 400;
+                display: block;
+                padding: 4px 0;
+            }
+            .left-toolbar {
+                height: 100%;
+                padding: 0 3px;
+            }
+            .right-toolbar {
+                padding: 0 10px;
+            }
+            .left-toolbar > *,
+            .left-toolbar > ::slotted(*) {
+                float: left;
+            }
+
+            .col-toolbar paper-icon-button,
+            .col-toolbar ::slotted(paper-icon-button) {
+                margin-top: 10px;
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+            }
+            .col-toolbar ::slotted(kct-icon-button) {
+                margin-top: 10px;
+                width: 32px;
+                height: 32px;
+                --button-padding: 6px;
+            }
+            .col-toolbar paper-button,
+            .col-toolbar ::slotted(paper-button) {
+                margin-top: 12px;
+                margin-right: 8px;
+                font-size: 11px !important;
+                font-weight: 600 !important;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            .col-toolbar .separator,
+            .col-toolbar ::slotted(.separator) {
+                height: 100%;
+                border-right: 1px solid #dfdfdf;
+                margin: 0 3px;
+            }
+            .col-toolbar ::slotted(paper-spinner),
+            .col-toolbar ::slotted(paper-spinner-lite) {
+                width: 24px;
+                height: 24px;
+                margin: 14px 6px 0 7px;
+                cursor: pointer;
+                --paper-spinner-stroke-width: 2px;
+            }
+            .col-toolbar ::slotted(paper-spinner[hidden]),
+            .col-toolbar ::slotted(paper-spinner-lite[hidden]) {
+                display: none;
+            }
+            .col-toolbar task-search,
+            .col-toolbar ::slotted(task-search) {
+                margin-top: 10px;
+            }
+        </style>
+
+        <div class="container">
+            <kct-hbox class="columns-container">
+                <div class="col-navigation" hidden$="[[ hideNav ]]" on-tap="__onBackTap">
+                    <paper-icon-button id="button-back" class="button-back" icon="arrow-back" title="Back"></paper-icon-button> 
+                </div>
+                <div class="col-header" hidden$="[[ hideHeader ]]">
+                    <kct-hbox fit>
+                        <div class="col-header-icon">
+                            <div class="header-icon">
+                                <iron-icon icon="[[ icon ]]"></iron-icon>
+                            </div>
+                        </div>
+                        <div class="col-header-info flex">
+                            <div class="header-form">
+                                <div class="header-label">[[ text ]]</div>
+                                <div class="header-value">
+                                    <slot name="header-value">
+                                        <!-- <h3>Tower Provider</h3> -->
+                                    </slot>
+                                </div>
+                            </div>
+                        </div>
+                    </kct-vbox>
+                </div>
+                <div class="col-toolbar">
+                    <div class="left-toolbar">
+                        <slot name="left-toolbar"></slot>
+                    </div>
+                </div>
+                <div class="col-toolbar flex">
+                    <div class="center-toolbar">
+                        <slot name="center-toolbar"></slot>
+                    </div>
+                </div>
+                <div class="col-toolbar">
+                    <div class="right-toolbar">
+                        <slot name="right-toolbar"></slot>
+                    </div>
+                </div>
+            </kct-hbox>
+        </div>
+    </template>
+    <script>
+        class HeaderBlock extends Polymer.Element {
+            static get is() {
+                return 'header-block';
+            }
+
+            static get properties() {
+                return {
+                    icon: { type: String, value: 'view-list' },
+                    text: { type: String, value: 'Page Header' },
+                    hideNav: { type: Boolean, value: false },
+                    hideHeader: { type: Boolean, value: false }
+                };
+            }
+
+            __onBackTap(e) {
+                
+                if (e.target != this.$['button-back']) {
+                    this.$['button-back'].getRipple().simulatedRipple();
+                }
+
+                let evt = new CustomEvent('back-tap');
+                this.dispatchEvent(evt);
+            }
+        }
+        
+        customElements.define(HeaderBlock.is, HeaderBlock);
+    </script>
+</dom-module>

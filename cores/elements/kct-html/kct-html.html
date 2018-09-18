@@ -1,0 +1,110 @@
+<link rel="import" href="../../vendors/marked/marked.html">
+
+<dom-module id="kct-html">
+    <template>
+        <style>
+            :host {
+                display: block;
+                height: 100%;
+            }
+
+            code {
+                display: block;
+                padding: 10px;
+                margin: 10px 0;
+                line-height: 1.5;
+                background-color: #f7f7f7;
+                border-radius: 3px;
+                white-space: pre-wrap;
+                font-family: monospace;
+            }
+
+            h1 { @apply --heading1; }
+            h2 { @apply --heading2; }
+            h3 { @apply --heading3; }
+            h4 { @apply --heading4; }
+            h5 { @apply --heading5; }
+            h6 { @apply --heading6; }
+            
+            a { @apply --anchor; }
+
+            p {
+                overflow-wrap: break-word;
+                word-wrap: break-word;
+                
+                -ms-word-break: break-all;
+                    word-break: break-all;
+                    word-break: break-word;
+
+                -webkit-hyphens: auto;
+                   -moz-hyphens: auto;
+                    -ms-hyphens: auto;
+                        hyphens: auto;
+                @apply --paragraph;
+            }
+            
+            p + p {
+                margin-top: var(--space, 0);
+            }
+
+            img {
+                @apply --image;
+            }
+
+            strong {
+                @apply --strong;
+            }
+        </style>
+
+        <span id="preview"></span>
+
+    </template>
+    <script>
+        class KctHtml extends Polymer.Element {
+            static get is() {
+                return 'kct-html';
+            }
+
+            static get properties() {
+                return {
+                    html: { type: String, value: '' }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__htmlChanged(html)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            __htmlChanged(html) {
+                let parsedMarkdown = marked(html || '');   
+                this.$.preview.innerHTML = parsedMarkdown;
+
+                this.$.preview.querySelectorAll('a').forEach(el=>{
+                    el.setAttribute("target","_blank");
+                });
+
+                this.$.preview.querySelectorAll('img').forEach(el => {
+                    let href = el.getAttribute('alt');
+
+                    if (href && /^http/.test(href)) {
+                        let link = document.createElement('a');
+                        link.href = href;
+                        link.target = '_blank';
+
+                        el.parentNode.insertBefore(link, el);
+                        link.appendChild(el);
+                    }
+                });
+            }
+               
+        }
+
+        customElements.define(KctHtml.is, KctHtml);
+    </script>
+</dom-module>

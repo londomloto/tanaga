@@ -1,0 +1,11 @@
+<div>
+    <paper-input label="Site Name" value="{{ record.tsp_name }}"></paper-input>
+    <div>
+        <label>Approval</label>
+        <paper-radio-group selected="{{ record.tsp_is_rejected }}" attr-for-selected="value">
+            <paper-radio-button value="0">Approved</paper-radio-button>
+            <paper-radio-button value="1">Rejected</paper-radio-button>
+        </paper-radio-group>    
+    </div>
+    <paper-input label="Approval Date" value="{{ record.tsp_date_approve }}"></paper-input>
+</div>

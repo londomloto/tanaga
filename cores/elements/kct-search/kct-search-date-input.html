@@ -1,0 +1,103 @@
+<link rel="import" href="../../bower_components/vaadin-text-field/vaadin-text-field.html">
+
+<dom-module id="kct-search-date-input">
+    <template>
+    <style>
+      :host {
+        /*display: inline-block;*/
+        display: block;
+        width: 150px;
+        outline: none;
+      }
+
+      .vaadin-text-field-container {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      [part="label"]:empty {
+        display: none;
+      }
+
+      [part="input-field"] {
+        display: flex;
+        align-items: center;
+        height: auto;
+        padding-bottom: 0;
+      }
+
+      [part="value"] {
+        width: 100%;
+        box-sizing: border-box;
+        flex: 1;
+        min-width: 0;
+        padding: 4px 0 5px 0;
+        /*padding: 2px 0;*/
+        /*padding: 0;*/
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 13px;
+        border: none;
+        outline: none;
+      }
+
+      [part="value"]::-ms-clear {
+        display: none;
+      }
+
+    </style>
+
+    <div class="vaadin-text-field-container">
+
+      <label part="label" on-click="focus" id="[[_labelId]]">[[label]]</label>
+
+      <div part="input-field">
+
+        <slot name="prefix"></slot>
+
+        <input part="value"
+          autocomplete$="[[autocomplete]]"
+          autocorrect$="[[autocorrect]]"
+          autofocus$="[[autofocus]]"
+          disabled$="[[disabled]]"
+          list="[[list]]"
+          maxlength$="[[maxlength]]"
+          minlength$="[[minlength]]"
+          pattern="[[pattern]]"
+          placeholder="[[placeholder]]"
+          readonly$="[[readonly]]"
+          aria-readonly$="[[readonly]]"
+          required$="[[required]]"
+          aria-required$="[[required]]"
+          value="{{value::input}}"
+          title="[[title]]"
+          on-blur="validate"
+          on-input="_onInput"
+          aria-describedby$="[[_getActiveErrorId(invalid, errorMessage, _errorId)]]"
+          aria-labelledby$="[[_getActiveLabelId(label, _labelId)]]"
+          aria-invalid$="[[invalid]]"
+        >
+
+        <slot name="suffix"></slot>
+
+      </div>
+
+      <div id="[[_errorId]]" aria-live="assertive" part="error-message" hidden$="[[!_getActiveErrorId(invalid, errorMessage, _errorId)]]">[[errorMessage]]</div>
+
+    </div>
+
+  </template>
+    <script>
+        {
+            let BaseClass = customElements.get('vaadin-text-field');
+
+            class KctSearchDateInput extends BaseClass {
+                static get is() {
+                    return 'kct-search-date-input';
+                }
+            }
+
+            customElements.define(KctSearchDateInput.is, KctSearchDateInput);
+        }
+    </script>
+</dom-module>

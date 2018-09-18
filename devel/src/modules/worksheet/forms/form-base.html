@@ -1,0 +1,51 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
+
+<dom-module id="form-base">
+    <template>
+        
+    </template>
+    <script>
+        class FormBase extends Polymer.Element {
+
+            static get is() {
+                return 'form-base';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object, notify: true },
+                    action: { type: String, value: 'create'},
+                    invalid: { type: Boolean, notify: true }
+                };
+            }
+
+            save() {}
+
+            trigger(name, data) {
+                let event = new CustomEvent(name, {
+                    composed: true,
+                    bubbles: true,
+                    detail: data
+                });
+
+                this.dispatchEvent(event);
+            }
+
+            toast(title, message, type = 'info') {
+                let toast = document.createElement('kct-toast');
+                
+                toast.duration = 3000;
+                toast.type = type;
+                toast.title = title;
+                toast.message = message;
+
+                document.body.appendChild(toast);
+                toast.open();
+            }
+        }
+
+        customElements.define(FormBase.is, FormBase);
+    </script>
+</dom-module>

@@ -1,0 +1,361 @@
+<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="kct-dropdown-item.html">
+
+<dom-module id="kct-dropdown-checkbox">
+    <template>
+        <style>
+            :host {
+                position: relative;
+            }
+            paper-menu-button {
+                padding: 0;
+                --paper-menu-button-content: {
+                    overflow: hidden;
+                };
+            }
+            .btn-trigger {
+                /*background-color: var(--paper-grey-200);*/
+                border-radius: 50%;
+                /*color: var(--paper-grey-500);*/
+                @apply --button-trigger;
+            }
+            .dropdown-content {
+                /*height: 300px;*/
+                /*@apply --layout-vertical;*/
+            }
+            .list {
+                max-height: 300px;
+                position: relative;
+                overflow-x: hidden;
+                overflow-y: auto;
+                /*@apply --layout-flex;*/
+            }
+            .paginator {
+                padding: 3px;
+                border-top: 1px solid #dfdfdf;
+                font-size: 12px;
+                text-align: center;
+            }
+            .paginator paper-icon-button {
+                width: 36px;
+                height: 36px;
+            }
+            .badge {
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 16px;
+                font-size: 9px;
+                background-color: var(--paper-blue-500);
+                color: #fff;
+                right: 2px;
+                top: 0;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-menu-button 
+            id="popup" 
+            horizontal-align="[[ horizontalAlign ]]" 
+            ignore-select 
+            allow-outside-scroll 
+            on-paper-dropdown-close="__onClose" 
+            no-animations>
+            <paper-icon-button class="btn-trigger" icon="[[ icon ]]" slot="dropdown-trigger"></paper-icon-button>
+            <div class="dropdown-content" slot="dropdown-content">
+                <div class="list">
+                    <template is="dom-repeat" items="[[ items ]]">
+                        <kct-dropdown-item 
+                            item="[[ item ]]" 
+                            on-tap="__onItemTap" 
+                            checked="[[ item.checked ]]" 
+                            label="[[ __computeLabel(item) ]]" 
+                            item-template="[[ __itemTemplate ]]" 
+                            item-style="[[ __itemStyle ]]"></kct-dropdown-item>
+                    </template>
+                </div>
+                <div class="paginator" hidden$="[[ !__pagingEnabled ]]">
+                    <paper-icon-button on-tap="__onPaginationTap" data-action="first" icon="first-page" disabled$="[[ __firstDisabled ]]"></paper-icon-button>
+                    <paper-icon-button on-tap="__onPaginationTap" data-action="prev"  icon="chevron-left" disabled$="[[ __prevDisabled ]]"></paper-icon-button>
+                    <label>Page [[ paging.page ]] of [[ paging.pages ]]</label>
+                    <paper-icon-button on-tap="__onPaginationTap" data-action="next" icon="chevron-right" disabled$="[[ __nextDisabled ]]"></paper-icon-button>
+                    <paper-icon-button on-tap="__onPaginationTap" data-action="last" icon="last-page" disabled$="[[ __lastDisabled ]]"></paper-icon-button>
+                </div>
+            </div>
+        </paper-menu-button>
+
+        <div class="badge" hidden$="[[ !__showBadge ]]">[[ __computeBadge(values.splices) ]]</div>
+
+        <slot id="slot"></slot>
+    </template>
+    <script>
+        class KctDropdownCheckbox extends Polymer.Element {
+            static get is() {
+                return 'kct-dropdown-checkbox';
+            }
+
+            static get properties() {
+                return {
+                    url: { type: String },
+                    pageSize: { type: Number },
+                    autoload: { type: Boolean, value: false },
+                    params: { 
+                        type: Object, 
+                        value: () => ({})
+                    },
+                    paging: {
+                        type: Object,
+                        value: () => ({
+                            start: 0,
+                            total: 0,
+                            page: 1,
+                            pages: 0
+                        })
+                    },
+                    icon: { type: String, value: 'menu' },
+                    items: { type: Array, value: () => ([])},
+                    itemLabelPath: { type: String, value: 'label' },
+                    itemValuePath: { type: String, value: 'value' },
+                    horizontalAlign: { type: String, value: 'left' },
+                    values: { type: Array, value: () => ([]), notify: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__proxyChanged(url, pageSize)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__itemTemplate = null;
+                this.__itemStyle = null;
+                this.__pagingEnabled = false;
+                this.__showBadge = false;
+            }
+
+            ready() {
+                super.ready();
+
+                let itemTemplate = this.$.slot.assignedNodes().find(e => {
+                    return e.localName == 'template';
+                });
+
+                if (itemTemplate) {
+                    let itemStyle = Polymer.StyleGather.cssFromTemplate(itemTemplate);
+                    if (itemStyle) {
+                        this.set('__itemStyle', itemStyle);
+                    }
+
+                    this.set('__itemTemplate', document.importNode(itemTemplate, true));
+                    this.removeChild(itemTemplate);
+                }
+            }
+
+            load(options = {}) {
+                let url = this.url;
+
+                if (options.start !== undefined) {
+                    this.paging.start = options.start;
+                }
+
+                if (options.params !== undefined) {
+                    this.params.params = Object.assign({}, options.params);
+                }
+
+                if (options.sort !== undefined) {
+                    this.params.sort = Object.assign({}, options.sort);
+                }
+
+                let payload = Object.assign({}, this.params);
+
+                if (this.__pagingEnabled && this.paging.start !== undefined) {
+                    payload.start = this.paging.start;
+                    payload.limit = this.paging.limit;
+                }
+
+                let evt = new CustomEvent('beforeload', {
+                    detail: {
+                        options: payload
+                    }
+                });
+
+                this.dispatchEvent(evt);
+
+                this.set('__firstDisabled', false);
+                this.set('__prevDisabled', false);
+                this.set('__nextDisabled', false);
+                this.set('__lastDisabled', false);
+
+                this.$.ajax.GET(url, payload).then(res => {
+                    let items = (res.data || []).map(e => {
+                        e.checked = this.__isChecked(e);
+                        return e;
+                    });
+
+                    this.set('items', items);
+
+                    let loadEvent = new CustomEvent('load');
+                    this.dispatchEvent(loadEvent);
+
+                    if (this.__pagingEnabled) {
+                        let total = res.total,
+                            start = this.paging.start,
+                            limit = this.paging.limit;
+
+                        this.set('paging.total', res.total);
+
+                        let pages = Math.ceil(total / limit);
+                        this.set('paging.pages', pages);
+
+                        let page = Math.ceil((start - 1) / limit) + 1;
+                        this.set('paging.page', page);
+
+                        if (page == pages) {
+                            this.set('__nextDisabled', true);
+                            this.set('__lastDisabled', true);
+                        }
+
+                        if (page == 1) {
+                            this.set('__firstDisabled', true);
+                            this.set('__prevDisabled', true);
+                        }
+
+                        if (pages == 0) {
+                            this.set('__firstDisabled', true);
+                            this.set('__prevDisabled', true);
+                            this.set('__nextDisabled', true);
+                            this.set('__lastDisabled', true);
+                        }
+                    }
+                    
+                    this.$.popup.$.dropdown.notifyResize();
+
+                });
+            }
+
+            autoCheck() {
+                if (this.paging.start === 0 && this.items.length) {
+                    let key = this.items[0][this.itemValuePath];
+                    if (key) {
+                        let pos = this.values.indexOf(key);
+                        if (pos === -1) {
+                            this.push('values', key);
+                            this.set('items.0.checked', true);
+                        }
+                    }
+                }
+            }
+
+            __proxyChanged(url, pageSize) {
+                if (pageSize !== undefined && pageSize > 0) {
+                    this.set('__pagingEnabled', true);
+
+                    this.paging.start = 0;
+                    this.paging.limit = pageSize;
+                }
+
+                if (url && this.autoload) {
+                    this.load();
+                }
+            }
+
+            __computeLabel(item) {
+                let label = item[this.itemLabelPath];
+                return label || '';
+            }
+
+            __computeIcon(check) {
+                return check ? 'done' : '';
+            }
+
+            __computeBadge() {
+                let count = (this.values || []).length;
+                this.set('__showBadge', count > 0);
+                return count;
+            }
+
+            __isChecked(item) {
+                let key = item[this.itemValuePath];
+
+                if (key) {
+                    let pos = this.values.indexOf(key);
+                    return pos !== -1;
+                }
+                return false;
+            }
+
+            __onOpened() {
+                this.load();
+            }
+
+            __onItemTap(e) {
+                let item = e.model.item,
+                    key = item[this.itemValuePath];
+
+                if (key) {
+                    let pos = this.values.indexOf(key);
+
+                    if (pos === -1) {
+                        this.push('values', key);
+                        // this.values.push(key);
+                        this.set('items.' + e.model.index + '.checked', true);
+                    } else {
+                        this.splice('values', pos, 1);
+                        // this.values.splice(pos, 1);
+                        this.set('items.' + e.model.index + '.checked', false);
+                    }
+                }
+            }
+
+            __onPaginationTap(e) {
+                let action = e.target.dataset.action,
+                    start = (this.paging.start || 0),
+                    limit = this.paging.limit,
+                    total = (this.paging.total || 0);
+
+                switch(action) {
+                    case 'first':
+                        start = 0;
+                        break;
+                    case 'prev':
+                        start -= limit;
+
+                        if (start <= 0) {
+                            start = 0;
+                        }
+                        break;
+                    case 'next':
+                        start += limit;
+                        if (start >= total) {
+                            start = total - limit + 1;
+                        }
+                        break;
+                    case 'last':
+                        start = total - limit;
+                        if (start < 0) {
+                            start = 0;
+                        }
+                        break;
+                }
+
+                this.set('paging.start', start);
+                this.load();
+            }
+
+            __onClose() {
+                let e = new CustomEvent('close');
+                this.dispatchEvent(e);
+            }
+        }
+
+        customElements.define(KctDropdownCheckbox.is, KctDropdownCheckbox);
+    </script>
+</dom-module>

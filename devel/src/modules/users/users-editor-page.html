@@ -1,0 +1,192 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="users-editor-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+
+            h3 {
+                font-weight: 500;
+                font-size: 16px;
+                margin-bottom: 16px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-role id="role"></kct-role>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block icon="perm-identity" text="Settings" desc="User Editor" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-button data-perm="manage@users" class="btn-blue m-l-sm" on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </setting-header-block>
+            <!-- <page-header-block image="[[ avatar ]]" icon="perm-identity" title="User Editor" description="[[ record.su_fullname ]]">
+                <paper-button on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </page-header-block>
+ -->
+            <div class="flex scroll-y padding">
+                <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
+                    <kct-column columns="3">
+                        <div class="p-r">
+                            <h3>Account Information</h3>
+                            <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required auto-validate error-message="Valid email address is required"></paper-input>
+                             <vaadin-combo-box 
+                                label="Member of role" 
+                                value="{{ record.su_sr_id }}" 
+                                items="[[ roles ]]" 
+                                item-label-path="sr_name" 
+                                item-value-path="sr_id" 
+                                required auto-validate error-message="Role is required"></vaadin-combo-box>
+                            <paper-input label="Password" type="password" value="{{ password1 }}" hidden$="[[ !record.su_id ]]"></paper-input>
+                            <paper-input label="Password confirm" type="password" value="{{ password2 }}" hidden$="[[ !record.su_id ]]"></paper-input>
+                            <kct-checkbox value="{{ record.su_active }}" hidden$="[[ !record.su_id ]]">Check to activate this user</kct-checkbox>
+                        </div>
+                        <div class="p-r">
+                            <h3>Personal Information</h3>
+                            <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}" readonly></paper-input>
+                            <paper-input label="Gender" value="{{ record.su_sex }}"  readonly></paper-input>
+                            <paper-input label="Date of Birth" value="{{ record.su_dob }}"  readonly></paper-input>
+                            <paper-input label="Job Description" value="{{ record.su_job_title }}"  readonly></paper-input>
+                        </div>
+                        <div class="p-r" hidden$="[[ !record.su_id ]]" data-perm="manage@users" >
+                            <h3>Account Removal</h3>
+                            <p>Removing user will remove all user data and all related documents.</p>
+                            <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-raised m-t">Delete User</paper-button>
+                        </div>
+                    </kct-columns>  
+                </kct-form-validator>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class UsersEditorPage extends KctView {
+            static get is() {
+                return 'users-editor-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String, value: 'profile' },
+                    roles: { type: Array },
+                    record: { type: Object, value: () => ({ su_active: '1' }) },
+                    avatar: {
+                        type: String,
+                        computed: '__computeAvatar(record.su_avatar_thumb)'
+                    }
+                };
+            }
+
+            handleRouteParams(setting, action, id) {
+                if (setting != 'users') {
+                    return;
+                }
+
+                if (action) {
+                    this.__loadRoles();    
+                    this.$.role.validate();
+
+                    if (id) {
+                        this.__loadRecord(id);
+                    } else {
+                        this.set('record', {});
+                        this.$.validator.validate();
+                    }
+                }
+            }
+
+            __computeAvatar(avatar) {
+                return avatar ? (avatar + '&w=32&h=32') : null;
+            }
+
+            __loadRecord(id) {
+                this.$.ajax.GET('/users/' + id).then((res) => {
+                    if (res.success) {
+                        this.set('record', res.data);
+                    } else {
+                        this.alert('Oops!', "It's look like user doesn't exists in database").then(() => {
+                            this.__back();
+                        });
+                    }
+                });
+            }
+
+            __loadRoles() {
+                this.$.ajax.GET('/roles').then((res) => {
+                    this.set('roles', res.data);
+                });
+            }
+
+            __back() {
+                this.set('route.path', '/settings/users');
+            }
+
+            __onSaveTap() {
+                let data = Object.assign({}, this.record);
+                let phantom = ! data.su_id;
+
+                if (this.password1) {
+                    data.su_passwd = this.password1;
+                }
+
+                data.su_kanban = this.kanban;
+
+                if (phantom) {
+                    this.mask('Creating user...');
+                    this.$.ajax.POST('/users', data).then(done.bind(this));
+                } else {
+                    this.mask('Updating user...');
+                    this.$.ajax.PUT('/users/' + data.su_id, data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.unmask();
+
+                    if (res.success) {
+                        this.toast('Success', 'User has been saved');
+                        this.__back();
+                    }else{
+                        if(res.message) this.alert('Error', res.message );
+                    }
+                }
+            }
+
+            __onRemoveAccountTap() {
+                this.confirm('Account Removal', 'Are you sure want to delete this user?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/users/' + this.record.su_id).then((res) => {
+                            if (res.success) {
+                                this.__back();
+                            }
+                        });
+                    }
+                });  
+            }
+
+            __onBackTap() {
+                this.__back();
+            }
+        }
+
+        customElements.define(UsersEditorPage.is, UsersEditorPage);
+    </script>
+</dom-module>

@@ -1,0 +1,99 @@
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../mixins/resolver.html">
+<dom-module id="kct-pages">
+    <script>
+        class KctPages extends Mixins(customElements.get('iron-pages')).use(Mixins.Resolver) {
+            
+            static get is() {
+                return 'kct-pages';
+            }
+
+            static get properties() {
+                return {
+                    lazyLoad: { type: Boolean, value: false }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__selectedItemChanged(selectedItem)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__loaded = {};
+            }
+
+            __findHost() {
+                let parent = this.parentNode;
+                let count = 0;
+                let host;
+
+                while(parent) {
+                    if (parent.host) {
+                        host = parent.host;
+                        break;
+                    }
+
+                    parent = parent.parentNode;
+
+                    // avoid overflow
+                    if (count >= 100) break;
+                    count++;
+                }
+
+                return host || parent;
+            }
+
+            __selectedItemChanged(item) {
+                if (item) {
+                    if (this.lazyLoad) {
+                    
+                        if ( ! this.__loaded[this.selected]) {
+                            this.__loaded[this.selected] = true;
+
+                            let path = item.getAttribute('import') || (item.localName + '.html'),
+                                host = this.__findHost();
+                            
+                            if (path && host) {
+                                path = host.resolveUrl && host.resolveUrl(path) || path;
+                                Polymer.importHref(
+                                    path,
+                                    () => {
+                                        
+                                        this.__activatePage();
+                                        this.__resizing = Polymer.Debouncer.debounce(
+                                            this.__resizing,
+                                            Polymer.Async.timeOut.after(300),
+                                            () => {
+                                                this.notifyResize();
+                                            }
+                                        );
+                                        Polymer.enqueueDebouncer(this.__resizing);
+                                    }
+                                );
+                            }
+                        } else {
+                            this.__activatePage();
+                        }
+                        
+                    } else {
+                        this.__activatePage();
+                    }
+                }
+            }
+
+            __activatePage() {
+                let evt = new CustomEvent('itemactivate', {
+                    detail: {
+                        activeItem: this.selectedItem,
+                        activeName: this.selected
+                    }
+                });
+                this.dispatchEvent(evt);
+            }
+        }
+        customElements.define(KctPages.is, KctPages);
+    </script>
+</dom-module>

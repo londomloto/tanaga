@@ -1,0 +1,111 @@
+<link rel="import" href="mixins.html">
+<script>
+    Mixins.FullScreen = Polymer.dedupingMixin(superclass => {
+
+        class Manager {
+            constructor() {
+                this.events = [
+                    'fullscreenchange',
+                    'webkitfullscreenchange',
+                    'mozfullscreenchange',
+                    'msfullscreenchange'
+                ];
+                this.target = document.documentElement;
+                this.handler = this.onChange.bind(this);
+                this.subscribers = [];
+                this.active = null;
+            }
+            add(sub) {
+                this.subscribers.push(sub);
+            }
+            init() {
+                this.events.forEach(e => {
+                    window.addEventListener(e, this.handler);
+                });
+            }
+            isFullScreen() {
+                let status = (document.fullscreenElement && document.fullscreenElement !== null) || 
+                             (document.webkitFullscreenElement && document.webkitFullscreenElement !== null) || 
+                             (document.mozFullScreenElement && document.mozFullScreenElement !== null) || 
+                             (document.msFullscreenElement && document.msFullscreenElement !== null);
+                return !!status;
+            }
+            toggle(subscriber) {
+                this.active = subscriber;
+
+                let status = this.isFullScreen();
+                let target;
+                let func;
+
+                if ( ! status) {
+                    target = this.target;
+                    func = target.requestFullscreen || 
+                           target.webkitRequestFullScreen || 
+                           target.mozRequestFullScreen || 
+                           target.msRequestFullScreen;
+                } else {
+                    target = document;
+                    func = target.exitFullscreen || 
+                           target.webkitExitFullscreen || 
+                           target.mozCancelFullScreen || 
+                           target.msExitFullscreen;
+                }
+
+                if (func) {
+                    func.call(target);
+                } else if (typeof window.ActiveXObject !== 'undefined') {
+                    let ax = new ActiveXObject('WScript.Sheel');
+                    if (ax !== null) {
+                        ax.SendKeys('{F11}');
+                    }
+                }
+            }
+            onChange(e) {
+                let fullscreen = this.isFullScreen();
+                let subscriber = this.active;
+
+                if (subscriber) {
+                    
+                    if ( ! subscriber.__context) {
+                        subscriber.__context = subscriber.parentNode;
+                    }
+
+                    if (fullscreen) {
+                        document.body.appendChild(subscriber);
+                    } else {
+                        subscriber.__context && subscriber.__context.appendChild(subscriber);
+                    }
+
+                    let timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        timer = null;
+                        subscriber.fullscreen = fullscreen;
+                    }, 10);
+                }
+            }
+        };
+
+        const manager = new Manager();
+        manager.init();
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    fullscreen: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            constructor() {
+                super();
+                manager.add(this);
+            }
+
+            _toggleFullScreen() {
+                manager.toggle(this);
+            }
+
+        };
+
+    });
+</script>

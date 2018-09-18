@@ -1,0 +1,269 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-auth/kct-auth.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-message/kct-alert.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+
+<dom-module id="forgot-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                
+                --paper-input-container-input: {
+                    font-size: 20px;
+                    color: #fff;
+                };
+
+                --paper-input-container-label: {
+                    font-size: 15px;
+                    color: #fff;
+                };
+
+                --paper-input-error: {
+                    font-weight: 300;
+                };
+            }
+
+            .container {
+                height: 100vh;
+                background-color: var(--app-login-background);
+                background-image: var(--login-background-image, url(images/cover-2.jpg));
+                background-repeat: no-repeat;
+                background-size: contain;
+                background-position: 0 0;
+                background-attachment: scroll;
+
+                @apply --layout-horizontal;
+            }
+
+            .story {
+                position: relative;
+                padding: 30px;
+                max-width: 40%;
+                color: #333;
+                
+            }
+            .story h3 {
+                font-size: 50px;
+                font-weight: 400;
+            }
+            .story p {
+                font-size: 26px;
+                font-weight: 300;
+                line-height: 1.2;
+            }
+            
+            .column-left.sm { display: none; }
+            .column-left.md { @apply --layout-flex; }
+            .column-left.lg { @apply --layout-flex-2; }
+            .column-left.xl { @apply --layout-flex-3; }
+
+            .column-right.sm { @apply --layout-flex; }
+            .column-right.md { @apply --layout-flex; }
+            .column-right.lg { @apply --layout-flex; }
+            .column-right.xl {
+                width: 460px;
+            }
+            .column-right { padding: 20px; }
+
+            .cover {
+                height: 100%;
+            }
+            
+            .login {
+                
+                overflow: hidden;
+                background-color: var(--app-login-background);
+                padding: 1rem;
+                color: #fff;
+                /*background-color: #ffffff;*/
+                /*box-shadow: 0 3px 10px rgba(0, 0, 0, 0.23), 0 3px 10px rgba(0, 0, 0, 0.16);*/
+
+                /*@apply --layout-vertical;*/
+            }
+            .login-logo {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .powered {
+                text-decoration: none;
+                font-size: 10px;
+                color: var(--paper-grey-500);
+            }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-600);
+            }
+
+            /** forgot */
+            .forgot {
+                color: #fff;
+                margin-top: 60px;
+            }
+            .forgot h3,
+            .forgot h4 {
+                font-weight: 300;
+                color: var(--paper-yellow-300);
+            }
+            .forgot h3 {
+                font-size: 20px;
+            }
+            .forgot p {
+                font-weight: 300;
+                font-size: 15px;
+            }
+            .forgot paper-button {
+                background-color: var(--paper-blue-700);
+                color: #fff;
+                padding-left: 15px;
+                padding-right: 15px;
+                margin: 0;
+                font-weight: 500;
+            }
+            .forgot paper-button[disabled] {
+                background-color: var(--paper-grey-600);
+            }
+            .notes {
+                border-top: 1px solid #464454;
+                padding: 10px 0 0 0;
+                margin-top: 30px;
+                
+            }
+            .notes p {
+                font-size: 13px;
+            }
+        </style>
+
+        <kct-auth id="auth" config="[[ config ]]" on-load="__onAuthLoaded"></kct-auth>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        
+        <div class="container">
+
+            <div class$="column-left [[ screen ]]">
+                <div class="cover">
+                    <div class="story">
+                        <h3>[[ config.app_title ]]</h3>
+                        <p>[[ config.app_description ]]</p>
+                    </div>
+                </div>    
+            </div>
+
+            <div class$="column-right [[ screen ]]">
+                <div class="login-logo">
+                    <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-1.png') ]]" alt="" class="logo">
+                </div>
+                <div name="forgot" class="forgot">
+                    <h3>Can't sign in? Forget your password?</h3>
+                    <p>Enter your email address below and we'll send you password reset instruction.</p>
+                    <div class="m-t">
+                        <paper-input id="email" value="{{ email }}" type="email" label="Enter your email address" required auto-validate error-message="Valid email address is required"></paper-input>
+                    </div>
+                    <div class="m-t">
+                        <paper-button on-tap="__onRequestPasswordTap" disabled$="[[ __forgotInvalid ]]">Send me reset instruction</paper-button>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">back to login page</a>
+                    </div>
+                    <div class="notes">
+                        <h4>A note about spam filters</h4>
+                        <p>If you don't get an email from us within a few minutes please be sure to check your spam filter.</p>
+                    </div>
+                </div>
+
+                <div class="text-center" style="margin-top: 60px;">
+                    <a class="powered" href="https://www.worksaurus.com" target="_blank">
+                        <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-0.png') ]]">
+                        <span class="block">POWERED BY <b>WORKSAURUS</b></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <kct-alert id="message" button="Continue" accent="info" title="Thank you" icon="info-outline">
+            <p>Please check your inbox to reset your password</p>
+        </kct-alert>
+
+    </template>
+
+    <script>
+
+        class ForgotPage extends KctView {
+            static get is() {
+                return 'forgot-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: 'String', notify: true, value: 'Forgot Password' },
+                    cover: { type: String },
+                    email: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__coverChanged(cover)',
+                    '__forgotValidator(email)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__forgotInvalid = true;
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            handleRouteParams() {
+                if (this.email) {
+                    this.set('email', '');
+                }
+            }
+
+            __coverChanged(cover) {
+                if (cover) {
+                    this.updateStyles({
+                        '--login-background-image': 'url(' + cover + ')'
+                    });    
+                }
+            }
+
+            __forgotValidator(email) {
+                let valid = true;
+                valid = valid && (this.$.email.validate());
+                this.set('__forgotInvalid', !valid);
+            }
+
+            __onBackTap(e) {
+                this.set('route.path', '/login');
+            }
+
+            __onAuthLoaded() {
+                // force to logout
+                this.$.auth.logout();
+            }
+
+            __onRequestPasswordTap() {
+                let payload = {
+                    email: this.email
+                };
+
+                this.mask('Submitting...');
+
+                this.$.ajax.POST('/auth/recover', payload).then(() => {
+                    this.unmask();
+
+                    this.$.message.open().then(() => {
+                        this.set('route.path', '/login');
+                    });
+                });
+            }
+        }
+
+        customElements.define(ForgotPage.is, ForgotPage);
+    </script>
+</dom-module>

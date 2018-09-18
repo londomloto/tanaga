@@ -1,0 +1,17 @@
+<dom-module id="maps-geocoding-service">
+    <template>
+        <style include="theme-helper"></style>
+        <div class="container p-a">
+            <h2 class="f-300">Maps Geocoding</h2>
+        </div>
+    </template>    
+    <script>
+        class MapsGeocodingService extends Polymer.Element {
+            static get is() {
+                return 'maps-geocoding-service';
+            }
+        }
+
+        customElements.define(MapsGeocodingService.is, MapsGeocodingService);
+    </script>
+</dom-module>

@@ -1,0 +1,315 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-auth/kct-auth.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-message/kct-alert.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+
+<dom-module id="recover-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                
+                --paper-input-container-input: {
+                    font-size: 20px;
+                    color: #fff;
+                };
+
+                --paper-input-container-label: {
+                    font-size: 15px;
+                    color: #fff;
+                };
+
+                --paper-input-error: {
+                    font-weight: 300;
+                };
+            }
+
+            .container {
+                height: 100vh;
+                background-color: var(--app-login-background);
+                background-image: var(--login-background-image, url(images/cover-2.jpg));
+                background-repeat: no-repeat;
+                background-size: contain;
+                background-position: 0 0;
+                background-attachment: scroll;
+
+                @apply --layout-horizontal;
+            }
+
+            .story {
+                position: relative;
+                padding: 30px;
+                max-width: 40%;
+                color: #333;
+                
+            }
+            .story h3 {
+                font-size: 50px;
+                font-weight: 400;
+            }
+            .story p {
+                font-size: 30px;
+                font-weight: 300;
+                line-height: 1;
+            }
+            
+            .column-left.sm { display: none; }
+            .column-left.md { @apply --layout-flex; }
+            .column-left.lg { @apply --layout-flex-2; }
+            .column-left.xl { @apply --layout-flex-3; }
+
+            .column-right.sm { @apply --layout-flex; }
+            .column-right.md { @apply --layout-flex; }
+            .column-right.lg { @apply --layout-flex; }
+            .column-right.xl {
+                width: 460px;
+            }
+            .column-right { padding: 20px; }
+
+            .cover {
+                height: 100%;
+            }
+            
+            .login-logo {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .powered {
+                display: block;
+                text-decoration: none;
+                font-size: 10px;
+                margin-top: 20px;
+                color: var(--paper-grey-500);
+            }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-600);
+            }
+
+            /** forgot */
+            .recover {
+                color: #fff;
+                margin-top: 60px;
+            }
+            .recover h3 {
+                color: var(--paper-yellow-300);
+                font-weight: 300;
+                font-size: 20px;
+            }
+            .recover p {
+                font-size: 15px;
+                font-weight: 300;
+            }
+            .recover paper-button {
+                background-color: var(--paper-blue-700);
+                color: #fff;
+                padding-left: 15px;
+                padding-right: 15px;
+                margin: 0;
+                font-weight: 500;
+            }
+            .recover paper-button[disabled] {
+                background-color: var(--paper-grey-600);
+            }
+            .notes {
+                color: #fff;
+                text-align: center;
+                border-top: 1px solid #464454;
+                padding: 10px 0 0 0;
+                margin-top: 50px;
+            }
+            .message {
+                margin: 100px 0;
+                background-color: #423f54;
+                text-align: center;
+                color: #fff;
+                padding: 15px;
+                border-radius: 6px;
+            }
+        </style>
+
+        <kct-auth id="auth" config="[[ config ]]" on-load="__onAuthLoaded"></kct-auth>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        
+        <div class="container">
+
+            <div class$="column-left [[ screen ]]">
+                <div class="cover">
+                    <div class="story">
+                        <h3>[[ config.app_title ]]</h3>
+                        <p>[[ config.app_description ]]</p>
+                    </div>
+                </div>    
+            </div>
+
+            <div class$="column-right [[ screen ]]"  hidden$="[[ !__valid ]]">
+                <div class="login-logo">
+                    <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-1.png') ]]" alt="" class="logo">
+                </div>
+
+                <div class="recover">
+                    <h3>Reset your password</h3>
+                    <p style="margin-top: 10px;">You have requested to reset the password for <b>[[ email ]]</b></p>
+                    <div class="m-t">
+                        <paper-input value="{{ password1 }}" type="password" label="Type new password" required auto-validate error-message="Password is required"></paper-input>
+                        <paper-input id="password2" value="{{ password2 }}" type="password" label="Confirm your password"></paper-input>
+                    </div>
+                    <div class="m-t">
+                        <paper-button on-tap="__onResetPasswordTap" disabled$="[[ __recoverInvalid ]]">Reset Password</paper-button>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">back to login page</a>
+                    </div>
+                </div>
+
+                <div class="text-center" style="margin-top: 60px;">
+                    <a class="powered" href="https://www.worksaurus.com" target="_blank">
+                        <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-0.png') ]]">
+                        <span class="block">POWERED BY <b>WORKSAURUS</b></span>
+                    </a>
+                </div>
+                
+                
+            </div>
+        </div>
+
+        <kct-alert id="message-error" title="Oh Snap!">
+            <p>Unable to reset password</p>
+        </kct-alert>
+
+        <kct-alert id="message-invalid" title="Oh Snap!">
+            <p>Invalid password reset request</p>
+        </kct-alert>
+
+        <kct-alert id="message-success" button="Continue" title="Success!" accent="info" icon="info-outline">
+            <p>
+                Password has been resetted.<br>
+                Press <b>Continue</b> to go to login page.
+            </p>
+        </kct-alert>
+
+    </template>
+
+    <script>
+
+        class RecoverPage extends KctView {
+            static get is() {
+                return 'recover-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: 'String', notify: true, value: 'Forgot Password' },
+                    cover: { type: String },
+                    email: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__coverChanged(cover)',
+                    '__recoverValidator(password1, password2)',
+                    '__passwordChanged(password2)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__recoverInvalid = true;
+                this.__valid = false;
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            handleRouteParams() {
+                console.log('called');
+                this.set('__valid', false);
+                this.set('__recoverInvalid', true);
+                this.__validateToken();
+            }
+
+            __validateToken() {
+                let token = this.route.query.code;
+
+                if (token) {
+                    this.$.ajax.POST('/auth/validate-reset', { token: token }).then(res => {
+                        if (res.success) {
+                            this.set('__valid', true);
+                            this.set('email', res.data.su_email);
+                        } else {
+                            this.set('__valid', false);
+                            this.$['message-invalid'].open().then(() => {
+                                this.set('route.path', '/login');
+                            });
+                        }
+                    });    
+                } else {
+                    this.set('route.path', '/login');
+                }
+            }
+
+            __coverChanged(cover) {
+                if (cover) {
+                    this.updateStyles({
+                        '--login-background-image': 'url(' + cover + ')'
+                    });    
+                }
+            }
+
+            __passwordChanged(password2) {
+                this.$.password2.invalid = false;
+                this.$.password2.errorMessage = '';
+
+                if (this.password1) {
+                    if (this.password1 != password2) {
+                        this.$.password2.invalid = true;
+                        this.$.password2.errorMessage = `Password doesn't match`;
+                    }
+                }
+            }
+
+            __recoverValidator(password1, password2) {
+                let valid = true;
+                valid = valid && password1 && (password1 == password2);
+                this.set('__recoverInvalid', !valid);
+            }
+
+            __onBackTap(e) {
+                this.set('route.path', '/login');
+            }
+
+            __onAuthLoaded() {
+                // force to logout
+                this.$.auth.logout();
+            }
+
+            __onResetPasswordTap() {
+                let payload = {
+                    email: this.email,
+                    password: this.password1
+                };
+
+                this.mask('Submitting...');
+
+                this.$.ajax.POST('/auth/reset', payload).then(res => {
+                    this.unmask();
+                    
+                    if (res.success) {
+                        this.$['message-success'].open().then(() => {
+                            this.set('route.path', '/login');
+                        });
+                    } else {
+                        this.$['message-error'].open();
+                    }
+                });
+            }
+        }
+
+        customElements.define(RecoverPage.is, RecoverPage);
+    </script>
+</dom-module>

@@ -1,0 +1,90 @@
+<link rel="import" href="../../../mixins/resolver.html">
+
+<dom-module id="maps-provider">
+    <script>
+        class MapsProvider extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+            static get is() {
+                return 'maps-provider';
+            }
+
+            static get properties() {
+                return {
+                    markers: {
+                        type: Array,
+                        notify: true,
+                        value: () => {
+                            return [];
+                        }
+                    },
+                    center: {
+                        type: Object,
+                        notify: true,
+                        value: () => {
+                            return {
+                                latitude: -6.1754,
+                                longitude: 106.8272
+                            };
+                        }
+                    },
+                    zoom: { type: Number, notify: true, value: 15 },
+                    tilt: { type: Boolean, value: false }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__markersChanged(markers.*)'
+                ];
+            }
+
+            get map() {
+
+            }
+
+            load() {
+                return Promise.resolve();
+            }
+
+            mask() {
+
+            }
+
+            unmask() {
+
+            }
+
+            resize() {
+
+            }
+
+            pointing() {
+                return Promise.resolve({ longitude: 0, latitude: 0 });
+            }
+
+            __renderMarker(marker) {}
+
+            __removeMarker(marker) {}
+
+            __markersChanged(changed) {
+                if (changed.path == 'markers') {
+                    this.markers.forEach((marker) => {
+                        this.__renderMarker(marker);
+                    });
+                } else if (changed.path == 'markers.splices') {
+                    changed.value.indexSplices.forEach((s) => {
+                        s.removed.forEach((marker) => {
+                            this.__removeMarker(marker);
+                        }); 
+
+                        for (let i = 0; i < s.addedCount; i++) {
+                            let index = s.index + i;
+                            let marker = s.object[index];
+                            this.__renderMarker(marker);
+                        }
+                    });
+                }
+            }
+        }
+        customElements.define(MapsProvider.is, MapsProvider);
+    </script>
+</dom-module>

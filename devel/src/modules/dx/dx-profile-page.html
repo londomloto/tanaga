@@ -1,0 +1,175 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+
+<dom-module id="dx-profile-page">
+    
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #grid {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-grid 
+            id="grid" 
+            url="/dx/profiles" 
+            columns="{{ columns }}" 
+            selection="{{ selection }}" 
+            selected="{{ selected }}" 
+            title="Dynamic Upload" 
+            description="Upload Profiles">
+
+            <paper-button slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;New</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onDeleteTap"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>        
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Profile Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
+                        <paper-input label="Profile Name" value="{{ selected.profile_name }}" required auto-validate error-message="Profile name is required"></paper-input>
+                        <paper-input allowed-pattern="[0-9]" label="Header Row" value="{{ selected.header_row_idx }}" required auto-validate error-message="Header row is required"></paper-input>
+                        <paper-input allowed-pattern="[a-zA-Z]" label="Column Offset" value="{{ selected.col_offset }}" required auto-validate error-message="Column offset is required"></paper-input>
+                        <paper-input allowed-pattern="[0-9]" label="Row Offset" value="{{ selected.row_offset }}" required auto-validate error-message="Row offset is required"></paper-input>
+                        <kct-checkbox value="{{ selected.map_header }}" true-value="1" false-value="0">Enable header mapping</kct-checkbox>
+                        
+                    </kct-form-validator>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSubmitTap" disabled$="[[ __formInvalid ]]">SAVE</paper-button>
+                    <paper-button on-tap="__onEditpCloseTap">CLOSE</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+
+    <script>
+        class DxProfilePage extends KctView {
+            static get is() {
+                return 'dx-profile-page';
+            }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { type: 'rownumber' },
+                                { text: 'Profile', dataIndex: 'profile_name' },
+                                { text: 'Header Row', dataIndex: 'header_row_idx' },
+                                { text: 'Column Offset', dataIndex: 'col_offset' },
+                                { text: 'Row Offset', dataIndex: 'row_offset' },
+                                { 
+                                    text: 'Mapping', 
+                                    align: 'center',
+                                    dataIndex: 'map_header',
+                                    renderer: e => {
+                                        return e.data ? (e.data.map_header == 1 ? 'Y' : '-') : '-';
+                                    }
+                                }
+                            ];
+                        }
+                    }
+                };
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'dx-profile') return;
+                this.$.grid.deferAutoload();
+            }
+
+            handleResizing(width, height) {
+                this.$.grid.resize();
+            }
+
+            __onAddTap() {
+                this.set('selected', {});
+                this.$.editor.open();
+                this.$.validator.validate();
+            }
+
+            __onEditTap() {
+                if ( ! this.selected) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.$.editor.open();
+            }
+
+            __onDeleteTap() {
+                if ( ! this.selection.length) {
+                    this.toast('Warning', 'No record(s) selected', 'warn');
+                    return;
+                }
+
+                let record = this.selection[0];
+
+                this.confirm('Confirm', 'Are you sure want to delete selected record(s)?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/dx/profiles/' + record.profile_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+
+            }
+
+            __onEditpCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSubmitTap() {
+                let data = this.selected,
+                    ajax = this.$.ajax;
+
+                if (data.profile_id) {
+                    ajax.PUT('/dx/profiles/' + data.profile_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/dx/profiles', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                        this.$.editor.close();
+                    }
+                }
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(DxProfilePage.is, DxProfilePage);
+    </script>
+
+</dom-module>

@@ -1,0 +1,78 @@
+<link rel="import" href="mixins.html">
+
+<script>
+    Mixins.Browser = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            _browser() {
+                return this._isIE()
+                    ? 'IE'
+                    : this._isOpera()
+                        ? 'opera' 
+                        : this._isFirefox() 
+                            ? 'firefox'
+                            : this._isSafari() 
+                                ? 'safari'
+                                : this._isChrome()
+                                    ? 'chrome'
+                                    : this._isEdge()
+                                        ? 'edge'
+                                        : null;
+            }
+
+            _isChrome() {
+                return /chrome/i.test(navigator.userAgent);
+            }
+
+            _isFirefox() {
+                return /firefox/i.test(navigator.userAgent);
+            }
+
+            _isOpera() {
+                return /(opera|opr)/i.test(navigator.userAgent);
+            }
+
+            _isSafari() {
+                return /safari/i.test(navigator.userAgent) && !this._isChrome();
+            }
+
+            _isIE() {
+                let ver = this._detectIEVersion();
+                return ver && ver < 12;
+            }
+
+            _isEdge() {
+                let ver = this._detectIEVersion();
+                return ver && ver >= 12;
+            }
+
+            _detectIEVersion() {
+                let ua = navigator.userAgent;
+                
+                let msie = ua.indexOf('MSIE ');
+                
+                if (msie > 0) {
+                    return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+                }
+
+                let trident = ua.indexOf('Trident/');
+
+                if (trident > 0) {
+                    let rv = ua.indexOf('rv:');
+                    return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+                }
+
+                let edge = ua.indexOf('Edge/');
+
+                if (edge > 0) {
+                    return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+                }
+
+                return false;
+            }
+
+        };
+
+    });
+</script>

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <base id="base">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+        <meta name="description" content="sistem informasi manajemen pondok pesantren">
+        
+        <title>LOADING...</title>
+
+        <link rel="icon" href="images/icons/favicon.ico">
+        <link rel="manifest" href="manifest.json">
+
+        <meta name="theme-color" content="#3f51b5">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="application-name" content="tanaga">
+        <meta name="application-base" content="">
+        <meta name="application-test" content="^/tanaga">
+
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="tanaga">
+
+        <link rel="apple-touch-icon" href="images/manifest/icon-48x48.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="images/manifest/icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="96x96" href="images/manifest/icon-96x96.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="images/manifest/icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="192x192" href="images/manifest/icon-192x192.png">
+
+        <meta name="msapplication-TileImage" content="images/manifest/icon-144x144.png">
+        <meta name="msapplication-TileColor" content="#3f51b5">
+        <meta name="msapplication-tap-highlight" content="no">
+
+        <style>
+            html, 
+            body { 
+                height: 100%;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                overflow-x: hidden;
+            }
+
+            body.loading {
+                overflow: hidden;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            body.loading kct-app { opacity: 0; }
+            body.ready kct-app { animation: fade-in 0.5s; }
+
+            #loading-indicator {
+                width: 100%;
+                position: absolute;
+                top: 50%;
+                margin-top: -1px;
+                left: 0;
+                color: rgba(255, 255, 255, 0.56);
+            }
+
+            #loading-indicator .spinner {
+                content: "";
+                position: absolute;
+                height: 2px;
+                background: #00b4f0;
+                top: 0;
+                left: 0;
+                width: 100%;
+                animation: 1.2s spin infinite;
+                transform-origin: 100% 0;
+            }
+
+            @keyframes spin {
+                50% { transform: scalex(0); }
+                51% { transform: translatex(-100vw); }
+            }
+
+            @keyframes fade-in {
+                0% { opacity: 0; };
+                100% { opacity: 1; }
+            }
+        </style>
+
+    </head>
+    <body class="loading">
+        
+        <div id="loading-indicator">
+            <div class="spinner"></div>     
+        </div>
+
+        <script id="boot">
+            
+            var app = {
+
+                supports: {
+                    WEB_COMPONENT: (
+                        'registerElement' in document && 
+                        'import' in document.createElement('link') && 
+                        'content' in document.createElement('template')
+                    )
+                },
+
+                run: function() {
+                    let path = window.location.pathname,
+                        host = window.location.host,
+                        boot = document.querySelector('#boot');
+
+                    let tester = new RegExp(document.querySelector('meta[name="application-test"]').content, 'g');
+                    
+                    let part = path.match(/([^/]+)/g);
+                    let base = '/';
+                    let name;
+
+                    if (tester.test(path)) {
+                        base = '/' + part[0] + '/' + part[1] + '/';
+                        name = part[1] + '@' + part[0];
+                    } else {
+                        base = '/' + part[0] + '/';
+                        if (/\.\d/.test(host)) {
+                            name = part[0] + '@' + host;
+                        } else {
+                            name = part[0] + '@' + host.split(/\./)[0];
+                        }
+                    }
+
+                    tester = null;
+
+                    document.querySelector('#base').href = base;
+                    document.querySelector('meta[name="application-base"]').content = base;
+
+                    Promise.all([ 
+                        prepare(),
+                        loadDependencies(),
+                        loadRoutes(base)
+                    ]).then((values) => {
+                        
+                        Polymer.setPassiveTouchGestures(true);
+
+                        let node = document.createElement('kct-app');
+                        node.name = name;
+
+                        // has routes
+                        if (values[2]) {
+                            node.fallback = values[2].fallback;
+                            node.routes = values[2].routes;
+                        }
+                        
+                        document.body.insertBefore(node, boot);
+                    });
+
+                    function defer() {
+                        let promise, resolve, reject;
+                        
+                        promise = new Promise((res, rej) => {
+                            resolve = res;
+                            reject = rej;
+                        });
+
+                        return { promise: promise, resolve: resolve, reject: reject };
+                    }
+
+                    function prepare() {
+                        let d = defer();
+
+                        if (app.supports.WEB_COMPONENT) {
+                            d.resolve();
+                        } else {
+                            var script = document.createElement('script');
+                            script.async = true;
+                            script.src = '../cores/bower_components/webcomponentsjs/webcomponents-lite.js';
+                            script.addEventListener('load', () => {
+                                d.resolve();
+                            });
+                            document.head.appendChild(script);
+                        }
+
+                        return d.promise;
+                    }
+
+                    function loadDependencies() {
+                        window.Polymer = window.Polymer || {};
+                        window.Polymer.dom = 'shadow';
+
+                        let deps = [
+                            '../cores/bower_components/polymer/polymer-element.html',
+                            '../cores/themes/theme-default/theme-default.html',
+                            'src/kct-app.html'
+                        ].map((href) => {
+                            let d = defer();
+                            let link;
+                            
+                            link = document.head.querySelector('link[href="' + href + '"][import-href]');
+
+                            if ( ! link) {
+                                link = document.createElement('link');
+                                link.rel = 'import';
+                                link.href = href;
+                                link.async = true;
+                                link.setAttribute('import-href', '');
+                            }
+
+                            link.addEventListener('load', () => {
+                                d.resolve(href);
+                            });
+
+                            if (link.parentNode == null) {
+                                document.head.appendChild(link);    
+                            }
+                            
+                            return d.promise;
+                        });
+
+                        return Promise.all(deps).then(() => {
+                            let t = setTimeout(() => {
+                                clearTimeout(t);
+                                finish();    
+                            }, 1000);
+                        });
+                    }
+
+                    function loadRoutes(base) {
+                        let part = base.replace(/(^\/|\/$)/g, '').split(/\//);
+                        let path;
+
+                        if (part.length > 1) {
+                            path = '/' + part[0] + '/api/v2/' + part[1] + '/config/routes';
+                        } else {
+                            path = '/api/v2/' + part[0] + '/config/routes';
+                        }
+
+                        let ajax = new XMLHttpRequest(),
+                            d = defer();
+
+                        ajax.onreadystatechange = () => {
+                            if (ajax.readyState === XMLHttpRequest.DONE && ajax.status == 200) {
+                                let json;
+                                
+                                try {
+                                    json = JSON.parse(ajax.responseText).data;
+                                } catch(e){}
+
+                                d.resolve(json);
+                            }
+                        };
+
+                        ajax.open('GET', path);
+                        ajax.send();
+
+                        return d.promise;
+                    }
+
+                    function finish() {
+                        var indicator;
+
+                        document.body.classList.remove('loading');
+                        document.body.classList.add('ready');
+
+                        indicator = document.querySelector('#loading-indicator');
+                        indicator.parentNode.removeChild(indicator);
+                        
+                        // register service worker
+                        if ('serviceWorker' in navigator) {
+                            // navigator.serviceWorker.register('service-worker.js');
+                        }
+                    }
+
+                }
+
+            };
+
+            app.run();
+
+        </script>
+
+    </body>
+</html>

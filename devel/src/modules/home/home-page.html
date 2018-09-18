@@ -1,0 +1,84 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="home-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                background-color: var(--paper-blue-grey-500);
+                background-image: url(../../../images/backgrounds/background-8.jpg);
+                background-repeat: no-repeat;
+                background-size: cover;
+                height: 100%;
+            }
+            .welcome {
+                color: #fff;
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                text-align: right;
+                padding: 30px 30px 30px 15px;
+            }
+            /*.border {
+                display: block;
+                content: '';
+                position: absolute;
+                background: var(--paper-grey-500);
+                height: 1px;
+                left: 0;
+                right: 0;
+                bottom: 40px;
+            }*/
+            .welcome-title {
+                font-size: 28px;
+                font-weight: 600;
+            }
+            .welcome-desc {
+                font-size: 20px;
+            }
+            page-header-block {
+                border-bottom: none;
+            }
+        </style>
+
+        <kct-vbox>
+            <div class="overlay"></div>
+            <!-- <page-header-block icon="home" description="Application Homepage" accent="var(--paper-green-500)"></page-header-block> -->
+            
+            <div class="flex" style="position: relative; z-index: 2">
+                <div class="p-a-lg">
+                    <div class="border"></div>
+                    <div class="welcome">
+                        <h2 class="welcome-title f-300">[[ config.app_title ]]</h2>
+                        <p class="welcome-desc f-300">[[ config.app_description ]]</p>    
+                    </div>
+                    
+                </div>
+            </div>
+        </kct-vbox>
+
+    </template>
+
+    <script>
+        class HomePage extends KctView {
+            static get is() {
+                return 'home-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Homepage' },
+                    inputs: { type: Array, value: [{ name: 'A' }, {name: 'B'}] }
+                }
+            }
+
+            download() {
+                this.$.ajax.DOWNLOAD('/home/download', {user: 1, type: 'jpeg', items: ['A', 'B']});
+            }
+        }
+
+        customElements.define(HomePage.is, HomePage);
+    </script>    
+</dom-module>

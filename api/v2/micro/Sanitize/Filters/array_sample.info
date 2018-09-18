@@ -1,0 +1,109 @@
+
+		/**
+		$getJson = array(
+			"name"  => array(
+				0 => array( "first" => "Ahmad - 1" , "last" => "Wahyudin - 1" ) ,  
+				1 => array( "first" => "Ahmad - 2" , "last" => "Wahyudin - 2" ) ,  
+				2 => array( "first" => "Ahmad - 3" , "last" => "Wahyudin - 3" )   
+			) , 
+			"ip"    => array(
+				0 => array( "contains" => "127.0.0.1" ) ,  
+				1 => array( "contains" => "127.0.0.2" ) ,  
+				2 => array( "contains" => "127.0.0.3" )  
+			) , 
+			"chart" => array(
+				0 => array( "item" => "Buku - 1" , "value" => "39.000 - 1" ) ,  
+				1 => array( "item" => "Buku - 2" , "value" => "40.000 - 2" ) ,  
+				2 => array( "item" => "Buku - 3" , "value" => "41.000 - 3" )   
+			) , 
+		);
+
+
+		$getJson = array (
+	  'worker' => 'non-gsm-v2',
+	  'record' => array (
+	    'ticket' => array (
+	      'ttt_malfunction_start_date' => '2018-07-16',
+	      'malfunction_start_hour' => '11',
+	      'malfunction_start_minute' => '57',
+	      'ttt_malfunction_end_date' => '',
+	      'malfunction_end_hour' => NULL,
+	      'malfunction_end_minute' => NULL,
+	      'ttt_app_type' => 'non-gsm',
+	      'ttt_customer_id' => '1218',
+	      'ttt_category' => '1',
+	      'ttt_branch' => '725371 [Cloud]Kreasindo Cipta Teknologi<>XL Cloud Surabaya<>managed by HTI',
+	      'ttt_fault_code' => '12',
+	      'ttt_link_id_1' => '029C1218L1',
+	      'ttt_simple_cause_code' => '',
+	      'ttt_cause_code' => '',
+	      'ttt_object_part' => '',
+	      'ttt_priority_status_1' => '1',
+	      'ttt_customer_class' => '1',
+	      'ttt_list_region' => '1',
+	      'ttt_call_location' => 'Email',
+	      'ttt_text' => '725371 [Cloud]Kreasindo Cipta Teknologi<>XL Cloud Surabaya<>managed by HTI Configuration:
+	              Site ID | NE Type | NE Brand | NE ID | Channel
+	              -  |  -  |  -  | Technical Detail | 2 core 2GB RAM 200 GB Storage
+
+	        Site A:
+	         Address: Jl. Ragunan Raya No.9 Rt.02 Rw.07
+	        PIC BP:
+	                  (1). Nama: ikhsan; Email: ikhsan@kct,co.id; Phone:
+	                  (2). Nama: satrio; Email: satrio@kct.co.id; Phone:
+	                  (3). Nama: ; Email: ; Phone: ',
+	      'ttt_breakdown_duration' => '0 hour 0 minute',
+	      'ttt_mttr_xl_to_customer' => '0 hour 0 minute',
+	      'ttt_customer_name' => 'FÃ©dÃ©ration Camerounaise de Football',
+	      'ttt_sold_to_party' => '725371',
+	      'ttt_functional_location' => '0051-SRBY',
+	      'ttt_service_type_1' => 'Cloud',
+	      'ttt_am_email' => NULL,
+	      'ttt_sm_email' => NULL,
+	      'ttt_description' => 'Cloud [Cloud]Kreasindo Cipta Teknologi Intermitten',
+	      'pic_1_a' => 'ikhsan',
+	      'email_1_a' => 'ikhsan@kct,co.id',
+	      'phone_1_a' => '',
+	      'pic_2_a' => 'satrio',
+	      'email_2_a' => 'satrio@kct.co.id',
+	      'phone_2_a' => '',
+	      'pic_3_a' => '',
+	      'email_3_a' => '',
+	      'phone_3_a' => '',
+	      'ttt_contact_1' => NULL,
+	    ),
+
+	    'labels' => array (),
+
+	    'users' => array (),
+	    'partner' => array (
+	      'rc_am' => NULL,
+	      'rc_am_email' => NULL,
+	      'rc_sm' => NULL,
+	      'rc_sm_email' => NULL,
+	      'rc_csr' => NULL,
+	      'rc_csr_email' => NULL,
+	      'rc_bp_ho' => NULL,
+	      'rc_bp_ho_name' => NULL,
+	    ),
+
+	    'pics' => array (
+	      0 => array (
+	        'rcp_pic_name' => 'Ikhsan',
+	        'rcp_pic_email' => 'ikhsan@kct.co.id',
+	        'rcp_pic_phone' => NULL,
+	      ),
+	    ),
+
+	    'user' => array (
+	      'id' => '11',
+	      'fullname' => 'Hani Ikhsanuddin',
+	      'email' => 'ikhsan@kct.co.id',
+	    ),
+	  ),
+	  'send' => true,
+	);
+		**/
+
+	
+		 

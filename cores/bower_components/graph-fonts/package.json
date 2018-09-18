@@ -1,0 +1,24 @@
+{
+  "name": "graph-fonts",
+  "version": "1.0.2",
+  "description": "Fonts used by graph",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/londomloto/graph-fonts.git"
+  },
+  "keywords": [
+    "graph",
+    "svg",
+    "webfont"
+  ],
+  "author": "londomloto",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/londomloto/graph-fonts/issues"
+  },
+  "homepage": "https://github.com/londomloto/graph-fonts#readme"
+}

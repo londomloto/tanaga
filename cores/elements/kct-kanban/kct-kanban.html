@@ -1,0 +1,160 @@
+<link rel="import" href="../../bower_components/polymer/lib/utils/flattened-nodes-observer.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../kct-layouts/kct-vbox.html">
+<link rel="import" href="../kct-kanban/kct-kanban-panel.html">
+
+<dom-module id="kct-kanban">
+    <template>
+        <style>
+            :host { 
+                display: block;
+                height: 100%; 
+            }
+            
+            .kanban-header {
+                padding: 0 6px;
+                background-color: var(--kanban-header-background, var(--paper-blue-grey-500));
+                color: var(--kanban-header-color, #ffffff);
+            }
+
+            .kanban-body {
+                padding: 0 0 15px 0;
+                overflow-x: scroll;
+                overflow-y: hidden;
+            }
+
+            .kanban-body-top-space {
+                height: 18px;
+                width: 100%;
+                background-color: #fff;
+            }
+            .panel-container {
+                height: 100%;
+            }
+        </style>
+        <kct-vbox class="kanban">
+            <div class="kanban-header">
+                <slot name="header"></slot>        
+            </div>
+            <div class="kanban-body-top-space"></div>
+            <div id="kanban-body" class="kanban-body flex">
+                <div id="panel-container" class="panel-container">
+                    <slot id="panel"></slot>
+                </div>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class KctKanban extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+            static get is() {
+                return 'kct-kanban';
+            }
+            static get properties() {
+                return {
+                    columns: { type: Number, value: 3 }
+                };
+            }
+            constructor() {
+                super();
+            }
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.__panelObservers = new Polymer.FlattenedNodesObserver(this.$.panel, info => {
+                        this.__resizePanelContainer();
+                    });
+                });
+            }
+            resize() {
+                this.__resizePanelContainer();
+            }
+            scroll(dir) {
+                switch(dir) {
+                    case 'right':
+                        let timer = setTimeout(() => {
+                            this.$['kanban-body'].scrollLeft = this.$['kanban-body'].scrollWidth;
+                            clearTimeout(timer);
+                            timer = null;
+                        }, 0);
+                        break;
+                    case 'left':
+                        this.$['kanban-body'].scrollLeft = 0;
+                        break;
+                }
+            }
+            __getBodySize() {
+                let style, width, height;
+
+                style  = window.getComputedStyle(this.$['kanban-body'], null);
+                width  = parseFloat(style.getPropertyValue('width'), 10);
+                height = parseFloat(style.getPropertyValue('height'), 10);
+
+                return {
+                    width: width,
+                    height: height
+                };
+            }
+            __getBodyHeight() {
+                let computed = window.getComputedStyle(this.$['kanban-body'], null);
+                let height = parseFloat(computed.getPropertyValue('height'), 10);
+
+                return height;
+            }
+            __getScrollbarHeight() {
+                let height = this.constructor.__scrollbarHeight;
+
+                if (height === undefined) {
+                    let outer, inner, width1, width2;
+                    
+                    outer = document.createElement('div');
+                    outer.style.visibility = 'hidden';
+                    outer.style.width = '100px';
+                    outer.style.msOverflowStyle = 'scrollbar';
+                    
+                    document.body.appendChild(outer);
+                    
+                    width1 = outer.offsetWidth;
+
+                    outer.style.overflow = 'scroll';
+
+                    inner = document.createElement('div');
+                    inner.style.width = '100%';
+                    
+                    outer.appendChild(inner);
+
+                    width2 = inner.offsetWidth;
+
+                    outer.parentNode.removeChild(outer);
+
+                    height = width1 - width2;
+                    this.constructor.__scrollbarHeight = height;
+                }
+
+                return height;
+            }
+            __resizePanelContainer() {
+                let gutter = 15;
+
+                let panels = this.$.panel.assignedNodes().filter(node => {
+                        return node.localName == 'kct-kanban-panel';
+                    }),
+                    sizes = this.__getBodySize(),
+                    columnWidth = ((sizes.width - this.columns * 15) - 15) / this.columns,
+                    height = this.__getBodyHeight(),
+                    width = 0;
+
+                panels.forEach(panel => {
+                    panel.width = columnWidth;
+                    width += (columnWidth + 15);
+                });
+
+                width += 15;
+
+                this.$['panel-container'].style.width = width + 'px';
+                this.$['panel-container'].style.height = height + 'px';
+            }
+        }
+        customElements.define(KctKanban.is, KctKanban);
+    </script>
+</dom-module>

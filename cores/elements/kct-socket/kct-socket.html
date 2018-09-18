@@ -1,0 +1,65 @@
+<link rel="import" href="kct-socket-manager.html">
+
+<dom-module id="kct-socket">
+    <script>
+        customElements.whenDefined('kct-socket-manager').then(() => {
+            let Manager = customElements.get('kct-socket-manager');
+
+            class KctSocket extends Polymer.Element {
+                static get is() {
+                    return 'kct-socket';
+                }
+
+                static get properties() {
+                    return {
+                        manager: { type: String },
+                        session: { type: String, notify: true }
+                    };
+                }
+
+                ready() {
+                    super.ready();
+                    this._ensureAttribute('hidden', true);
+                    let managerInstance = Manager.get(this.manager);
+
+                    if (managerInstance) {
+                        managerInstance.register(this);
+                    }
+                }
+
+                disconnectedCallback() {
+                    let managerInstance = Manager.get(this.manager);
+                    if (managerInstance) {
+                        managerInstance.unregister(this);
+                    }
+
+                    super.disconnectedCallback();
+                }
+
+                send(event, data) {
+                    let managerInstance = Manager.get(this.manager);
+                    if (managerInstance) {
+                        managerInstance.emit(event, data);
+                    }
+                }
+
+                emit(event, data = {}) {
+                    data.__event = event;
+                    data.__action = 'emit';
+                    this.send('emit', data);
+                }
+
+                broadcast(event, data = {}) {
+                    data.__event = event;
+                    data.__action = 'broadcast';
+                    this.send('broadcast', data);
+                }
+
+            }
+
+            customElements.define(KctSocket.is, KctSocket);
+
+        });
+        
+    </script>
+</dom-module>

@@ -1,0 +1,78 @@
+<link rel="import" href="../../mixins/resolver.html">
+
+<dom-module id="kct-file">
+    <template>
+        <input type="file" accept$="[[ accept ]]" on-change="__onInputChange">
+    </template>    
+    <script>
+        class KctFile extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+            static get is() {
+                return 'kct-file';
+            }
+            static get properties() {
+                return {
+                    accept: { type: String },
+                    image: { type: String, notify: true },
+                    previewEnabled: { type: Boolean, value: false }
+                }
+            }
+            static get observers() {
+                return [
+                    '__previewEnabledChanged(previewEnabled)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__readerHandler = this.__onReaderLoad.bind(this);
+                this.__reader = new FileReader();
+            }
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+                this.__input = this.shadowRoot.querySelector('input');
+            }
+            connectedCallback() {
+                super.connectedCallback();
+                this.__reader.addEventListener('load', this.__readerHandler);
+            }
+            disconnectedCallback() {
+                super.disconnectedCallback();
+                this.__reader.removeEventListener('load', this.__readerHandler);
+            }
+            browse() {
+                this.__input.click();
+            }
+            reset() {
+                this.__input.value = '';
+
+                if (this.previewEnabled) {
+                    this.set('image', '');
+                }
+            }
+            file() {
+                return this.__input;
+            }
+            __previewEnabledChanged(enabled) {
+                let accept;
+                if (enabled) {
+                    accept = 'image/jpeg, image/png, image/gif';    
+                }
+                this.set('accept', accept);
+            }
+            __onInputChange(e) {
+                let event = new e.constructor(e.type, e);
+                this.dispatchEvent(event);
+                
+                if (this.previewEnabled) {
+                    let file = this.__input.files[0];
+                    this.__reader.readAsDataURL(file);    
+                }
+            }
+            __onReaderLoad(e) {
+                let image = this.__reader.result;
+                this.set('image', image);
+            }
+        }
+        customElements.define(KctFile.is, KctFile);
+    </script>
+</dom-module>

@@ -1,0 +1,227 @@
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../kct-layouts/kct-hbox.html">
+
+<dom-module id="kct-search">
+    <template>
+        <style>
+            :host { 
+                display: block; 
+                overflow: hidden;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 5;
+                max-height: 0;
+                box-shadow:0 1px 2px rgba(0,0,0,0.15),0 -1px 0px rgba(0,0,0,0.02);
+
+                transition-property: all;
+                transition-duration: .3s;
+                transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
+            }
+            :host([opened]) {
+                max-height: 80px;
+            }
+            [hidden] {
+                display: none;
+            }
+            .wrapper {
+                padding: 5px;
+                background-color: var(--paper-grey-100);
+            }
+            :host([extra-size]) .wrapper {
+                padding: 5px 3px;
+            }
+            paper-menu-button {
+                padding: 0;
+            }
+            paper-checkbox {
+                font-size: 13px;
+                --paper-checkbox-margin: 0;
+
+            }
+            paper-input {
+                --paper-input-container-label: { 
+                    font-size: 14px;
+                };
+                --paper-input-container-input: { 
+                    font-size: 14px;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+            }
+            paper-item {
+                --paper-item-selected: { font-weight: normal;  };
+                --paper-item-min-height: 36px;
+            }
+            .item-divider {
+                height: 1px;
+                border-top: 1px solid #ccc;
+                margin: 8px 0;
+            }
+        </style>
+        
+        <div class$="wrapper [[ __extraClass ]]">
+            <kct-hbox>
+                <div>
+                    <paper-menu-button ignore-select no-animations title="Columns">
+                        <paper-icon-button icon="list" slot="dropdown-trigger"></paper-icon-button>
+                        <paper-listbox slot="dropdown-content">
+                            <paper-item>
+                                <paper-checkbox on-change="__onSelectToggle" checked="{{ select }}">Select All</paper-checkbox>
+                            </paper-item>
+                            <div class="item-divider"></div>
+                            <template is="dom-repeat" items="[[ fields ]]">
+                                <paper-item>
+                                    <paper-checkbox on-change="__onSelectFieldToggle" checked="{{ item.checked }}">[[ item.text ]]</paper-checkbox>
+                                </paper-item>
+                            </template>
+                        </paper-listbox>
+                    </paper-menu-button>
+                    <paper-icon-button icon="search"></paper-icon-button>
+                </div>
+                <div class="flex">
+                    <paper-input id="input" value="{{ query }}" placeholder="Search for anything..." no-label-float></paper-input>
+                </div>
+                <div>
+                    <paper-icon-button on-tap="__onClearTap" icon="clear" hidden$="[[ __hideClearButton ]]"></paper-icon-button>
+                    <paper-icon-button on-tap="__onCloseTap" icon="expand-less"></paper-icon-button>
+                </div>
+            </kct-hbox>    
+        </div>
+
+    </template>
+    <script>
+        class KctSearch extends Polymer.Element {
+            static get is() {
+                return 'kct-search';
+            }
+            static get properties() {
+                return {
+                    query: { type: String, value: '', notify: true },
+                    fields: { type: Array, value: () => ([]) },
+                    delay: { type: Number, value: 300 },
+                    opened: { type: Boolean, value: false, reflectToAttribute: true },
+                    select: { type: Boolean, value: true, reflectToAttribute: true },
+                    extraSize: { type: Boolean, value: false },
+
+                    __extraClass: {
+                        type: String,
+                        computed: '__computeExtraClass(extraSize)'
+                    }
+                }
+            }
+            static get observers() {
+                return [
+                    '__queryChanged(query)',
+                    '__fieldsChanged(fields.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__initialization = true;
+                this.__silent = false;
+                this.__hideClearButton = true;
+            }
+            ready() {
+                super.ready();
+            }
+            open() {
+                this.set('opened', true);
+                this.__focus = Polymer.Debouncer.debounce(
+                    this.__focus,
+                    Polymer.Async.timeOut.after(300),
+                    () => {
+                        this.$.input.focus();
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__focus);
+            }
+            close() {
+                this.set('opened', false);
+            }
+            toggle() {
+                this.set('opened', ! this.opened);
+            }
+            __computeExtraClass(extraSize) {
+                return extraSize ? 'extra' : '';
+            }
+            __fieldsChanged(changed) {
+                if (changed.path == 'fields') {
+                    this.fields.forEach((f, i) => {
+                        this.set('fields.' + i + '.checked', this.select);
+                    });
+                }
+            }
+            __fireEvent() {
+                if (this.__initialization) {
+                    this.__initialization = false;
+                    return;
+                }
+
+                let fields = this.fields.filter(f => f.checked).map(f => f.name),
+                    query = this.query;
+
+                let e = new CustomEvent('query', {
+                    detail: {
+                        query: query,
+                        fields: JSON.stringify(fields)
+                    }
+                });
+                
+                this.dispatchEvent(e);
+            }
+            __queryChanged(query) {
+                if (query) {
+                    this.set('__hideClearButton', false);
+                } else {
+                    this.set('__hideClearButton', true);
+                }
+
+                this.__query = Polymer.Debouncer.debounce(
+                    this.__query,
+                    Polymer.Async.timeOut.after(this.delay),
+                    this.__fireEvent.bind(this)
+                );
+                
+                Polymer.enqueueDebouncer(this.__query);
+            }
+            __onSelectFieldToggle() {
+                let checks = this.fields.filter(f => f.checked === true);
+                if (checks.length === this.fields.length) {
+                    this.set('select', true);
+                } else {
+                    this.set('select', false);
+                }
+                this.__fireEvent();
+            }
+            __onClearTap() {
+                this.set('query', '');
+            }
+            __onCloseTap() {
+                this.close();
+            }
+            __onSelectToggle(e) {
+                let checked = e.target.checked;
+
+                this.fields.forEach((f, i) => {
+                    let p = 'fields.' + i + '.checked';
+                    this.set(p, checked);
+                });
+
+                this.__fireEvent(); 
+                
+            }
+        }
+
+        customElements.define(KctSearch.is, KctSearch);
+    </script>
+</dom-module>

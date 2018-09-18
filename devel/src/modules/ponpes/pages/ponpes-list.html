@@ -1,0 +1,110 @@
+<dom-module id="ponpes-list">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .item {
+                color: #333;
+            }
+            .item .card-actions {
+                text-align: center;
+            }
+            .item .card-actions paper-button {
+                padding: 3px 5px;
+                font-size: 14px;
+                text-transform: none;
+            }
+            .item .card-header h3 {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--google-red-500);
+                margin: 0;
+            }
+            .item .card-meta {
+                font-size: 12px;
+                margin: 0 0 8px 0;
+                color: var(--paper-blue-grey-500);
+            }
+            .item .card-meta iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="Pesantren" desc="Database Pesantren" hide-nav>
+                <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Record</paper-button>
+            </module-header-block>
+            <div class="flex scroll-y padding">
+                <kct-column columns="5">
+                    <template is="dom-repeat" items="[[ records ]]">
+                        <div class="item">
+                            <paper-card image="[[ item.img_gedung_thumb ]]&w=200&h=100">
+                              <div class="card-content">
+                                <div class="card-header">
+                                    <h3>[[ item.nama_ponpes ]]</h3>
+                                    <div class="card-meta">
+                                        <span>[[ item.alamat ]], [[ item.kelurahan ]], Kab. [[ item.nama_kota ]]</span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    Tipe, manhaj dan keterangan tambahan
+                                </div>
+                              </div>
+                              <div class="card-actions">
+                                    <paper-button on-tap="__onDetailTap">Detail</paper-button>
+                                    <paper-button on-tap="__onRemoveTap">Hapus</paper-button>
+                              </div>
+                            </paper-card>
+                        </div>
+                        
+                    </template>
+                </kct-column>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class PonpesList extends KctView {
+            static get is() {
+                return 'ponpes-list';
+            }
+            static get properties() {
+                return {
+                    records: { type: Array, value: () => ([]) }
+                }
+            }
+            handleRouteParams(page) {
+                if (page != this.id) return;
+                this.loadRecords();
+            }
+            loadRecords() {
+                this.$.ajax.GET('/ponpes').then(res => {
+                    if (res.success) {
+                        this.set('records', res.data);
+                    }
+                });
+            }
+            __onAddTap() {
+                this.set('route.path', '/ponpes/create');
+            }
+            __onDetailTap(e) {
+                let item = e.model.item;
+                this.set('route.path', '/ponpes/' + item.id_ponpes + '/home');
+            }
+            __onRemoveTap() {
+                this.confirm('Konfirmasi', 'Menghapus data pesantren akan menghapus semua dokumen yang berkaitan. Lanjutkan?').then(b => {
+                    if (b == 'yes') {
+                        this.loadRecords();
+                    }
+                });
+            }
+        }
+        customElements.define(PonpesList.is, PonpesList);
+    </script>
+</dom-module>

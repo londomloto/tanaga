@@ -1,0 +1,338 @@
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../mixins/dialog.html">
+<link rel="import" href="../../../mixins/resolver.html">
+<link rel="import" href="../../kct-layouts/kct-vbox.html">
+<link rel="import" href="../../kct-layouts/kct-hbox.html">
+<link rel="import" href="../../kct-ajax/kct-ajax.html">
+
+<dom-module id="link-editor">
+    <template>
+        <style include="theme-helper">
+            kct-vbox {
+                margin-top: 0;
+                padding: 0;
+            }
+            kct-vbox > .flex {
+                overflow-y: auto;
+                position: relative;
+            }
+            .header {
+                padding: 24px;
+                background-color: var(--paper-grey-300);
+            }
+            .actions {
+                background-color: var(--app-danger);
+                padding: 8px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            .actions paper-button {
+                color: #ffffff;
+                height: 40px;
+            }
+            #dialog {
+                width: 800px;
+                height: 100%;
+            }
+            .form-group {
+                margin-bottom: 10px;
+            }
+            paper-tabs {
+                background-color: var(--paper-grey-300);
+                --paper-tabs-selection-bar-color: var(--app-danger);
+            }
+            paper-tab,
+            paper-tab:focus {
+                font-size: 15px;
+                font-weight: 300;
+            }
+
+            .page[name=properties] {
+                padding: 0 24px;
+            }
+            .form-group {
+                margin-top: 10px;
+                margin-bottom: 0;
+            }
+            .form-group > label {
+                font-size: 13px;
+                display: block;
+                color: rgb(33,33,33);
+            }
+            .form-group > paper-radio-group {
+                position: relative;
+                left: -10px;
+            }
+            .table-editable tr > th + th,
+            .table-editable tr > td + td {
+                border-left: 1px solid #DDD;
+            }
+            .table-editable tr th {
+                text-align: center !important;
+            }
+            .table-editable td {
+                padding: 0 8px;
+            }
+            .table-editable td paper-input {
+                --paper-input-container-underline: {
+                    display: none;
+                };
+            }
+            .table-editable td vaadin-combo-box {
+                --paper-input-container-underline: {
+                    display: none;
+                };
+            }
+            .table-editable td paper-input.center {
+                --paper-input-container-input: {
+                    text-align: center;
+                };
+            }
+            .table-editable td paper-icon-button {
+                padding: 2px;
+                width: 28px;
+                height: 28px;
+                margin-top: 8px;
+            }
+            paper-fab {
+                position: absolute;
+                right: 24px;
+                bottom: 24px;
+            }
+            .code {
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-input: {
+                    font-family: Monaco, Consolas, 'Courier New', Courier;
+                }
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-dialog id="dialog" on-iron-overlay-closed="__onClose" modal>
+            <kct-vbox>
+                <div class="header">
+                    <h2 class="f-300">Link Editor</h2>
+                </div>
+                <div class="flex">
+                    <paper-tabs selected="{{ page }}" attr-for-selected="name">
+                        <paper-tab name="properties">Properties</paper-tab>
+                        <!-- <paper-tab name="datasource">Data Source</paper-tab> -->
+                        <paper-tab name="conditions">Conditions</paper-tab>
+                    </paper-tabs>
+                    <div class="panes">
+                        <iron-pages selected="[[ page ]]" attr-for-selected="name">
+                            <div class="page" name="properties">
+                                <kct-hbox>
+                                    <div class="flex">
+                                        <div class="p-r">
+                                            <paper-input label="ID" name="id" value="{{ props.guid }}" disabled></paper-input>
+                                            <paper-input label="Label" name="label" value="{{ props.label }}" on-change="__onInputChange"></paper-input>
+                                            <paper-input label="Source" name="source" value="{{ props.source }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Target" name="target" value="{{ props.target }}" on-change="__onInputChange"></paper-input>        
+                                            <div class="form-group">
+                                                <label>Smooth</label> 
+                                                <paper-radio-group selected="{{ props.smooth }}" attr-for-selected="value">
+                                                    <paper-radio-button value="1">Enabled</paper-radio-button>
+                                                    <paper-radio-button value="0">Disabled</paper-radio-button>
+                                                </paper-radio-group>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="p-l">
+                                            <paper-input label="Smoothness (px)" value="{{ props.smoothness }}"></paper-input>        
+                                            <div class="form-group">
+                                                <label>Convex</label> 
+                                                <paper-radio-group selected="{{ props.convex }}" attr-for-selected="value">
+                                                    <paper-radio-button value="1">Enabled</paper-radio-button>
+                                                    <paper-radio-button value="0">Disabled</paper-radio-button>
+                                                </paper-radio-group>
+                                            </div>
+                                            <paper-input label="Fill color" value="none" disabled></paper-input>        
+                                            <paper-input label="Stroke color" name="stroke" value="{{ props.stroke }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Stroke width (px)" value="2" disabled></paper-input>            
+                                        </div>
+                                    </div>
+                                </kct-hbox>
+                            </div>
+                            <!-- <div class="page" name="datasource">
+                                <div class="p-l p-r">
+                                    <paper-textarea value="{{ props.dataSource }}" max-rows="10" class="code" label="SQL Query"></paper-textarea>
+                                </div>
+                            </div> -->
+                            <div class="page" name="conditions">
+                                <div class="table-responsive">
+                                    <table class="table bordered table-editable">
+                                        <thead>
+                                            <tr>
+                                                <th>FIELD</th>
+                                                <th style="width: 150px;">COMPARISON</th>
+                                                <th>CONDITION</th>
+                                                <th style="width: 120px;">OPERATOR</th>
+                                                <th style="width: 32px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template is="dom-repeat" items="{{ params }}">
+                                                <tr>
+                                                    <td><paper-input value="{{ item.field }}" no-label-float></paper-input></td>
+                                                    <td>
+                                                        <!-- <paper-input value="{{ item.comparison }}" class="center" no-label-float></paper-input> -->
+                                                        <vaadin-combo-box 
+                                                            value="{{ item.comparison }}" 
+                                                            items="[[ __comparisons ]]" 
+                                                            item-label-path="label" 
+                                                            item-value-path="value" 
+                                                            no-label-float>></vaadin-combo-box>
+                                                    </td>
+                                                    <td><paper-input value="{{ item.value }}" no-label-float></paper-input></td>
+                                                    <td>
+                                                        <!-- <paper-input value="{{ item.operator }}" class="center" no-label-float></paper-input> -->
+                                                        <vaadin-combo-box 
+                                                            value="{{ item.operator }}" 
+                                                            items="[[ __operators ]]" 
+                                                            item-label-path="label" 
+                                                            item-value-path="value" 
+                                                            no-label-float>></vaadin-combo-box>
+                                                    </td>
+                                                    <td><paper-icon-button on-tap="__onDeleteParamTap" icon="clear"></paper-icon-button></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>    
+                                </div>
+                                
+                                <paper-fab class="fab-raised" icon="add" on-tap="__onAddConditionTap"></paper-fab>
+                            </div>
+                        </iron-pages>
+                    </div>
+                </div>
+                <div class="actions">
+                    <paper-button on-tap="__onButtonSaveTap">Update</paper-button>
+                    <paper-button on-tap="__onButtonCloseTap">Close</paper-button>
+                </div>    
+            </kct-vbox>
+        </paper-dialog>
+    </template>
+    <script>
+        class LinkEditor extends Mixins(Polymer.Element).use(Mixins.Dialog, Mixins.Resolver) {
+            static get is() {
+                return 'link-editor';
+            }
+            static get properties() {
+                return {
+                    link: { type: Object },
+                    page: { type: String, value: 'properties' },
+                    props: { type: Object },
+                    params: { type: Array, value: () => ([]) }
+                };
+            }
+            static get observers() {
+                return [
+                    '__linkChanged(link.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__redraw = {};
+                this.__comparisons = [
+                    { label: '=', value: '=' },
+                    { label: 'IS', value: 'is' },
+                    { label: 'IS NOT NULL', value: 'is not null' },
+                    { label: 'CONTAINS', value: 'contains' },
+                    { label: '<>', value: '<>' },
+                    { label: '<', value: '<' },
+                    { label: '<=', value: '<=' },
+                    { label: '>', value: '>' },
+                    { label: '>=', value: '>=' },
+                    { label: 'IN', value: 'in' },
+                    { label: 'BETWEEN', value: 'between' }
+                ];
+                this.__operators = [
+                    { label: '-', value: '' },
+                    { label: 'AND', value: 'AND' },
+                    { label: 'OR', value: 'OR' }
+                ];
+            }
+            open() {
+                this.__redraw = {};
+                this.set('page', 'properties');
+
+                this._relocate();
+                this.$.dialog.open();
+            }
+            close() {
+                this.$.dialog.close();
+            }
+            __linkChanged(changed) {
+                if (changed.path == 'link' && this.link) {
+                    let data = this.link.toJson();
+
+                    this.set('props', data.props);
+                    this.set('params', data.params);
+                }
+            }
+            __dataSourceChanged(sql) {
+                if (sql) {
+                    this.$.ajax.POST('/bpmn/diagrams/source', { sql: sql }).then(res => {
+                        console.log(res);
+                    });
+                }
+            }
+            __onInputChange(e) {
+                let key = e.target.name,
+                    val = e.target.value;
+
+                this.__redraw[key] = val;
+            }
+            __onClose() {
+                this._restore();
+            }
+            __onButtonSaveTap() {
+                if (this.props) {
+                    this.link.props = this.props;
+
+                    Object.keys(this.__redraw).forEach(k => {
+                        let v = this.__redraw[k],
+                            f = this.link[k];
+
+                        if (f && typeof f == 'function') {
+                            f.call(this.link, v);
+                        }
+                    });
+                }
+                this.close();
+            }
+            __onButtonCloseTap() {
+                this.close();
+            }
+            __onDeleteParamTap(e) {
+                let index = e.model.index;
+                this.splice('params', index, 1);
+            }
+            __onAddConditionTap() {
+                this.push('params', {
+                    field: '',
+                    comparison: '=',
+                    value: '',
+                    operator: ''
+                });
+            }
+        }
+        customElements.define(LinkEditor.is, LinkEditor);
+    </script>
+</dom-module>

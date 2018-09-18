@@ -1,0 +1,264 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../kct-config/kct-config.html">
+<link rel="import" href="../kct-router/kct-router.html">
+<link rel="import" href="../kct-pages/kct-pages.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="../kct-auth/kct-auth.html">
+<link rel="import" href="../kct-role/kct-role.html">
+<link rel="import" href="../kct-toast/kct-toast.html">
+<link rel="import" href="plugins/screen-locker.html">
+
+<dom-module id="kct-app">
+    
+    <template>
+
+        <style>
+            :host { 
+                display: block; 
+                height: 100%; 
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+        
+        <kct-config id="config" name="[[ name ]]" config="{{ config }}"></kct-config>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+        <kct-router 
+            id="router" 
+            config="[[ config ]]" 
+            routes="[[ routes ]]" 
+            route="{{ route }}" 
+            state="{{ state }}" 
+            fallback="[[ fallback ]]" 
+            on-before-route="__onBeforeRoute"></kct-router>
+
+        <kct-auth id="auth" config="[[ config ]]"></kct-auth>
+        <kct-role id="role" config="[[ config ]]"></kct-role>
+
+        <template is="dom-if" if="[[ state.layout ]]">
+            <kct-pages id="pages" selected="{{ state.layout }}" attr-for-selected="name" fallback-selection="error" lazy-load>
+                <main-layout  name="main"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/main-layout.html"></main-layout>
+                <auth-layout  name="auth"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/auth-layout.html"></auth-layout>
+                <page-layout  name="page"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/page-layout.html"></page-layout>
+                <error-layout name="error" config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/error-layout.html"></error-layout>
+            </kct-pages>
+        </template>
+
+    </template>
+
+    <script>
+        class KctApp extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+                
+            static get is() { 
+                return 'kct-app'; 
+            }
+
+            static get properties() {
+                return {
+                    name: { type: String, reflectToAttribute: true },
+                    fallback: { type: String },
+                    routes: {
+                        type: Object,
+                        notify: true,
+                        value: {
+                            '/login': {
+                                layout: 'auth',
+                                module: 'auth',
+                                page: 'login-page',
+                                authentication: false
+                            },
+                            '/invitation/:token': {
+                                layout: 'auth',
+                                module: 'auth',
+                                page: 'invitation-page',
+                                authentication: false
+                            },
+                            '/projects/:project': {
+                                module: 'projects',
+                                page: 'project-page'
+                            },
+                            '/settings/:setting/:params': {
+                                module: 'settings',
+                                page: 'settings-page'
+                            },
+                            '/settings/:setting': {
+                                module: 'settings',
+                                page: 'settings-page'
+                            },
+                            '/worksheet/:params': {
+                                module: 'worksheet',
+                                page: 'worksheet-page'
+                            }
+                        }
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__appTitleChanged(config.app_title)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__maxRedir = 1;
+                this.__numRedir = 0;
+            }
+
+            ready() {
+                super.ready();
+                this.__loadConfig();
+
+                // intercept 401, 403
+                KctAjax.interceptor({
+                    response: (res) => {
+                        if ( ! res.success && res.status !== undefined) {
+                            if (this.state.layout) {
+                                switch(true) {
+                                    case (res.status == 401):
+                                        this.__lock();
+                                        break;
+                                    case (res.status == 403):
+                                        this.__toast('Forbidden', res.message, 'danger');
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            __toast(title, message, type = 'warn') {
+                let toast = document.createElement('kct-toast');
+
+                toast.title = title;
+                toast.message = message;
+                toast.type = type;
+                toast.icon = 'close';
+                toast.duration = 2000;
+                
+                document.body.appendChild(toast);
+                
+                toast.open();
+            }
+
+            // lock screen
+            __lock() {
+                let locker = this.shadowRoot.querySelector('screen-locker');
+                
+                if ( ! locker) {
+                    locker = document.createElement('screen-locker');
+                    locker.route = this.route;
+                    locker.config = this.config;
+
+                    locker.addEventListener('authenticate', (e) => {
+                        if (e.detail.success) {
+                            this.$.auth.user = e.detail.user;
+                        }
+                    });
+
+                    locker.addEventListener('close', () => {
+                        this.set('route.path', '/login');
+                    });
+
+                    this.shadowRoot.appendChild(locker);
+                }
+
+                locker.open();
+            }
+
+            /**
+             * Load application config from server
+             */
+            __loadConfig() {
+                let config = Object.assign({}, this.config),
+                    version = config.app_version;
+
+                this.$.ajax.GET('/config/load').then(res => {
+                    let data = res.data;
+                    
+                    if (data) {
+                        if (version != data.app_version) {
+                            console.info && console.info('INFO => There are updates available for your application. Clear your browser cache to apply new updates.');
+                            // this.$['update-alert'].open();
+                        }
+                        
+                        Object.keys(data).forEach(k => {
+                            config[k] = data[k];
+                        });
+
+                        this.set('config', config);
+                    }
+                });
+
+            }
+
+            __appTitleChanged(title) {
+                this._debounce(
+                    'apptitle',
+                    () => {
+                        document.title = title;
+                    },
+                    1000
+                );
+            }
+
+            __onBeforeRoute(e) {
+                let state = e.detail.state;
+
+                if (state.authentication) {
+                    e.preventDefault();
+
+                    this.$.auth.authenticate().then(authenticated => {
+                        if ( ! authenticated) { // 401
+                            if (this.__numRedir <= this.__maxRedir) {
+                                this.__numRedir++;
+                                if ( ! this.state.layout) {
+                                    let delay = setTimeout(() => {
+                                        clearTimeout(delay);
+                                        delay = null;
+                                        this.set('route.path', '/login');
+                                    }, 1);
+                                }
+                            } else {
+                                this.__numRedir = 0;
+                                this.set('route.path', '/net-error');
+                            }
+                        } else {
+                            if (state.authorization) { // 403
+                                this.$.role.access(state).then(authorized => {
+                                    if ( ! authorized) { // 403
+                                        if (this.__numRedir <= this.__maxRedir) {
+                                            this.__numRedir++;
+                                            this.set('route.path', '/forbidden');
+                                        } else {
+                                            this.__numRedir = 0;
+                                            this.set('route.path', '/net-error');
+                                        }   
+                                    } else {
+                                        this.__numRedir = 0;
+                                        this.set('state', state);
+                                        this.set('route.event', 'finish');    
+                                    }
+                                });
+                            } else {
+                                this.__numRedir = 0;
+                                this.set('state', state);
+                                this.set('route.event', 'finish');   
+                            }
+                        }
+                    });
+                }
+                
+            }
+
+        }
+
+        customElements.define(KctApp.is, KctApp);
+    </script>
+
+</dom-module>

@@ -1,0 +1,61 @@
+<dom-module id="maps-help-service">
+    <template>
+        <style include="theme-helper">
+            .container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 50px;
+                overflow-y: auto;    
+            }
+            ul > li {
+                font-weight: 300;
+            }
+        </style>
+        <div class="container custom-scroll">
+            <div class="p-a">
+                <h2 class="f-300">Need a help?</h2>
+                <div class="m-t">
+                    <p class="f-300">Web mapping provider:</p>    
+                    <ul>
+                        <li>Map Server</li>
+                        <li>WMS</li>
+                        <li>Google Maps (online)</li>
+                        <li>MapBox (online)</li>
+                        <li>OpenStreetMap (online)</li>
+                        <li>Bing Maps (online)</li>
+                    </ul>
+                </div>
+                <div class="m-t">
+                    <p class="f-300">Web mapping frameworks:</p>    
+                    <ul>
+                        <li>OpenLayers</li>
+                        <li>Leaflet</li>
+                        <li>Google Map</li>
+                        <li>MapBox</li>
+                        <li>Modest Maps</li>
+                        <li>Skobbler</li>
+                    </ul>
+                </div>
+                <div class="m-t">
+                    <p class="f-300">Web mapping styling:</p>    
+                    <ul>
+                        <li>CartoCSS</li>
+                        <li>TileMill</li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </template>    
+    <script>
+        class MapsHelpService extends Polymer.Element {
+            static get is() {
+                return 'maps-help-service';
+            }
+        }
+
+        customElements.define(MapsHelpService.is, MapsHelpService);
+    </script>
+</dom-module>

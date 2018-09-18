@@ -1,0 +1,470 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="users-permissions-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: 100%;
+            }
+            .header-container,
+            .body-container {
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            td, th {
+                font-size: 13px;
+            }
+            th {
+                padding: 8px 16px;
+            }
+            th.column-input {
+                padding-left: 0;
+                padding-right: 0;
+                width: 232px;
+            }
+            td {
+                padding: 4px 16px;
+            }
+            th {
+                border-bottom: 1px solid #ccc;
+            }
+            th > span {
+                display: block;
+                text-align: center;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                font-weight: 400;
+                font-size: 14px;
+            }
+            tr {
+                border-bottom: 1px solid #f2f2f2;
+            }
+            tr.level-1 {
+                background-color: var(--paper-grey-100);
+            }
+
+            
+            tr.level-3 td:first-child {
+                padding-left: 64px;
+            }
+            th + th,
+            td + td {
+                border-left: 1px solid #dfdfdf;
+            }
+            tr.level-1 td {
+                font-weight: 400;
+            }
+            tr.level-2 td:first-child {
+                padding-left: 44px;
+                font-weight: 400;
+            }
+            .column-input {
+                width: 200px;
+                text-align: center;
+            }
+            .scroll-overlay {
+                position: absolute;
+                background-color: #fff;
+                top: 47px;
+                right: 0;
+                padding: 13px 8px;
+            }
+
+            .checkbox-wrapper {
+                position: relative;
+            }
+            kct-checkbox {
+                position: absolute;
+                top: -24px;
+                --paper-checkbox-label-spacing: 0;
+            }
+            vaadin-combo-box {
+                padding: 0;
+                --paper-input-container-input: { font-size: 14px; font-weight: 400;  };
+                --paper-input-container-label: { font-size: 14px; font-weight: 400;  };
+                --paper-input-container-underline: { display: none; };
+                --paper-input-container-underline-focus: { display: none; };
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-vbox>
+            <page-header-block icon="lock-outline" title="Settings - ACL" description="Users Permissions">
+                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                <paper-button on-tap="__onResetTap"><iron-icon icon="settings-backup-restore"></iron-icon>&nbsp;Reset Default</paper-button>
+            </page-header-block>
+            <div class="flex">
+                <kct-vbox>
+                    <div class="header-container">
+                        <table>
+                            <tr>
+                                <th class="column-label"><span>Description</span></th>
+                                <th class="column-input">
+                                    <vaadin-combo-box
+                                        label="Select User" 
+                                        items="[[ __users1 ]]" 
+                                        value="{{ selectedUser1 }}"
+                                        item-value-path="su_id" 
+                                        item-label-path="su_fullname" 
+                                        no-label-float></vaadin-combo-box>
+                                </th>
+                                <th class="column-input">
+                                    <vaadin-combo-box
+                                        label="Select User" 
+                                        items="[[ __users2 ]]" 
+                                        value="{{ selectedUser2 }}"
+                                        item-value-path="su_id" 
+                                        item-label-path="su_fullname" 
+                                        no-label-float></vaadin-combo-box>
+                                </th>
+                            </tr>
+                        </table>
+                    </div>    
+                    <div class="body-container flex scroll-y">
+                        <table>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ setup ]]">
+                                    <tr class="level-1">
+                                        <td class="column-label">
+                                            <iron-icon icon="label-outline" style="position: relative; top: -2px;"></iron-icon> 
+                                            <span>[[ item.module.sm_title ]] Module</span>
+                                            <template is="dom-if" if="[[ item.menu ]]">
+                                                <span class="f-400">( Menu: <span class="text-danger">[[ item.menu.smn_title_path ]]</span> )</span>
+                                            </template>
+                                        </td>
+                                        <td class="column-input">
+                                            <template is="dom-if" if="[[ item.menu ]]">
+                                                <div class="checkbox-wrapper">
+                                                    <kct-checkbox value="{{ item.menu.smn_selected_1 }}"></kct-checkbox>
+                                                </div> 
+                                            </template>
+                                        </td>
+                                        <td class="column-input">
+                                            <template is="dom-if" if="[[ item.menu ]]">
+                                                <div class="checkbox-wrapper">
+                                                    <kct-checkbox value="{{ item.menu.smn_selected_2 }}"></kct-checkbox>
+                                                </div>    
+                                            </template>
+                                        </td>
+                                    </tr>    
+                                    <!-- <template is="dom-if" if="[[ item.menus.length ]]">
+                                        <tr class="level-2">
+                                            <td>Menus </td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                        <template is="dom-repeat" items="[[ item.menus ]]" as="menu">
+                                            <tr class="level-3">
+                                                <td>&bull; [[ menu.smn_title ]]</td>
+                                                <td class="column-input">
+                                                    <div class="checkbox-wrapper">
+                                                        <kct-checkbox value="{{ menu.smn_selected_1 }}" true-value="1" false-value="0"></kct-checkbox>
+                                                    </div>
+                                                </td>
+                                                <td class="column-input">
+                                                    <div class="checkbox-wrapper">
+                                                        <kct-checkbox value="{{ menu.smn_selected_2 }}" true-value="1" false-value="0"></kct-checkbox>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>    
+                                    </template> -->
+                                    <template is="dom-if" if="[[ item.capabilities.length ]]">
+                                        <tr class="level-2">
+                                            <td>Permissions</td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                        <template is="dom-repeat" items="[[ item.capabilities ]]" as="cap">
+                                            <tr class="level-3">
+                                                <td>&bull; [[ cap.smc_description ]]</td>
+                                                <td class="column-input">
+                                                    <div class="checkbox-wrapper">
+                                                        <kct-checkbox value="{{ cap.smc_selected_1 }}" true-value="1" false-value="0"></kct-checkbox>
+                                                    </div>
+                                                </td>
+                                                <td class="column-input">
+                                                    <div class="checkbox-wrapper">
+                                                        <kct-checkbox value="{{ cap.smc_selected_2 }}" true-value="1" false-value="0"></kct-checkbox>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>    
+                                    </template>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </kct-vbox>
+                <div class="scroll-overlay">&nbsp;</div>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class UsersPermissionsPage extends KctView {
+            static get is() {
+                return 'users-permissions-page';
+            }
+            static get properties() {
+                return {
+                    setup: { type: Array },
+                    users: { type: Array },
+                    selectedUser1: { type: Object },
+                    selectedUser2: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__selectedUser1Changed(selectedUser1)',
+                    '__selectedUser2Changed(selectedUser2)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__users1 = [];
+                this.__users2 = [];
+            }
+
+            ready() {
+                super.ready();
+                this.__loadUsers();
+                this.__loadSetup();
+            }
+
+            __loadSetup() {
+                let ajax = this.$.ajax;
+
+                return ajax.GET('/users/users-permissions?display=setup').then(res => {
+                    this.set('setup', res.data);
+                });
+            }
+
+            __loadUsers() {
+                let ajax = this.$.ajax;
+
+                return ajax.GET('/users').then(res => {
+                    let users = res.data;
+
+                    this.set('__users1', users.slice());
+                    this.set('__users2', users.slice());
+                    this.set('users', users);
+                });
+            }
+
+            __loadPermissions(user, combo) {
+                // reset first
+                if ( ! this.setup) return;
+
+                this.setup.forEach((s, i) => {
+                    if (s.menu) {
+                        this.set('setup.' + i + '.menu.smn_selected_' + combo, '0');
+                    }
+
+                    // s.menus.forEach((m, j) => {
+                    //     this.set('setup.' + i + '.menus.' + j + '.smn_selected_' + combo, '0');
+                    // });
+
+                    s.capabilities.forEach((c, j) => {
+                        this.set('setup.' + i + '.capabilities.' + j + '.smc_selected_' + combo, '0');
+                    });
+                });
+
+                if ( ! user) return;
+
+                let ajax = this.$.ajax;
+
+                ajax.GET('/users/users-permissions?display=setup&user=' + user + '&combo=' + combo).then(res => {
+                    let data = res.data;
+
+                    data.forEach((d, i) => {
+                        let setupItem = this.setup.find(s => s.module.sm_id == d.module.sm_id),
+                            setupIndex = setupItem ? this.setup.indexOf(setupItem) : -1,
+                            menuSelected = (d.menu && d.menu['smn_selected_' + combo] == '1') ? true : false,
+                            // menuSelection = d.menus.filter(m => m['smn_selected_' + combo] == '1').map(m => m.smn_id),
+                            permSelection = d.capabilities.filter(c => c['smc_selected_' + combo] == '1').map(c => c.smc_id);
+
+                        if (setupItem) {
+                            if (setupItem.menu && menuSelected) {
+                                this.set('setup.' + setupIndex + '.menu.smn_selected_' + combo, '1');
+                            }
+
+                            // validate menus
+                            // setupItem.menus.forEach((m, j) => {
+                            //     if (menuSelection.indexOf(m.smn_id) !== -1) {
+                            //         this.set('setup.' + setupIndex + '.menus.' + j + '.smn_selected_' + combo, '1');
+                            //     }
+                            // });
+
+                            // validate capabilities
+                            setupItem.capabilities.forEach((c, j) => {
+                                if (permSelection.indexOf(c.smc_id) !== -1) {
+                                    this.set('setup.' + setupIndex + '.capabilities.' + j + '.smc_selected_' + combo, '1');
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+
+            __selectedUser1Changed(user) {
+                this.__loadPermissions(user, 1);
+
+                if (user) {
+                    let users2 = this.users.filter(r => r.su_id != user);
+                    this.set('__users2', users2);
+                } else if (this.users) {
+                    this.set('__users2', this.users.slice());
+                }
+            }
+
+            __selectedUser2Changed(user) {
+                this.__loadPermissions(user, 2);
+
+                if (user) {
+                    let users1 = this.users.filter(r => r.su_id != user);
+                    this.set('__users1', users1);
+                } else if (this.users) {
+                    this.set('__users1', this.users.slice());
+                }
+            }
+            
+            __onSaveTap() {
+                if ( ! this.selectedUser1 && ! this.selectedUser2) {
+                    return;
+                }
+
+                let data = {},
+                    ajax = this.$.ajax;
+
+                if (this.selectedUser1) {
+                    data[this.selectedUser1] = {
+                        menus: [],
+                        permissions: []
+                    };
+                }
+
+                if (this.selectedUser2) {
+                    data[this.selectedUser2] = {
+                        menus: [],
+                        permissions: []
+                    };
+                }
+
+                this.setup.forEach(s => {
+                    if (this.selectedUser1) {
+
+                        if (s.menu && (s.menu.smn_selected_1 == '1')) {
+                            data[this.selectedUser1].menus.push(s.menu.smn_id);
+                        }
+
+                        // s.menus.forEach(m => {
+                        //     if (m.smn_selected_1 == '1') {
+                        //         data[this.selectedUser1].menus.push(m.smn_id);
+                        //     }
+                        // });
+
+                        s.capabilities.forEach(c => {
+                            if (c.smc_selected_1 == '1') {
+                                data[this.selectedUser1].permissions.push(c.smc_id);
+                            } 
+                        });
+                    }
+
+                    if (this.selectedUser2) {
+                        if (s.menu && (s.menu.smn_selected_2 == '1')) {
+                            data[this.selectedUser2].menus.push(s.menu.smn_id);
+                        }
+
+                        // s.menus.forEach(m => {
+                        //     if (m.smn_selected_2 == '1') {
+                        //         data[this.selectedUser2].menus.push(m.smn_id);
+                        //     } 
+                        // });
+
+                        s.capabilities.forEach(c => {
+                            if (c.smc_selected_2 == '1') {
+                                data[this.selectedUser2].permissions.push(c.smc_id);
+                            } 
+                        });
+                    }
+                });
+
+                ajax.POST('/users/users-permissions', data).then(res => {
+                    if (res.success) {
+                        this.toast('Success', 'Users permissions has been saved');
+                    }
+                });
+            }
+
+            __onResetTap() {
+                if ( ! this.selectedUser1 && ! this.selectedUser2) {
+                    return;
+                }
+
+                this.confirm('Confirm', 'Are you sure want to reset to default setup (role based) ?').then(y => {
+                    if (y) {
+                        let data = {},
+                            ajax = this.$.ajax;
+
+                        if (this.selectedUser1) {
+                            data[this.selectedUser1] = {
+                                menus: [],
+                                permissions: []
+                            };
+                        }
+
+                        if (this.selectedUser2) {
+                            data[this.selectedUser2] = {
+                                menus: [],
+                                permissions: []
+                            };
+                        }
+
+                        ajax.POST('/users/users-permissions', data).then(res => {
+                            if (res.success) {
+                                this.toast('Success', 'Users permissions has been saved');
+
+                                if (this.selectedUser1) {
+                                    this.__loadPermissions(this.selectedUser1, 1);
+                                }
+
+                                if (this.selectedUser2) {
+                                    this.__loadPermissions(this.selectedUser2, 2);
+                                }
+
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(UsersPermissionsPage.is, UsersPermissionsPage);
+    </script>
+</dom-module>

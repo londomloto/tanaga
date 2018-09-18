@@ -1,0 +1,320 @@
+<link rel="import" href="../maps-provider.html">
+<link rel="import" href="../../../../bower_components/iron-jsonp-library/iron-jsonp-library.html">
+<link rel="import" href="../../../../bower_components/paper-spinner/paper-spinner.html">
+
+<dom-module id="google-maps-provider">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            #map, #mask {
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1;
+            }
+            #mask {
+                display: none;
+                z-index: 2;
+                background-color: rgba(0,0,0,.2);
+            }
+            #mask.open {
+                display: block;
+            }
+            #mask > paper-spinner {
+                position: absolute;
+                padding: 8px;
+                background-color: #fff;
+                border-radius: 50%;
+                top: 50%;
+                margin-top: -22px;
+                left: 50%;
+                margin-left: -22px;
+            }
+        </style>
+
+        <iron-jsonp-library library-url="[[ __gmapsURL ]]" library-loaded="{{ __gmapsLoaded }}"></iron-jsonp-library>
+
+        <div id="map"></div>
+
+        <div id="mask" class="open">
+            <paper-spinner active></paper-spinner>
+        </div>
+
+    </template>
+    <script>
+        /**
+         * Google Maps Provider
+         * api documentation: https://developers.google.com/maps/documentation/javascript/get-api-key
+         */
+        
+        class GoogleMapsProvider extends MapsProvider {
+            static get is() {
+                return 'google-maps-provider';
+            }
+
+            static get properties() {
+                return {
+                    mapApiUrl: { type: String, value: 'https://maps.googleapis.com/maps/api/js?callback=%%callback%%' },
+                    mapApiKey: { type: String, value: 'AIzaSyBAMRCuP2DSe-T98yTxWp1pDlSfBMS25BA' },
+                    mapClientId: { type: String, value: '' },
+                    mapVersion: { type: String, value:'3.exp' },
+                    mapLanguage: { type: String, value:'' },
+                    mapSignedIn: { type: Boolean, value: false },
+                    mapType: { type: String, value: 'roadmap' },
+                    
+                    __gmapsURL: {
+                        type: String,
+                        computed: '__computeUrl(mapApiUrl, mapApiKey, mapClientId, mapVersion, mapLanguage, mapSignedIn)'
+                    },
+                    
+                    __gmapsLoaded: {
+                        type: Boolean,
+                        value: false
+                    }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__loadedChanged(__gmapsLoaded)'
+                ];
+            }
+
+            get api() {
+                return google.maps;
+            }
+
+            get map() {
+                return this.__gmaps;
+            }
+
+            constructor() {
+                super();
+                this.__gmapsLoading = this._defer();
+                this.__gmapsListeners = {};
+                this.__gmaps = null;
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                this.load();
+            }
+
+            disconnectedCallback() {
+                if (this.__gmaps) {
+                    this.__removeMapListeners();    
+                }
+                super.disconnectedCallback();
+            }
+
+            load() {
+                if (this.__gmaps) {
+                    return Promise.resolve();
+                }
+                return this.__load();
+            }
+
+            mask() {
+                this.$.mask.querySelector('paper-spinner').active = true;
+                this.$.mask.classList.add('open');
+            }
+
+            unmask() {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+                    this.$.mask.querySelector('paper-spinner').active = false;
+                    this.$.mask.classList.remove('open');
+                }, 1000);
+            }
+
+            resize() {
+                if (this.__gmaps) {
+                    let center = Object.assign({}, this.center);
+                    
+                    google.maps.event.trigger(this.__gmaps, 'resize');
+
+                    this.setProperties({
+                        'center.latitude': center.latitude,
+                        'center.longitude': center.longitude
+                    });
+                }
+            }
+
+            pointing() {
+                this.__pointing = this._defer();
+                return this.__pointing.promise;
+            }
+
+            __computeUrl(apiUrl, apiKey, clientId, version, language, signedIn) {
+                let url = apiUrl + '&v=' + version;
+                url += '&libraries=drawing,geometry,places,visualization';
+
+                if (apiKey && ! clientId) {
+                    url += '&key=' + apiKey;
+                }
+
+                if (clientId) {
+                    url += '&client=' + clientId;
+                }
+
+                if (language) {
+                    url += '&language=' + language;
+                }
+
+                if (signedIn) {
+                    url += '&signed_in=' + signedIn;
+                }
+                return url;
+            }
+
+            __loadedChanged(loaded) {
+                if (loaded) {
+                    this.__gmapsLoading.resolve();
+                }
+            }
+
+            __load() {
+                this.mask();
+
+                return this.__gmapsLoading.promise.then(() => {
+                    this.__initMap();
+                    this.unmask();
+                });
+            }
+
+            __initMap() {
+                if (this.__gmaps) {
+                    return;
+                }
+
+                let options = {
+                    zoom: this.zoom,
+                    tilt: this.tilt ? 45 : 0,
+                    mapTypeId: this.mapType
+                };
+
+                this.__gmaps = new google.maps.Map(this.$.map, options);
+                this.__updateCenter();
+                this.__addMapListeners();
+
+                // render markers
+                if (this.markers.length) {
+                    this.markers.forEach((marker) => {
+                        this.__renderMarker(marker);
+                    });
+                }
+            }
+
+            __updateCenter() {
+                if (this.__debounce) {
+                    this.__debounce.cancel();
+                }
+
+                this.__debounce = Polymer.Debouncer.debounce(
+                    this.__debounce,
+                    Polymer.Async.timeOut.after(300),
+                    () => {
+                        if (this.__gmaps) {
+                            let lat = this.center.latitude,
+                                lon = this.center.longitude;
+
+                            let ncenter = new google.maps.LatLng(lat, lon),
+                                ocenter = this.__gmaps.getCenter();
+
+                            if ( ! ocenter) {
+                                this.__gmaps.setCenter(ncenter);
+                            } else {
+                                ocenter = new google.maps.LatLng(ocenter.lat(), ocenter.lng());
+                                if ( ! ocenter.equals(ncenter)) {
+                                    this.__gmaps.panTo(ncenter);
+                                }
+                            }
+                        }
+                    }
+                );
+
+                Polymer.enqueueDebouncer(this.__debounce);
+                
+            }
+
+            __renderMarker(marker = {}) {
+                if ( ! this.__gmaps) {
+                    return;
+                }
+
+                if (marker.gmaps || ! marker.latitude || ! marker.longitude) {
+                    return;    
+                }
+
+                let instance = new google.maps.Marker({
+                    position: {
+                        lat: marker.latitude,
+                        lng: marker.longitude
+                    },
+                    map: this.__gmaps
+                });
+
+                marker.gmaps = instance;
+            }
+
+            __removeMarker(marker) {
+                if (marker.gmaps) {
+                    marker.gmaps.setMap(null);
+                    delete marker.gmaps;
+                }
+            }
+
+            __addMapListeners() {
+                let listeners = this.__gmapsListeners;
+
+                listeners.resize = google.maps.event.addListener(this.__gmaps, 'resize', this.__onGmapResize.bind(this));
+                listeners.click = google.maps.event.addListener(this.__gmaps, 'click', this.__onGmapPointing.bind(this));
+                listeners.center = google.maps.event.addListener(this.__gmaps, 'center_changed', this.__onGmapCenter.bind(this));
+                listeners.zoom = google.maps.event.addListener(this.__gmaps, 'zoom_changed', this.__onGmapZoom.bind(this));
+            }
+
+            __removeMapListeners() {
+                for (let name in this.__gmapsListeners) {
+                    let lsnr = this.__gmapsListeners[name];
+                    google.maps.event.removeListener(lsnr);    
+                    delete this.__gmapsListeners[name];
+                }
+            }
+
+            __hideMask() {
+                this.$.mask.classList.add('hidden');
+            }
+
+            __onGmapResize(e) {
+                this.__updateCenter();
+            }
+
+            __onGmapCenter(e) {
+                var center = this.__gmaps.getCenter();
+                this.setProperties({
+                    'center.latitude': center.lat(),
+                    'center.longitude': center.lng()
+                });
+            }
+
+            __onGmapZoom(e) {
+                this.set('zoom', this.__gmaps.getZoom());
+            }
+
+            __onGmapPointing(e) {
+                if (this.__pointing) {
+                    this.__pointing.resolve({
+                        longitude: e.latLng.lng(),
+                        latitude: e.latLng.lat()
+                    });
+                }
+            }
+        }
+        customElements.define(GoogleMapsProvider.is, GoogleMapsProvider);
+    </script>
+</dom-module>

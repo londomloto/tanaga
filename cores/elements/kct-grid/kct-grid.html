@@ -1,0 +1,1218 @@
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../vendors/ag-grid/ag-grid-style.html">
+<link rel="import" href="../../vendors/ag-grid/ag-grid-style-material.html">
+<link rel="import" href="../../vendors/ag-grid/ag-grid.html">
+<link rel="import" href="../../mixins/resolver.html">
+<!-- <link rel="import" href="../kct-search/kct-search.html"> -->
+<link rel="import" href="../kct-media/kct-media.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="../kct-layouts/kct-hbox.html">
+<link rel="import" href="kct-grid-action.html">
+<!-- <link rel="import" href="kct-grid-search.html"> -->
+
+<dom-module id="kct-grid">
+    <template>
+        <style include="ag-grid-style"></style>
+        <style include="ag-grid-style-material">
+            .ag-material .ag-cell-not-inline-editing {
+                padding: 7px 6px;
+                font-size: 12px;
+                font-weight: 400;
+            }
+
+            .ag-material .ag-cell iron-icon {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+                position: relative;
+                top: -1px;
+            }
+            
+            .ag-material .ag-header-cell iron-icon {
+                position: relative;
+                top: -2px;
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+            }
+
+            .ag-material .ag-cell .ag-selection-checkbox {
+                display: block;
+                height: 100%;
+                position: relative;
+            }
+            .ag-material .ag-cell .ag-selection-checkbox > iron-icon,
+            .ag-material .ag-header-cell .ag-selection-checkbox > iron-icon {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin-top: -10px;
+                margin-left: -10px;
+            }
+            .ag-material .ag-cell-checkbox {
+                padding-left:0;
+                padding-right:0;
+            }
+            .ag-material .ag-cell.text-center {
+                text-align: center;
+            }
+            .ag-material .ag-cell-action {
+                padding-top: 7px;
+            }
+            .ag-material .ag-cell-action paper-button {
+                padding: 0.25rem 0.5rem;
+                font-size: 10px;
+                font-weight: 500;
+            }
+            .ag-material .ag-cell-action paper-button iron-icon {
+                pointer-events: none;
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+            }
+            .ag-material .ag-header-cell {
+                font-size: 13px;
+                font-weight: 500;
+                border-left: 1px solid #DDDDDD;
+                border-right: 1px solid #DDDDDD;
+            }
+            
+            .ag-material .ag-header-cell-label {
+                padding: 8px 6px;
+            }
+            .ag-material .ag-header-cell.text-center .ag-header-cell-label { text-align: center; }
+            .ag-material .ag-header-cell.text-right .ag-header-cell-label { text-align: right; }
+            .ag-material .ag-paging-button {
+                display:inline-block;
+                width:40px;
+                height:40px;
+                background-color:#00aaff;
+                border:none;
+                border-radius:50%;
+                color:#fff;
+                outline:none;
+                position:relative;
+            }
+            .ag-material .ag-paging-button[disabled] {
+                background-color:#dfdfdf;
+            }
+            .ag-material .ag-paging-page-summary-panel {
+                float:right;
+                margin-top: -10px;
+            }
+            .ag-material .ag-cell-focus {
+                outline:none;
+            }
+            .ag-material .ag-cell-action paper-button.btn-icon {
+                padding: 0 0;
+                min-width: 0;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+            }
+            .ag-material .ag-header-row > .ag-header-cell:first-child {
+                border-left-color: transparent;
+            }
+
+            .ag-scrolls .ag-header-row {
+                position: absolute;
+                border-bottom: 1px solid #dfdfdf;
+            }
+
+            .ag-material .ag-ltr .ag-header-group-cell {
+                border-right: none;
+                border-left: 1px solid #dfdfdf;
+            }
+
+            .ag-material .ag-header-group-cell-label {
+                padding: 7px;
+                text-align: center;
+            }
+
+        </style>
+        <style>
+            :host {
+                display: block;
+                height: var(--grid-height, 100%);
+                position: relative;
+            }
+            .inline-block {display: inline-block;}
+            .b-l { 
+                border-left: 1px solid #d2d2d2; 
+            }
+            .text-right { 
+                text-align: right; 
+            }
+            .text-center { text-align: center;  }
+            .grid-panel { 
+                height: 100%;
+                @apply --layout-vertical;
+            }
+            .grid-header.container {
+                padding: 0;
+                border-bottom: 1px solid #dfdfdf;
+                background-color: var(--page-background-color);
+            }
+
+            .grid-header .columns-container {
+                min-height: 53px;
+            }
+            .grid-header .col-navigation {
+                /*border-right: 1px solid #dfdfdf;*/
+                position: relative;
+                width: 40px;
+                padding: 0 2px;
+            }
+            .grid-header .button-back {
+                position: absolute;
+                top: 50%;
+                margin-top: -20px;
+            }
+            .grid-header .col-header {
+                position: relative;
+                padding: 0 10px;
+                /*border-right: 1px solid #dfdfdf;*/
+            }
+            .grid-header .col-header-icon {
+                width: 40px;
+            }
+            .grid-header .col-header-info {
+                padding-top: 5px;
+            }
+            .grid-header .header-icon {
+                background-color: var(--paper-amber-500);
+                color: #fff;
+                border-radius: 50%;
+                padding: 4px;
+                width: 32px;
+                height: 32px;
+                box-sizing: border-box !important;
+                --iron-icon-width: 100%;
+                --iron-icon-height: 100%;
+                position: absolute;
+                top: 50%;
+                margin-top: -16px;
+            }
+            .grid-header .header-label {
+                text-transform: uppercase;
+                font-size: 10px;
+                font-weight: 600;
+                position: relative;
+                top: 4px;
+            }
+            .grid-header .header-value ::slotted(kct-combobox),
+            .grid-header .header-value kct-combobox {
+                padding: 0;
+                min-width: 300px;
+                --paper-input-container-input: {
+                    font-size: 17px;
+                    font-weight: 400;
+                };
+                --paper-input-container-label: {
+                    font-size: 17px;
+                    font-weight: 400;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .grid-header .header-value ::slotted(h3),
+            .grid-header .header-value h3 {
+                font-size: 17px;
+                font-weight: 400;
+                display: block;
+                padding: 4px 0;
+                margin: 0;
+            }
+            .grid-header .left-toolbar {
+                height: 100%;
+                padding: 0 3px;
+            }
+            .grid-header .right-toolbar {
+                padding: 0 10px;
+            }
+            .grid-header .left-toolbar > *,
+            .grid-header .left-toolbar > ::slotted(*) {
+                float: left;
+            }
+
+            .grid-header .col-toolbar paper-icon-button,
+            .grid-header .col-toolbar ::slotted(paper-icon-button) {
+                margin-top: 12px;
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+            }
+            .grid-header .col-toolbar paper-button,
+            .grid-header .col-toolbar ::slotted(paper-button) {
+                margin-top: 12px;
+                margin-right: 8px;
+                font-size: 13px !important;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            .grid-header .col-toolbar .separator,
+            .grid-header .col-toolbar ::slotted(.separator) {
+                height: 100%;
+                border-right: 1px solid #dfdfdf;
+                margin: 0 3px;
+            }
+            .grid-header .col-toolbar ::slotted(kct-checkbox) {
+                margin-top: 6px;
+                margin-left: 6px;
+                --paper-checkbox-size: 14px;
+                --paper-checkbox-label: {
+                    font-size: 13px;
+                };
+            }
+            .grid-header .col-toolbar task-search,
+            .grid-header .col-toolbar ::slotted(task-search) {
+                margin-top: 10px;
+            }
+            /** ------------ */
+            .grid-statusbar paper-button,
+            .grid-statusbar ::slotted(paper-button) {
+                font-weight: 400;
+                padding: 0.3em 0.8em !important;
+                font-size: 13px !important;
+
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            .grid-statusbar paper-icon-button,
+            .grid-statusbar ::slotted(paper-icon-button) {
+                position: relative;
+                padding: 4px;
+                width: 26px;
+                height: 26px;
+                top: -1px;
+            }
+
+            .grid-statusbar paper-menu-button {
+                padding: 0;
+            }
+
+            .grid-panel-body {
+                @apply --layout-flex;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .grid-panel-footer {
+                background-color: #fff;
+                border-top: 1px solid #ddd;
+                padding: 0.3rem 1rem;
+            }
+            #grid {
+                display: block;
+                height: var(--grid-node-height, 100%);
+            }
+            .grid-action-new {
+                position: absolute;
+                top: 50px;
+                left: 50px;
+            }
+            .grid-panel.sm .ag-paging-row-summary-panel,
+            .grid-panel.xs .ag-paging-row-summary-panel{
+                display: none;
+            }
+
+            .grid-statusbar {
+                font-size: 13px;
+            }
+            .grid-statusbar .grid-pagination-info {
+                text-transform: uppercase;
+                position: relative;
+                top: 6px;
+            }
+            .grid-statusbar .grid-pagination-info b {
+                font-weight: 500;
+            }
+            .grid-statusbar .grid-pagination paper-icon-button {
+                display: inline-block;
+                margin: 0 8px;
+                color: var(--paper-indigo-500);
+                --paper-icon-button-ink-color: var(--paper-indio-500);
+            }
+            .grid-statusbar .grid-pagination paper-icon-button[disabled] {
+                color: var(--paper-grey-500);
+                opacity: .5;
+            }
+            .grid-statusbar .grid-pagination paper-input {
+                display: inline-block;
+                width: 40px;
+                text-align: center;
+                position: relative;
+                top: -5px;
+                --paper-input-container: {
+                    padding: 0;
+                };
+                --paper-input-container-input: {
+                    font-weight: 500;
+                    color: var(--paper-indigo-500);
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+            }
+            .paging-text-full.sm,
+            .paging-text-full.md,
+            .paging-text-full.lg { display: none; }
+
+            .paging-text-mini.sm,
+            .paging-text-mini.md,
+            .paging-text-mini.lg { display: inline; }
+            .paging-text-mini.xl { display: none;  }
+
+            .search-badge {
+                display: block;
+                position: absolute;
+                top: -7px;
+                right: 3px;
+                color: #F44336;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            .search-badge[hidden] {
+                display: none;
+            }
+            .grid-panel.sm .hide-sm {
+                display: none;
+            }
+        </style>
+
+        <slot id="slot"></slot>
+        
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <div class$="grid-panel [[ screen ]]">
+            <div class="grid-header container" hidden$="[[ hideHeader ]]">
+                <kct-hbox class="columns-container">
+                    <div class="col-navigation" hidden$="[[ hideNav ]]">
+                        <paper-icon-button class="button-back" icon="arrow-back" title="Back" on-tap="__onBackTap"></paper-icon-button> 
+                    </div>
+                    <div class="col-header">
+                        <kct-hbox fit>
+                            <div class="col-header-icon">
+                                <div class="header-icon">
+                                    <iron-icon icon="[[ headerIcon ]]"></iron-icon>
+                                </div>
+                            </div>
+                            <div class="col-header-info flex">
+                                <div class="header-form">
+                                    <div class="header-label">[[ headerText ]]</div>
+                                    <div class="header-value">
+                                        <slot name="header-value">
+                                            <h3>[[ headerDesc ]]</h3>
+                                        </slot>
+                                    </div>
+                                </div>
+                            </div>
+                        </kct-vbox>
+                    </div>
+                    <div class="col-toolbar">
+                        <div class="left-toolbar">
+                            <div class="separator"></div>
+                            <paper-icon-button icon="refresh" on-tap="__onRefreshTap"></paper-icon-button>
+                            <slot name="left-toolbar"></slot>
+                            <!-- fallback -->
+                            <slot name="primary-toolbar"></slot>
+                            <!-- /fallback -->
+                        </div>
+                    </div>
+                    <div class="col-toolbar flex">
+                        <div class="center-toolbar">
+                            <!-- <kct-grid-search></kct-grid-search> -->
+                            <slot name="center-toolbar"></slot>
+                        </div>
+                    </div>
+                    <div class="col-toolbar">
+                        <div class="right-toolbar">
+                            <slot name="right-toolbar"></slot>
+                            <!-- <paper-icon-button on-tap="__onSearchTap" icon="search"></paper-icon-button> -->
+                        </div>
+                    </div>
+                </kct-hbox>
+            </div>
+
+            <div class="grid-panel-body">
+                <ag-grid-polymer id="grid" class="ag-material"></ag-grid-polymer>
+            </div>
+
+            <div class="grid-panel-footer">
+                <kct-hbox>
+                    <div class="flex hide-sm">
+                        <div class="grid-statusbar">
+                            <paper-menu-button horizontal-align="right" vertical-align="bottom">
+                                <paper-button slot="dropdown-trigger">
+                                    <span class$="paging-text-full [[ screen ]]">Display [[ pageSize ]] rows</span>
+                                    <span class$="paging-text-mini [[ screen ]]">[[ pageSize ]] rows</span>
+                                    <iron-icon icon="arrow-drop-up" style="position: relative; top: 1px;"></iron-icon>
+                                </paper-button>
+                                <paper-listbox selected="{{ pageSize }}" attr-for-selected="value" slot="dropdown-content">
+                                    <!-- <paper-item value="2">2 ROWS</paper-item>
+                                    <paper-item value="5">5 ROWS</paper-item> -->
+                                    <paper-item value="10">10 ROWS</paper-item>
+                                    <paper-item value="25">25 ROWS</paper-item>
+                                    <paper-item value="50">50 ROWS</paper-item>
+                                </paper-listbox>
+                            </paper-menu-button>
+                        </div>
+                    </div>
+                    <div class="flex hide-sm">
+                        <div class="grid-statusbar text-center">
+                            <span class="grid-pagination-info">Displaying row <b>[[ __page.start ]]</b> - <b>[[ __page.end ]]</b> of <b>[[ __page.total ]]</b> row(s)</span>    
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="grid-statusbar text-right">
+                            <div class="grid-pagination">
+                                <paper-icon-button on-tap="__onPageTap" id="nav-first" icon="first-page"></paper-icon-button>
+                                <paper-icon-button on-tap="__onPageTap" id="nav-prev" icon="chevron-left"></paper-icon-button>
+                                <paper-input value="[[ page ]]" on-change="__onPageInputChange" class="page-input" label="Page" no-label-float></paper-input>
+                                <paper-icon-button on-tap="__onPageTap" id="nav-next" icon="chevron-right"></paper-icon-button>
+                                <paper-icon-button on-tap="__onPageTap" id="nav-last" icon="last-page"></paper-icon-button>            
+                            </div>
+                        </div>
+                    </div>
+                </kct-box>
+            </div>
+            <div class="grid-action-new">
+                <slot name="grid-action-new">
+                    <!-- <paper-fab class="fab-raised" icon="add"></paper-fab> -->
+                </slot>
+            </div>
+        </div>
+
+        <kct-ajax id="ajax" token="[[ token ]]"></kct-ajax>
+        <!-- <kct-search id="search" fields="[[ searchFields ]]" on-query="__onSearchQuery" extra-size$="[[ extraSize ]]"></kct-search> -->
+    </template>
+    <script>
+        {
+            const ICON_CHECKED = '<iron-icon icon="done"></iron-icon>';
+            const ICON_UNCHECKED = '<iron-icon icon="radio-button-unchecked"></iron-icon>';
+            const ICON_SORT_ASCENDING = '<iron-icon icon="arrow-drop-up"></iron-icon>';
+            const ICON_SORT_DESCENDING = '<iron-icon icon="arrow-drop-down"></iron-icon>';
+
+            class KctGrid extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+
+                static get is() {
+                    return 'kct-grid';
+                }
+
+                static get properties() {
+                    return {
+                        url: { type: String },
+                        token: { type: String },
+                        columns: { type: Array, notify: true, value: () => ([]) },
+                        params: { type: Object, notify: true, value: () => ({}) },
+                        data: { type: Array, notify: true, value: () => ([]) },
+                        selectionModel: { type: String, notify: true, value: 'checkbox' },
+                        pageSize: { type: Number, notify: true, value: 25 },
+                        page: { type: Number },
+                        selection: { type: Array, notify: true, value: () => ([]) },
+                        selected: { type: Object, notify: true },
+                        autoload: { type: Boolean, value: false },
+                        hideHeader: { type: Boolean, value: false },
+                        hideFooter: { type: Boolean, value: false },
+                        extraSize: { type: Boolean, value: false },
+                        rowHeight: { type: Number, value: 30 },
+                        height: { type: String },
+                        headerDesc: { type: String },
+                        headerIcon: { type: String },
+                        headerText: { type: String },
+                        hideNav: { type: Boolean, value: false, reflectToAttribute: true },
+                        searchFields: { type: Array, value: () => ([]) },
+
+                        description: { type: String, value: 'Datagrid Component' },
+                        icon: { type: String, value: 'view-list' },
+                        title: { type: String, value: 'Component' }
+
+                    };
+                }
+
+                static get observers() {
+                    return [
+                        '__dependenciesChanged(url, params.*)',
+                        '__paramsChanged(params.*)',
+                        '__pageSizeChanged(pageSize)',
+                        '__heightChanged(height)',
+                        '__computeFallback(description, icon, title)'
+                    ];
+                }
+
+                get api() {
+                    return this.__grid && this.__grid.api;
+                }
+
+                constructor() {
+                    super();
+                    this.__grid = null;
+                    this.__page = {};
+                    this.__wait = this._defer();
+
+                    this.__bulk = {
+                        records: 0,
+                        element: null,
+                        checked: false,
+                        handler: this.__onGridBulkSelection.bind(this)
+                    };
+
+                    this.__hasAutosizeColumn = false;
+                }
+
+                ready() {
+                    super.ready();
+                    this.__injectStyles();
+                }
+
+                connectedCallback() {
+                    super.connectedCallback();
+
+                    this.__wait.promise.then(() => {
+                        this.__setupGrid();
+                    });
+                }
+
+                __computeFallback(description, icon, title) {
+                    if ( ! this.headerDesc) {
+                        this.set('headerDesc', description);
+                    }
+
+                    if ( ! this.headerIcon) {
+                        this.set('headerIcon', icon);
+                    }
+
+                    if ( ! this.headerText) {
+                        this.set('headerText', title);
+                    }
+                }
+
+                __injectStyles() {
+                    let owner = (this.parentNode && this.parentNode.host) || this;
+                    let styleBaseURI = '';
+
+                    if (owner.constructor.importPath) {
+                        styleBaseURI = Polymer.ResolveUrl.resolveUrl(owner.constructor.importPath);
+                    }
+
+                    let template = this.$.slot.assignedNodes().find(node => {
+                        return node instanceof HTMLTemplateElement;
+                    });
+
+                    if (template) {
+                        if (window.ShadyCSS) {
+                            window.ShadyCSS.prepareTemplate(template, 'kct-grid');
+                        }
+
+                        let styleContent = Polymer.StyleGather.cssFromTemplate(template, styleBaseURI);
+                        
+                        if (styleContent) {
+                            let customStyle = document.createElement('style');
+                            customStyle.textContent = styleContent;
+                            this.shadowRoot.insertBefore(customStyle, this.$.slot);
+                        }
+                    }
+                }
+
+                resize() {
+                    this._debounce(
+                        'resizing',
+                        () => {
+                            let container = this.shadowRoot.querySelector('.grid-panel-body');
+                            let height = container.clientHeight;
+                            
+                            this.updateStyles({ '--grid-node-height': height + 'px' });
+                            
+                            if (this.__hasAutosizeColumn) {
+                                this.api.sizeColumnsToFit();
+                            }
+                        },
+                        10
+                    );
+                }
+
+                deferAutoresize() {
+                    if ( ! this.__deferAutoresize) {
+                        this.__deferAutoresize = true;
+                        this.resize();
+                    }
+                }
+
+                load(options = {}) {
+                    return this.__buildStore();
+                }
+
+                deferAutoload(options = {}) {
+                    if ( ! this.__deferAutoload) {
+                        this.__deferAutoload = true;
+                        this.load(options);
+                    }
+                }
+
+                getRows() {
+                    let rows = [];
+                    if (this.api) {
+                        this.api.forEachNode(n => {
+                            rows.push(n.data);
+                        });
+                    }
+                    return rows;
+                }
+
+                findRow(handler) {
+                    let rows = this.getRows();
+                    if (typeof handler == 'function') {
+                        return rows.find(handler);
+                    }
+                    return null;
+                }
+
+                refresh(node) {
+                    if ( ! this.api) return;
+                    this.api.refreshCells({
+                        rowNodes: [node]
+                    });
+                }
+
+                update(node, data) {
+                    if ( ! this.api) return;
+
+                    node.setData(data);
+
+                    this.api.refreshCells({
+                        rowNodes: [node]
+                    });
+                }
+
+                __setupGrid() {
+                    if (this.__grid) {
+                        return;
+                    }
+
+                    this.__grid = {
+                        rowHeight: this.rowHeight,
+                        headerHeight: 36,
+                        enableColResize: true,
+                        enableSorting: true,
+                        pagination: true,
+                        paginationPageSize: this.pageSize,
+                        suppressPaginationPanel: true,
+                        cacheBlockSize: this.pageSize,
+                        cacheOverflowSize: 2,
+                        maxConcurrentDatasourceRequests: 2,
+                        infiniteInitialRowCount: 0,
+                        maxBlocksInCache: 2,
+                        animateRows: false,
+                        rowModelType: 'infinite',
+                        rowSelection: 'multiple',
+                        enableServerSideSorting: true,
+                        onRowClicked: this.__onRowClicked.bind(this),
+                        onGridReady: this.__onGridReady.bind(this),
+                        onCellClicked: this.__onGridCellClicked.bind(this),
+                        onRowSelected: this.__onGridRowSelected.bind(this),
+                        onPaginationChanged: this.__onGridPaginationChanged.bind(this),
+                        onGridColumnsChanged: this.__onGridColumnsChanged.bind(this),
+                        onViewportChanged: this.__onGridViewportChanged.bind(this),
+                        icons: {
+                            sortAscending: ICON_SORT_ASCENDING,
+                            sortDescending: ICON_SORT_DESCENDING,
+                            checkboxChecked: ICON_CHECKED,
+                            checkboxUnchecked: ICON_UNCHECKED
+                        }
+                    };
+
+                    if (this.selectionModel == 'cell') {
+                        this.__grid.suppressRowClickSelection = true;
+                    }
+
+                    this.__buildColumns();
+                    this.$.grid.gridOptions = this.__grid;
+                }
+
+                __buildColumns() {
+                    let columns = [], 
+                        searchable = [],
+                        grid = this.__grid;
+
+                    if (this.selectionModel == 'checkbox') {
+                        // checkbox
+                        columns.push({
+                            headerName: `<span class="ag-selection-checkbox bulk-selection-checkbox">${ICON_UNCHECKED}</span>`,
+                            text: '',
+                            width: 50,
+                            cellClass: 'text-center',
+                            suppressMenu: true,
+                            suppressSorting: true,
+                            suppressSizeToFit: true,
+                            suppressResize: true,
+                            checkboxSelection: true,
+                            cellRenderer: function(params) {
+                                return '';
+                            }
+                        });
+                    }
+
+                    this.columns.forEach((col) => {
+                        var item;
+
+                        col.type = col.type === undefined ? 'column' : col.type;
+
+                        if (col.type == 'rownumber') {
+                            col.text  = col.text  === undefined ? '#' : col.text;
+                            col.width = col.width === undefined ? 50 : col.width;
+                            col.align = col.align === undefined ? 'center': col.align;
+
+                            col.renderer = (e) => {
+                                return e.node.rowIndex + 1;
+                            };
+                        } else if (col.type == 'action') {
+                            col.text  = col.text  === undefined ? '' : col.text;
+                            col.align = col.align === undefined ? 'left': col.align;
+                            col.items = col.items === undefined ? [] : col.items;
+                            col.cellClass = 'ag-cell-action';
+                        } else {
+                            if (col.dataIndex) {
+                                searchable.push({ 
+                                    text: col.text, 
+                                    name: col.dataIndex
+                                });
+                            }
+                        }
+
+                        // implementation
+
+                        item = {
+                            headerName: col.text,
+                            field: col.dataIndex,
+                            columnType: col.type
+                        };
+
+                        if (col.renderer) {
+                            item.cellRenderer = col.renderer;
+                        }
+
+                        if (col.width !== undefined) {
+                            if (col.width == 'auto') {
+                                this.__hasAutosizeColumn = true;
+                            } else {
+                                item.width = col.width;
+                                item.suppressSizeToFit = true;
+                            }
+                        }
+
+                        if (col.align) {
+                            item.cellClass = (col.cellClass || '') + ' text-' + (col.align);
+                            item.headerClass = 'text-' + (col.align);
+                        }
+
+                        if (col.type == 'rownumber' || col.type == 'action') {
+                            item.suppressSorting = true;
+                        }
+
+                        if (col.sortable !== undefined) {
+                            item.suppressSorting = !col.sortable;
+                        }
+
+                        if (col.children) {
+                            let itemChildren = [];
+
+                            for(var i = 0; i < col.children.length; i++) {
+                                var tmpItemChildren = {
+                                    headerName: col.children[i].text,
+                                    field: col.children[i].dataIndex
+                                };
+
+                                if (col.children[i].width !== undefined) {
+                                    tmpItemChildren.width = col.children[i].width; 
+                                }
+
+                                if (col.children[i].align !== undefined) {
+                                    tmpItemChildren.headerClass = 'text-' + (col.children[i].align); 
+                                }
+
+                                itemChildren.push(tmpItemChildren);
+                            }
+
+                            if(itemChildren) {
+                                item.children = itemChildren;
+                            }
+                        }
+
+                        columns.push(item);
+                    });
+
+                    grid.columnDefs = columns;
+                    this.set('searchFields', searchable);
+                }
+
+                __buildStore() {
+                    let d = this._defer();
+
+                    if ( ! this.__grid) {
+                        d.resolve();
+                    } else {
+                        this._debounce(
+                            'loading',
+                            () => {
+                                let ajax = this.$.ajax;
+                                let store = {
+                                    getRows: function(loader) {
+
+                                        let options = {};
+
+                                        for (let key in this.params) {
+                                            let val = this.params[key];
+                                            
+                                            if (typeof val == 'object' || typeof val == 'array') {
+                                                options[key] = JSON.stringify(val);
+                                            } else {
+                                                options[key] = val;
+                                            }
+                                            
+                                        }
+
+                                        options.start = loader.startRow;
+                                        options.limit = this.pageSize;
+
+                                        if (loader.sortModel) {
+                                            let sorts = loader.sortModel.map((s) => {
+                                                return {
+                                                    property:  s.colId,
+                                                    direction: s.sort
+                                                };
+                                            });
+
+                                            if (sorts.length) {
+                                                options.sort = JSON.stringify(sorts);    
+                                            }
+                                        }
+
+                                        // updating params
+                                        this.__silent = true;
+                                        this.set('params', options);
+                                        this.__silent = false;
+
+                                        this.dispatchEvent(new CustomEvent('beforeload', { detail: { options: options }}));
+
+                                        ajax.GET(this.url, options).then(
+                                            (res) => {
+                                                if (res.success) {
+                                                    let data = res.data  || [],
+                                                        last = res.total || 0;
+
+                                                    loader.successCallback(data, last);
+
+                                                    this.dispatchEvent(new CustomEvent('load', {
+                                                        detail: {
+                                                            response: res
+                                                        }
+                                                    }));
+                                                    
+                                                }
+                                                d.resolve();
+                                            },
+                                            (err) => {
+                                                d.resolve();
+                                            }
+                                        );
+                                    }.bind(this)
+                                };
+
+                                this.api.setDatasource(store);
+                            },
+                            100
+                        );
+                    }
+
+                    return d.promise;
+                }
+
+                __dependenciesChanged(url, params) {
+                    this.__wait.resolve();
+                }
+
+                __computeSelection() {
+
+                }
+
+                __computeSelected() {
+                    // do nothing
+                }
+
+                __heightChanged(height) {
+                    this.updateStyles({
+                        '--grid-height': height
+                    });
+
+                    this.resize();
+                }
+
+                __paramsChanged(changed) {
+                    if (this.__silent) return;
+                    this.load();
+                }
+
+                __pageSizeChanged(size) {
+                    if (this.__grid) {
+                        size = +size;
+                        this.__grid.paginationPageSize = size;
+                        this.__grid.cacheBlockSize = size;
+                    }
+                    this.load();
+                }
+
+                __updatePageNavigation() {
+                    let maxpage = this.api.paginationGetTotalPages() - 1,
+                        curpage = this.api.paginationGetCurrentPage(),
+                        buttons = [ 'nav-first', 'nav-prev', 'nav-next', 'nav-last' ];
+
+                    // reset navigation
+                    buttons.forEach(b => { this.$[b].disabled = false });
+
+                    if (maxpage == 0) {
+                        // disable all
+                        buttons.forEach(b => { this.$[b].disabled = true });
+                    } else if (curpage == maxpage) {
+                        this.$['nav-next'].disabled = true;
+                        this.$['nav-last'].disabled = true;
+                    } else if (curpage == 0) {
+                        this.$['nav-first'].disabled = true;
+                        this.$['nav-prev'].disabled = true;
+                    }
+
+                    this.set('page', (curpage + 1));
+                    
+                }
+
+                __updateBulkSelection() {
+                    if ( ! this.__bulk.element) return;
+
+                    let selectionLength = this.selection.length,
+                        renderedLength = this.api.getRenderedNodes().length;
+
+                    if ((selectionLength == renderedLength) && selectionLength > 0) {
+                        this.__bulk.checked = true;
+                        this.__bulk.element.innerHTML = ICON_CHECKED;
+                    } else {
+                        this.__bulk.checked = false;
+                        this.__bulk.element.innerHTML = ICON_UNCHECKED;
+                    }
+
+                }
+
+                __lookupContext() {
+                    let parentNode = this.parentNode;
+
+                    while(parentNode) {
+                        let host = parentNode.host;
+                        if (host) {
+                            this.context = host;
+                            break;
+                        }
+
+                        if (parentNode.localName == 'body') {
+                            break;
+                        }
+
+                        parentNode = parentNode.parentNode;
+                    }
+                }
+
+                __onPageInputChange(e) {
+                    let page = e.target.value;
+
+                    if (page == '') return;
+                    
+                    page = +page - 1;
+                    this.api.paginationGoToPage(page);
+                }
+
+                __onGridReady() {
+                    if (this.autoload) {
+                        this.load().then(() => {
+                            this.resize();
+                        });    
+                    } else {
+                        this.resize();
+                    }
+                }
+
+                __onGridCellClicked(args) {
+                    let columnType = args.colDef.columnType;
+
+                    if (columnType != 'action') {
+                        this.dispatchEvent(new CustomEvent('cellclick', {
+                            detail: {
+                                data: args.data,
+                                node: args.node
+                            }
+                        }));
+                        
+                        return;
+                    }
+
+                    let e = args.event, path = e.path;
+
+                    if (path && path.length) {
+                        // we only aware on <a/>, <paper-icon-button/> and <paper-button/>
+                        let button = path[0],
+                            action = button.getAttribute('on-tap');
+
+                        if ( ! action && path[2]) {
+                            button = path[2];
+                            action = button.getAttribute('on-tap');
+                        }
+
+                        if (action) {
+                            if ( ! this.context) {
+                                this.__lookupContext();
+                            }
+
+                            if (this.context) {
+                                if (this.context[action]) {
+                                    this.context[action](args);
+                                } else {
+                                    console.warn(`Undefined method \`${action}()\` on <${this.context.localName}/>`);
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+
+                __onGridRowSelected(e) {
+
+                    if (e.node.selected) {
+                        this.set('selected', e.node.data);    
+                    } else {
+                        if (e.node.data === this.selected ) {
+                            this.set('selected', null);
+                        }
+                    }
+
+                    this.set('selection', this.api.getSelectedRows());
+                    this.__updateBulkSelection();
+
+                }
+
+                __onRowClicked(e){
+                    let customEvent = new CustomEvent('rowclick', { 
+                        detail: { 
+                            data: e.data,
+                            node: e.node
+                        } 
+                    });
+                    this.dispatchEvent(customEvent);
+                }
+
+                __onGridColumnsChanged() {
+                    this.__bulk.element = this.shadowRoot.querySelector('.bulk-selection-checkbox');
+
+                    if (this.__bulk.element) {
+                        this.__bulk.element.removeEventListener('tap', this.__bulk.handler);
+                        this.__bulk.element.addEventListener('tap', this.__bulk.handler);
+                    }
+                }
+
+                __onGridViewportChanged(e) {
+
+                    /*if (this.selection.length) {
+                        this.set('selection', []);
+                        this.set('selected', null);
+
+                        // clear previous selection node
+                        this.api.forEachNode(node => {
+                            if (node.id !== undefined) {
+                                node.setSelected(false);    
+                            }
+                        });
+
+                        this.__updateBulkSelection();
+                    }*/
+
+                    this.__updatePageNavigation();
+                }
+
+                __onGridBulkSelection() {
+                    let checked = ! this.__bulk.checked;
+
+                    this.api.getRenderedNodes().forEach(node => {
+                        if (node.id !== undefined) {
+                            node.setSelected(checked);    
+                        }
+                    });
+                }
+
+                __onGridPaginationChanged() {
+                    let api = this.api,
+                        limit = api.paginationGetPageSize(),
+                        page = api.paginationGetCurrentPage(),
+                        pages = api.paginationGetTotalPages(),
+                        isLastPage = api.paginationIsLastPageFound(),
+                        total = isLastPage ? api.paginationGetRowCount() : null,
+                        start = (limit * page) + 1,
+                        end = (start + limit) - 1;
+
+                    if (isLastPage && end > total) {
+                        end = total;
+                    }
+
+                    this.set('__page', {
+                        start: start,
+                        end: end,
+                        total: total
+                    });
+                }
+
+                __onRefreshTap() {
+                    this.load();
+                }
+
+                __onBackTap() {
+                    this.dispatchEvent(new CustomEvent('back-tap'));
+                }
+
+                __onPageTap(e) {
+                    if ( ! this.api) {
+                        return;
+                    }
+
+                    let nav = e.target.id;
+
+                    switch(nav) {
+                        case 'nav-first':
+                            this.api.paginationGoToFirstPage();
+                            break;
+                        case 'nav-prev':
+                            this.api.paginationGoToPreviousPage();
+                            break;
+                        case 'nav-next':
+                            this.api.paginationGoToNextPage();
+                            break;
+                        case 'nav-last':
+                            this.api.paginationGoToLastPage();
+                            break;
+                    }
+                }
+
+                __onResponsiveToolbarTap(e) {
+                    let button = e.model.item;
+                    button.link.dispatchEvent(new CustomEvent('tap'));
+                }
+            }
+
+            customElements.define(KctGrid.is, KctGrid);
+        }
+    </script>
+</dom-module>

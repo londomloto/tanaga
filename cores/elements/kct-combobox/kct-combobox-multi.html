@@ -1,0 +1,252 @@
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="kct-combobox.html">
+
+<dom-module id="kct-combobox-multi">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .container {
+                border-bottom: 1px solid var(--paper-grey-300);
+                padding: 0 0 5px 0;
+            }
+            .hbox {
+                @apply --layout-horizontal;
+                @apply --layout-wrap;
+            }
+            .hbox > .flex {
+                @apply --layout-flex;
+            }
+            #label {
+                font-size: 12px;
+                color: #777;
+            }
+            :host([focused]) #label {
+                color: var(--paper-blue-500);
+            }
+            ::slotted(kct-combobox) {
+                padding: 0;
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .form {
+                margin-top: 5px;
+            }
+            .item {
+                position: relative;
+                margin-right: 5px;
+                margin-top: 5px;
+            }
+            .chip {
+                padding: 4px 5px;
+                border-radius: 2px;
+                font-size: 12px;
+                background-color: var(--paper-grey-100);
+                cursor: pointer;
+            }
+
+            .chip iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -1px;
+                cursor: pointer;
+            }
+            .chip iron-icon:hover {
+                color: var(--paper-red-500);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="container">
+            <div id="label">[[ label ]]</div>
+            <div class="hbox">
+                <template is="dom-repeat" items="[[ items ]]">
+                    <div class="item">
+                        <div class="chip">
+                            <span>[[ item.label ]]</span>
+                            <iron-icon on-tap="__onRemoveItemTap" icon="close"></iron-icon>
+                        </div>
+                    </div>
+                </template>
+                <div class="form flex">
+                    <slot id="slot"></slot>
+                </div>
+                <div class="clear"></div>
+            </div>
+
+        </div>
+
+    </template>
+    <script>
+        class KctComboboxMulti extends Polymer.Element {
+            static get is() {
+                return 'kct-combobox-multi';
+            }
+            static get properties() {
+                return {
+                    url: { type: String },
+                    label: { type: String },
+                    values: { type: Array, value: () => ([]), notify: true }, 
+                    items: { type: Array, value: () => ([]) },
+                    itemLabelPath: { type: String, value: 'label' },
+                    itemValuePath: { type: String, value: 'value' },
+                    focused: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__valuesChanged(values.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__comboChange = this.__onComboChange.bind(this);
+                this.__comboFocus = this.__onComboFocus.bind(this);
+                this.__comboBlur = this.__onComboBlur.bind(this);
+
+                this.__comboResolver = {};
+                this.__comboResolver.promise = new Promise(res => {
+                    this.__comboResolver.resolve = res;
+                });
+            }
+
+            ready() {
+                super.ready();
+                this.$.combo = this.querySelector('kct-combobox');
+
+                if (this.$.combo) {
+                    this.$.combo.hideArrow = true;
+                    this.$.combo.hideClear = true;
+                    this.$.combo.noLabelFloat = true;
+
+                    this.set('url', this.$.combo.url);
+                    this.set('itemValuePath', this.$.combo.itemValuePath);
+                    this.set('itemLabelPath', this.$.combo.itemLabelPath);
+                }
+
+                this.__comboResolver.resolve();
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                if (this.$.combo) {
+                    this.$.combo.addEventListener('change', this.__comboChange);
+                    this.$.combo.addEventListener('focus', this.__comboFocus);
+                    this.$.combo.addEventListener('blur', this.__comboBlur);
+                }
+            }
+
+            disconnectedCallback() {
+                if (this.$.combo) {
+                    this.$.combo.removeEventListener('change', this.__comboChange);
+                    this.$.combo.removeEventListener('focus', this.__comboFocus);
+                    this.$.combo.removeEventListener('blur', this.__comboBlur);
+                }
+                super.disconnectedCallback();
+            }
+
+            __addItem(model){
+                let value = model[this.itemValuePath];
+                let index = (this.items || []).findIndex(e => e.value == value);
+                
+                if (index === -1) {
+                    this.push('items', {
+                        label: model[this.itemLabelPath],
+                        value: model[this.itemValuePath]
+                    });
+                }
+
+                index = (this.values || []).findIndex(e => e === value);
+
+                if (index === -1) {
+                    this.push('values', value);
+                }
+            }
+
+            __removeItem(model) {
+                let value = model.value;
+                let index = (this.items || []).findIndex(e => e.value == value);
+
+                if (index !== -1) {
+                    this.splice('items', index, 1);
+                }
+
+                index = (this.values || []).findIndex(e => e == value);
+                if (index !== -1) {
+                    this.splice('values', index, 1);
+                }
+            }
+
+            __syncItems() {
+                let values = (this.values || []);
+                if (values.length) {
+                    
+                    this.__comboResolver.promise.then(() => {
+
+                        let params = {};
+
+                        params[this.itemValuePath] = ['IN', values];
+                        
+                        let payload = {
+                            params: params
+                        };
+
+                        this.set('items', []);
+
+                        this.$.ajax.GET(this.url, payload).then(res => {
+                            let items = res.data || [];
+                            items.forEach(model => {
+                                this.push('items', {
+                                    label: model[this.itemLabelPath],
+                                    value: model[this.itemValuePath]
+                                });
+                            });
+                        });    
+
+                    });
+
+                    
+                } else {
+                    this.set('items', []);
+                }
+            }
+
+            __valuesChanged(changed) {
+                if (changed.path == 'values') {
+                    this.__syncItems();
+                }   
+            }
+
+            __onComboChange() {
+                let model = this.$.combo.getModelForValue(this.$.combo.value);
+                if (model) {
+                    this.__addItem(model);
+                }
+                this.$.combo.value = '';
+            }
+
+            __onComboFocus() {
+                this.set('focused', true);
+            }
+
+            __onComboBlur() {
+                this.set('focused', false);
+            }
+
+            __onRemoveItemTap(e) {
+                this.__removeItem(e.model.item);
+                this.$.combo.focus();
+            }
+        }
+        customElements.define(KctComboboxMulti.is, KctComboboxMulti);
+    </script>
+</dom-module>

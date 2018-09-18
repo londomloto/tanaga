@@ -1,0 +1,155 @@
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="mixins/chart.html">
+<link rel="import" href="styles/chart-styles.html">
+
+<dom-module id="kct-chart-waterfall">
+    <template>
+        <style include="chart-styles"></style>
+        <div class="panel vbox">
+            <div class="toolbar" hidden$="[[ !showToolbar ]]">
+                <slot name="toolbar"></slot>
+                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>        
+            </div>
+            <div id="chart"></div>
+        </div>
+    </template>
+    <script>
+        class KctChartWaterfall extends Mixins(Polymer.Element).use(Mixins.Chart) {
+            static get is() {
+                return 'kct-chart-waterfall';
+            }
+            static get properties() {
+                return {
+                    labelY: { type: String },
+                    labelX: { type: String },
+                    categories: { type: Array },
+                    series: { type: Array }
+                };
+            }
+            static get observers() {
+                return [
+                    '__categoriesChanged(categories.*)',
+                    '__seriesChanged(series.*)'
+                ];
+            }
+            ready() {
+                super.ready();
+                this.__setup();
+            }
+            __setup() {
+                let options = Highcharts.merge(this.styles, {
+                    chart: {
+                        type: 'waterfall',
+                        renderTo: this.$.chart,
+                        reflow: false
+                    },
+                    title: false,
+                    subtitle: false,
+                    exporting: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        type: 'category'
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: this.labelY
+                        }
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    tooltip: {
+                        headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                        pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                            '<td style="padding:0"><b>{point.y:.1f}</b></td></tr>',
+                        footerFormat: '</table>',
+                        shared: true,
+                        useHTML: true
+                    },
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0
+                        },
+                        series: {
+                            events: {
+                                click: e => {
+                                    let evt = new CustomEvent('series-click', {
+                                        detail: {
+                                            e
+                                        }
+                                    });
+
+                                    this.dispatchEvent(evt);
+                                }
+                            }
+                        }
+                    },
+                    series: []
+                });
+
+                if (this.title) {
+                    options.title.text = this.title;
+                }
+
+                if (this.subtitle) {
+                    options.subtitle.text = this.subtitle;
+                }
+
+                this.chart = new Highcharts.Chart(options);
+            }
+
+            
+
+            __updateCategories() {
+                if ( ! this.chart) return;
+                let categories = (this.categories || []).slice();
+                this.chart.xAxis[0].setCategories(categories);
+            }
+
+            __updateSeries() {
+                if ( ! this.chart) return;
+                let series = (this.series || []).slice();
+
+                // remove series
+                for (let i = this.chart.series.length - 1; i >= 0; i--) {
+                    this.chart.series[i].remove();
+                }
+
+                series[0].dataLabels = {
+                    enabled: true,
+                    formatter: function () {
+                        return Highcharts.numberFormat(Math.abs(this.y / 1000), 0, ',') + 'k';
+                    },
+                    style: {
+                        fontWeight: 'bold'
+                    }
+                };
+
+                series[0].pointPadding = 0;
+
+                series.forEach(s => {
+                    this.chart.addSeries(s);
+                });
+
+                this.chart.update({
+                    series: series
+                });
+
+                console.log('series', series);
+                console.log('chart', this.chart);
+            }
+
+            __categoriesChanged() {
+                this.__updateCategories();
+            }
+
+            __seriesChanged() {
+                this.__updateSeries();
+            }
+        }
+        customElements.define(KctChartWaterfall.is, KctChartWaterfall);
+    </script>
+</dom-module>

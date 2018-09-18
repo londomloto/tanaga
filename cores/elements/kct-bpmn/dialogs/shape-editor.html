@@ -1,0 +1,293 @@
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../mixins/dialog.html">
+<link rel="import" href="../../../mixins/resolver.html">
+<link rel="import" href="../../kct-layouts/kct-vbox.html">
+<link rel="import" href="../../kct-layouts/kct-hbox.html">
+
+<dom-module id="shape-editor">
+    <template>
+        <style include="theme-helper">
+            kct-vbox {
+                padding: 0;
+                margin: 0;
+            }
+            kct-vbox > .flex {
+                overflow-y: auto;
+                position: relative;
+            }
+            .header {
+                padding: 24px;
+                background-color: var(--paper-grey-300);
+            }
+            .actions {
+                background-color: var(--app-danger);
+                padding: 8px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            .actions paper-button {
+                color: #ffffff;
+                height: 40px;
+            }
+            #dialog {
+                width: 600px;
+                height: 100%;
+            }
+            .form-group {
+                margin-bottom: 10px;
+            }
+            paper-tabs {
+                background-color: var(--paper-grey-300);
+                --paper-tabs-selection-bar-color: var(--app-danger);
+            }
+            paper-tab,
+            paper-tab:focus {
+                font-size: 15px;
+                font-weight: 300;
+            }
+
+            .page[name=properties] {
+                padding: 0 24px;
+            }
+            .table-editable tr > th + th,
+            .table-editable tr > td + td {
+                border-left: 1px solid #DDD;
+            }
+            .table-editable tr th {
+                text-align: center !important;
+            }
+            .table-editable td {
+                padding: 0 8px;
+            }
+            .table-editable td paper-input {
+                --paper-input-container-underline: {
+                    display: none;
+                };
+            }
+            .table-editable td paper-input.center {
+                --paper-input-container-input: {
+                    text-align: center;
+                };
+            }
+            .table-editable td paper-icon-button {
+                padding: 2px;
+                width: 28px;
+                height: 28px;
+                margin-top: 8px;
+            }
+            paper-fab {
+                position: absolute;
+                right: 24px;
+                bottom: 24px;
+            }
+        </style>
+        <paper-dialog id="dialog" on-iron-overlay-closed="__onClose" modal>
+            <kct-vbox>
+                <div class="header">
+                    <h2 class="f-300">Shape Editor</h2>
+                </div>
+                <div class="flex">
+                    <paper-tabs selected="{{ page }}" attr-for-selected="name">
+                        <paper-tab name="properties">Properties</paper-tab>
+                        <paper-tab name="connections">Connections</paper-tab>
+                        <paper-tab name="params">Parameters</paper-tab>
+                    </paper-tabs>
+                    <div class="panes">
+                        <iron-pages selected="[[ page ]]" attr-for-selected="name">
+                            <div class="page" name="properties">
+                                <kct-hbox>
+                                    <div class="flex">
+                                        <div class="p-r">
+                                            <paper-input label="ID" name="id" value="{{ props.guid }}" disabled></paper-input>
+                                            <paper-input label="Label" name="label" value="{{ props.label }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Top (px)" name="top" value="{{ props.top }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Left (px)" name="left" value="{{ props.left }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Width (px)" name="width" value="{{ props.width }}" on-change="__onInputChange"></paper-input>        
+                                        </div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="p-l">
+                                            <paper-input label="Height (px)" name="height" value="{{ props.height }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Rotation (deg)" name="rotate" value="{{ props.rotate }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Fill color" name="fill" value="{{ props.fill }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Stroke color" name="stroke" value="{{ props.stroke }}" on-change="__onInputChange"></paper-input>        
+                                            <paper-input label="Stroke width (px)" name="strokeWidth" value="{{ props.strokeWidth }}" on-change="__onInputChange"></paper-input>            
+                                        </div>
+                                    </div>
+                                </kct-hbox>
+                            </div>
+                            <div class="page" name="connections" style="padding: 0">
+                                <div class="table-responsive">
+                                    <table class="table striped">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center" style="width: 30px;">#</th>
+                                                <th class="text-left">ID</th>
+                                                <th class="text-left">MODE</th>
+                                                <th class="text-left">PAIR</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template is="dom-repeat" items="[[ links ]]" index-as="index">
+                                                <tr>
+                                                    <td class="text-center">[[ __computeNo(index) ]]</td>
+                                                    <td><a on-click="__onLinkClick" href="#">[[ item.guid ]]</a></td>
+                                                    <td>[[ item.mode ]]</td>
+                                                    <td><a on-click="__onPairClick" href="#">[[ item.pair ]]</a></td>
+                                                </tr>
+                                            </template>    
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                            </div>
+                            <div class="page" name="params">
+                                <div class="table-responsive">
+                                    <table class="table bordered table-editable">
+                                        <thead>
+                                            <tr>
+                                                <th>NAME</th>
+                                                <th>VALUE</th>
+                                                <th style="width: 32px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template is="dom-repeat" items="{{ params }}">
+                                                <tr>
+                                                    <td><paper-input value="{{ item.name }}" no-label-float></paper-input></td>
+                                                    <td><paper-input value="{{ item.value }}" no-label-float></paper-input></td>
+                                                    <td><paper-icon-button on-tap="__onDeleteParamTap" icon="clear"></paper-icon-button></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <paper-fab class="fab-raised" icon="add" on-tap="__onAddParamTap"></paper-fab>
+                            </div>
+                        </iron-pages>
+                    </div>
+                </div>
+                <div class="actions">
+                    <paper-button on-tap="__onButtonSaveTap">Update</paper-button>
+                    <paper-button on-tap="__onButtonCloseTap">Close</paper-button>
+                </div>    
+            </kct-vbox>
+        </paper-dialog>        
+    </template>
+    <script>
+        class ShapeEditor extends Mixins(Polymer.Element).use(Mixins.Dialog, Mixins.Resolver) {
+            static get is() {
+                return 'shape-editor';
+            }
+            static get properties() {
+                return {
+                    shape: { type: Object },
+                    links: { type: Array, computed: '__computeLinks(shape)' },
+                    props: { type: Object },
+                    params: { type: Array, value: () => [] },
+                    page: { type: String, value: 'properties' }
+                };
+            }
+            static get observers() {
+                return [
+                    '__shapeChanged(shape.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__redraw = {};
+            }
+            open() {
+                this.__redraw = {};
+                this.set('page', 'properties');
+
+                this._relocate();
+                this.$.dialog.open();
+            }
+            close() {
+                this.$.dialog.close();
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+            __computeLinks() {
+                if (this.shape) {
+                    return this.shape.toJson().links;
+                }
+                return [];
+            }
+            __shapeChanged(changed) {
+                if (changed.path == 'shape' && this.shape) {
+                    let data = this.shape.toJson();
+
+                    this.set('props', data.props);
+                    this.set('params', data.params);
+                }
+            }
+            __onInputChange(e) {
+                let key = e.target.name,
+                    val = e.target.value;
+
+                this.__redraw[key] = val;
+            }
+            __onLinkClick(e) {
+                e.preventDefault();
+
+                let guid = e.model.item.guid,
+                    link = Graph.registry.link.get(guid);
+                
+                if (link) {
+                    link.select(true);
+                    this.close();
+                }
+            }
+            __onPairClick(e) {
+                e.preventDefault();
+                let guid = e.model.item.pair,
+                    pair = Graph.registry.shape.get(guid);
+                if (pair) {
+                    pair.select(true);
+                    this.close();
+                }
+            }
+            __onClose() {
+                this._restore();
+            }
+            __onButtonSaveTap() {
+                if (this.props) {
+                    this.shape.props = this.props;
+
+                    Object.keys(this.__redraw).forEach(k => {
+                        let v = this.__redraw[k],
+                            f = this.shape[k];
+
+                        if (f && typeof f == 'function') {
+                            f.call(this.shape, v);
+                        }
+                    });
+                }
+                this.close();
+            }
+            __onButtonCloseTap() {
+                this.close();
+            }
+            __onAddParamTap() {
+                this.push('params', {
+                    name: '',
+                    value: ''
+                });
+            }
+            __onDeleteParamTap(e) {
+                var index = e.model.index;
+                this.splice('params', index, 1);
+            }
+        }
+        customElements.define(ShapeEditor.is, ShapeEditor);
+    </script>
+</dom-module>

@@ -1,0 +1,22 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+
+<dom-module id="project-tour">
+    <template>
+        <style include="theme-helper"></style>
+
+        <h3>Tour</h3>
+    </template>
+    <script>
+        class ProjectTour extends KctView {
+            static get is() {
+                return 'project-tour';
+            }
+
+            handleRouteParams(project) {
+                if (project != 'tour') return;
+            }
+        }
+
+        customElements.define(ProjectTour.is, ProjectTour);
+    </script>
+</dom-module>

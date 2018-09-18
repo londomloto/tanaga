@@ -1,0 +1,360 @@
+<link rel="import" type="text/css" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" type="text/css" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" type="text/css" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" type="text/css" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="task-combo-user">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-combobox 
+            id="combo" 
+            url="/projects/projects-users" 
+            page-size="10" 
+            item-label-path="su_fullname" 
+            placeholder="Select or search user..." 
+            item-value-path="su_id" 
+            hide-clear 
+            no-label-float>
+            
+            <paper-button slot="toolbar" on-tap="__onAddMemberTap"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
+            <paper-button slot="toolbar" on-tap="__onInviteTap"><iron-icon icon="mail"></iron-icon>&nbsp;Invite</paper-button>
+            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+            <!-- <paper-icon-button icon="close" slot="toolbar" on-tap="__onComboCloseTap"></paper-icon-button> -->
+
+            <template>
+                <style>
+                    .icon {
+                        position: relative;
+                        width: 32x;
+                        height: 32px;
+                        border-radius: 50%;
+                        overflow: hidden;
+                        float: left;
+                    }
+                    .text {
+                        margin-left: 40px;
+                        font-size: 13px;
+                    }
+                    .meta {
+                        font-size: 12px;
+                        color: #999;
+                    }
+                    .clearfix {
+                        clear: both;
+                    }
+                </style>
+                <div>
+                    <div class="icon">
+                        <img src$="[[ item.su_avatar_thumb ]]&w=32&h=32">
+                    </div>
+                    <div class="text">
+                        <div>[[ item.su_fullname ]]</div>
+                        <div class="meta">[[ item.su_email ]]</div>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+            </template>
+        </kct-combobox>    
+
+        <kct-dialog id="editor" title="Add Member" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper">
+                    :host {
+                        --paper-input-container-label: {
+                            font-weight: 400;
+                        };
+                        --paper-input-container-input: {
+                            font-weight: 500;
+                        };
+                    }
+                    .message {
+                        padding: 5px;
+                        margin: 10px 0;
+                        background-color: var(--paper-amber-300);
+                        font-size: 12px;
+                        text-align: center;
+                        color: #fff;
+                    }
+                    p {
+                        font-size: 13px;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    
+                    <p>
+                        Add your project members by selecting users already registered within the app. 
+                        Adding members will automatically assign them into selected task.
+                    </p>
+
+                    <div class="message" hidden$="[[ __hideMessage(__message) ]]">[[ __message ]]</div>
+
+                    <kct-combobox 
+                        id="combo-user" 
+                        url="/users" 
+                        value="{{ record.su_id }}" 
+                        placeholder="Select or search user..." 
+                        page-size="10" 
+                        item-label-path="su_fullname" 
+                        item-value-path="su_id" 
+                        required 
+                        error-message="User is required" 
+                        hide-clear 
+                        no-label-float>
+                        <template>
+                            <style>
+                                .icon {
+                                    position: relative;
+                                    width: 32x;
+                                    height: 32px;
+                                    border-radius: 50%;
+                                    overflow: hidden;
+                                    float: left;
+                                }
+                                .text {
+                                    margin-left: 40px;
+                                    font-size: 13px;
+                                }
+                                .meta {
+                                    font-size: 12px;
+                                    color: #999;
+                                }
+                                .clearfix {
+                                    clear: both;
+                                }
+                            </style>
+                            <div>
+                                <div class="icon">
+                                    <img src$="[[ item.su_avatar_thumb ]]&w=32&h=32">
+                                </div>
+                                <div class="text">
+                                    <div>[[ item.su_fullname ]]</div>
+                                    <div class="meta">[[ item.su_email ]]</div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </template>        
+                    </kct-combobox>
+                    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ __invalidAdd ]]">Add</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="invite" title="Invite User" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper">
+                    :host {
+                        --paper-input-container-input: {
+                            font-weight: 500;
+                        };
+                    }
+                    .message {
+                        padding: 5px;
+                        margin: 10px 0;
+                        background-color: var(--paper-amber-300);
+                        font-size: 12px;
+                        text-align: center;
+                    }
+                    p {
+                        font-size: 13px;
+                    }
+                </style>
+
+                <div slot="dialog-body">
+
+                    <p>
+                        Add your project members by inviting users (sending message through email). 
+                        Inviting user will automatically assign them into selected task and project.
+                    </p>
+
+                    <div class="message" hidden$="[[ __hideMessage(__message) ]]">[[ __message ]]</div>
+
+                    <paper-input value="{{ inviteRecord.email }}" type="email" label="Email address" required error-message="Valid email address is required"></paper-input>
+                    <kct-combobox 
+                        id="combo-role" 
+                        url="/roles" 
+                        value="{{ inviteRecord.role }}" 
+                        page-size="10" 
+                        item-label-path="sr_name" 
+                        item-value-path="sr_id" 
+                        label="Assign default role" 
+                        hide-clear 
+                        required 
+                        error-message="Default role is required"></kct-combobox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onInviteSendTap" disabled$="[[ __invalidInvite ]]">Send</paper-button>
+                    <paper-button on-tap="__onInviteCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class TaskComboUser extends Polymer.Element {
+            static get is() {
+                return 'task-combo-user';
+            }
+
+            static get properties() {
+                return {
+                    project: { type: Object },
+                    record: { type: Object }, 
+                    inviteRecord: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__validateAdd(record.su_id)',
+                    '__validateInvite(inviteRecord.email, inviteRecord.role)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__message = '';
+                this.__invalidInvite = true;
+                this.__invalidAdd = true;
+            }
+
+            open() {
+                this.set('__message', '');
+                this.set('__invalidInvite', true);
+                this.set('__invalidAdd', true);
+
+                this.$.combo.value = '';
+
+                this.$.combo.load({
+                    project: this.project.sp_id,
+                    sort: [{ property: 'su_fullname', direction: 'asc' }]
+                }).then(() => {
+                    this.$.combo.open();
+                });
+            }
+
+            close() {
+                this.$.combo.close();
+            }
+
+            clear() {
+                this.$.combo.value = '';
+            }
+
+            getSelectedUser() {
+                let value = this.$.combo.value;
+                return this.$.combo.getModelForValue(value);
+            }
+
+            __validateInvite(email, role) {
+                let valid = true;
+                valid = valid && email;
+                valid = valid && role;
+                this.set('__invalidInvite', !valid);
+            }
+
+            __validateAdd(user) {
+                let valid = true;
+                valid = valid && user;
+                this.set('__invalidAdd', !valid);
+            }
+
+            __hideMessage(message) {
+                return !(!!message);
+            }
+
+            __onAddMemberTap() {
+                this.$['combo-user'].value = '';
+                this.$['combo-user'].load();
+                this.set('record', {});
+                this.$.editor.open();
+
+                this.dispatchEvent(new CustomEvent('action'));
+            }
+
+            __onInviteTap() {
+                this.$['combo-role'].value = '';
+                this.$['combo-role'].load();
+                this.set('inviteRecord', {});
+                this.$.invite.open();
+                this.dispatchEvent(new CustomEvent('action'));   
+            }
+
+            __onComboCloseTap() {
+                this.close();
+                this.dispatchEvent(new CustomEvent('action'));
+            }
+
+            __onEditorSaveTap() {
+                if ( ! this.project) return;
+                if ( ! this.record && this.record.su_id) return;
+                
+                let data = {
+                    spu_su_id: this.record.su_id,
+                    spu_sp_id: this.project.sp_id
+                };
+
+                this.set('__message', '');
+
+                this.$.ajax.POST('/projects/projects-users', data).then(res => {
+                    if (res.success) {
+                        this.$.combo.load();
+
+                        let event = new CustomEvent('member-add', {
+                            detail: {
+                                member: res.data
+                            }
+                        });
+
+                        this.dispatchEvent(event);
+                    } else {
+                        this.set('__message', res.message);
+                    }
+
+                    this.$['combo-user'].value = '';
+                });
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onInviteSendTap() {
+                let payload = this.inviteRecord;
+                payload.project = this.project.sp_id;
+
+                this.set('__message', '');
+                this.set('__invalidInvite', true);
+                this.$.invite.title = 'Sending...';
+
+                this.$.ajax.POST('/users/invite', payload).then(res => {
+
+                    if (res.success) {
+                        let e = new CustomEvent('member-add', {
+                            detail: {
+                                member: res.data
+                            }
+                        });
+                        this.dispatchEvent(e);
+
+                        this.set('__invalidInvite', false);
+                        this.$.invite.title = 'Invite';
+
+                        this.$.invite.close();
+                    } else {
+                        this.set('__message', res.message);
+                    }
+                });
+            }
+
+            __onInviteCloseTap() {
+                this.$.invite.close();
+            }
+        }
+
+        customElements.define(TaskComboUser.is, TaskComboUser);
+    </script>
+</dom-module>

@@ -1,0 +1,712 @@
+<link rel="import" href="../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="kct-combobox-overlay.html">
+
+<dom-module id="kct-combobox">
+    
+    <template>
+        <style include="vaadin-combo-box-shared-styles">
+            
+            :host {
+                display:block;
+                padding:8px 0;
+                min-width: 0;
+            }
+            :host>#overlay {
+                display:none;
+            }
+            paper-input-container {
+                position:relative;
+                padding: 0;
+                @apply --kct-combobox-container;
+            }
+            paper-icon-button.clear-button,
+            paper-icon-button.toggle-button,
+            :host::slotted(paper-icon-button[slot="toggle-button"]),
+            :host::slotted(paper-icon-button[slot="clear-button"]) {
+                line-height:18px !important;
+                /*width:32px;
+                height:32px;
+                padding:4px;*/
+                width: 24px;
+                height: 24px;
+                padding: 0;
+                text-align:center;
+                color:rgba(0,0,0,.38);
+                cursor:pointer;
+                margin-top:-1px;
+                --paper-icon-button-ink-color:rgba(0,0,0,.54);
+            }
+            :host::slotted(paper-input-container) paper-icon-button[slot="toggle-button"],
+            :host::slotted(paper-input-container) paper-icon-button[slot="clear-button"] {
+                line-height:18px !important;
+                /*width:32px;
+                height:32px;
+                padding:4px;*/
+                width: 24px;
+                height: 24px;
+                padding: 0;
+                text-align:center;
+                color:rgba(0,0,0,.38);
+                cursor:pointer;
+                margin-top:-1px;
+                --paper-icon-button-ink-color:rgba(0,0,0,.54);
+            }
+            #clearIcon {
+                @apply --kct-combobox-clear-button;
+            }
+            paper-input-container paper-icon-button:hover,
+            paper-input-container::slotted(paper-icon-button:hover),
+            :host([opened]) paper-input-container paper-icon-button,
+            :host([opened]) paper-input-container::slotted(paper-icon-button) {
+                color:rgba(0,0,0,.54);
+            }
+            :host::slotted(paper-input-container) paper-icon-button:hover,
+            :host([opened])::slotted(paper-input-container) paper-icon-button {
+                color:rgba(0,0,0,.54);
+            }
+            :host([opened]) paper-input-container::slotted(paper-icon-button:hover),
+            :host([opened]) paper-input-container paper-icon-button:hover {
+                color:rgba(0,0,0,.86);
+            }
+            :host([opened])::slotted(paper-input-container) paper-icon-button:hover {
+                color:rgba(0,0,0,.86);
+            }
+            :host([opened]) paper-input-container {
+                z-index:20;
+            }
+            :host [slot=suffix] {
+                display:flex;
+            }
+            input::-ms-clear {
+                display:none;
+            }
+            input {
+                position:relative;
+                outline:none;
+                box-shadow:none;
+                padding:0;
+                width:100%;
+                max-width:100%;
+                background:transparent;
+                border:none;
+                color:var(--paper-input-container-input-color,var(--primary-text-color));
+                -webkit-appearance:none;
+                text-align:inherit;
+                vertical-align:bottom;
+                min-width: 0;
+                @apply --paper-font-subhead;
+                @apply --paper-input-container-input;
+            }
+
+            /** custom */
+            :host([hide-trigger]) [slot=suffix] {
+                display: none;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-input-container
+            id="inputContainer"
+            disabled$="[[disabled]]"
+            no-label-float="[[noLabelFloat]]"
+            always-float-label="[[_computeAlwaysFloatLabel(alwaysFloatLabel,placeholder)]]"
+            auto-validate$="[[autoValidate]]"
+            invalid="[[invalid]]">
+
+            <label id="label" slot="label"
+                on-down="_preventDefault"
+                hidden$="[[!label]]"
+                aria-hidden="true"
+                on-tap="_openAsync"
+                for="input">[[label]]</label>
+
+            <slot name="prefix" slot="prefix"></slot>
+
+            <iron-input slot="input" id="ironinput"
+                bind-value="{{_inputElementValue}}"
+                allowed-pattern="[[allowedPattern]]"
+                prevent-invalid-input="[[preventInvalidInput]]"
+                invalid="{{invalid}}"
+                on-change="_stopPropagation"
+                label="[[label]]">
+                <input id="input"
+                    type="text"
+                    role="combobox"
+                    autocomplete="off"
+                    autocapitalize="none"
+                    aria-label$="[[label]]"
+                    aria-expanded$="[[_getAriaExpanded(opened)]]"
+                    aria-autocomplete="list"
+                    disabled$="[[disabled]]"
+                    pattern$="[[pattern]]"
+                    required$="[[required]]"
+                    autofocus$="[[autofocus]]"
+                    inputmode$="[[inputmode]]"
+                    name$="[[name]]"
+                    placeholder$="[[placeholder]]"
+                    readonly$="[[readonly]]"
+                    size$="[[size]]"
+                    on-input="_inputValueChanged"
+                    on-blur="_onBlur"
+                    on-change="_stopPropagation"
+                    key-event-target>
+            </iron-input>
+
+            <slot name="suffix" slot="suffix"></slot>
+
+            <div slot="suffix" suffix>
+                <span hidden$="[[ hideClear ]]">
+                    <slot name="clear-button">
+                        <paper-icon-button id="clearIcon"
+                            tabindex="-1"
+                            aria-label="Clear"
+                            icon="vaadin-combo-box:clear"
+                            class="clear-button small">
+                        </paper-icon-button>
+                    </slot>
+                </span>
+                <span hidden$="[[ hideArrow ]]">
+                    <slot name="toggle-button">
+                        <paper-icon-button id="toggleIcon"
+                            tabindex="-1"
+                            icon="vaadin-combo-box:arrow-drop-down"
+                            aria-label="Toggle"
+                            aria-expanded$="[[_getAriaExpanded(opened)]]"
+                            class="toggle-button rotate-on-open">
+                        </paper-icon-button>
+                    </slot>
+                </span>
+            </div>
+
+            <template is="dom-if" if="[[errorMessage]]">
+                <paper-input-error slot="add-on">[[errorMessage]]</paper-input-error>
+            </template>
+        </paper-input-container>
+
+        <kct-combobox-overlay 
+            id="overlay" 
+            width="[[ listWidth ]]" 
+            opened$=[[opened]]
+            position-target="[[_getPositionTarget()]]"
+            _focused-index="[[_focusedIndex]]"
+            _item-label-path="[[itemLabelPath]]"
+            on-down="_onOverlayDown"
+            loading="[[loading]]" 
+            busy="[[ busy ]]" 
+            has-toolbar="[[ __hasToolbar ]]" 
+            has-result="[[ __hasResult ]]" 
+            on-mousedown="_preventDefault" 
+            on-pagination="__onPagination" 
+            on-noresult-tap="__onNoResultTap" 
+            paging="[[ paging ]]"
+            vertical-offset="[[ overlayVerticalOffset ]]" 
+            hide-paging$="[[ __hidePaging ]]">
+
+            <!-- <template is="dom-repeat" items="[[ toolbar ]]">
+                <paper-button slot="toolbar" on-tap="__onToolbarItemTap">
+                    <iron-icon icon="[[ item.icon ]]" style="pointer-events: none; position: relative; top: -1px; margin-right: 3px;"></iron-icon>
+                    <span style="pointer-events: none;">[[ item.text ]]</span>
+                </paper-button>    
+            </template> -->
+
+        </kct-combobox-overlay>
+
+        <div style="display: none;">
+            <slot id="slot-toolbar" name="toolbar"></slot>
+        </div>
+
+    </template>
+
+    <script>
+        {
+            let BaseClass = customElements.get('vaadin-combo-box');
+
+            class KctCombobox extends BaseClass {
+                static get is() {
+                    return 'kct-combobox';
+                }
+
+                static get properties() {
+                    return {
+                        url: { type: String },
+                        payload: { type: Object, value: () => ({}) },
+                        params: { type: Object },
+                        paging: {
+                            type: Object,
+                            notify: true,
+                            value: () => ({
+                                start: 0,
+                                limit: 0,
+                                total: 0,
+                                pages: 0,
+                                page: 0
+                            })
+                        },
+                        pageSize: { type: Number }, 
+                        autoload: { type: Boolean, value: false },
+                        delay: { type: Number, value: 300  },
+                        hideTrigger: { type: Boolean, value: false },
+                        hideClear: { type: Boolean, value: false },
+                        hideArrow: { type: Boolean, value: false }, 
+                        overlayVerticalOffset: { type: Number, value: 2 },
+                        toolbar: { type: Array },
+                        itemQueryPath: { type: String },
+                        listWidth: { type: Number },
+                        busy: { type: Boolean, value: false }
+                    }
+                }
+
+                static get observers() {
+                    return [
+                        '__proxyChanged(url, pageSize)',
+                        '__paramsChanged(params.*)',
+                        '__toolbarChanged(toolbar.*)'
+                    ];
+                }
+
+                constructor() {
+                    super();
+                    this.__hasLoaded = false;
+                    this.__hasToolbar = false;
+                    this.__hasResult = false;
+                    this.__remoteQuery = false;
+                    this.__hidePaging = false;
+                }
+
+                ready() {
+                    super.ready();
+
+                    Polymer.RenderStatus.afterNextRender(this, () => {
+                        let tools = this.$['slot-toolbar'].assignedNodes({flatten: true}).filter(e => e.nodeType == Node.ELEMENT_NODE);
+                        if (tools.length) {
+                            this.set('__hasToolbar', true);
+                            tools.forEach(t => {
+                                t.slot = 'toolbar';
+                                this.$.overlay.appendChild(t);
+                            });
+                        }
+                    });
+                }
+
+                load(config = {}) {
+                    
+                    if ( ! this.__remoteQuery) {
+                        return Promise.resolve();
+                    }
+                    
+                    this.__hasLoaded = true;
+
+                    // make config immutable
+                    let options = Object.assign({}, config);
+
+                    if (options.params) {
+                        // save params
+                        this.__setPayload({
+                            params: options.params
+                        });
+
+                        options.params = undefined;
+                    }
+
+                    let payload = Object.assign({}, options, this.payload);
+                    
+                    if (payload.start === undefined) {
+                        payload.start = this.paging.start;
+                    } else {
+                        this.set('paging.start', payload.start);
+                    }
+
+                    if (payload.limit === undefined) {
+                        payload.limit = this.paging.limit;
+                    } else {
+                        this.set('paging.limit', payload.limit);
+                    }
+
+                    // save
+                    this.__setPayload(payload);
+
+                    let beforeLoadEvt = new CustomEvent('beforeload', {
+                        detail: {
+                            options: payload
+                        }
+                    });
+                    
+                    this.dispatchEvent(beforeLoadEvt);
+                    
+                    if (payload.fields) {
+                        if (typeof payload.fields == 'object') {
+                            payload.fields = JSON.stringify(payload.fields);
+                        }
+                    }
+
+                    if(payload.params) {
+                        if (typeof payload.params == 'object') {
+                            payload.params = JSON.stringify(payload.params);
+                        }
+                    }
+
+                    this.set('busy', true);
+
+                    return this.$.ajax.GET(this.url, payload).then(res => {
+                        let items = res.data;
+                        this.set('items', items);
+
+                        let total = +res.total;
+                        let limit = +this.paging.limit;
+                        let start = +this.paging.start;
+                        let pages = Math.ceil(total / limit);
+                        let page  = Math.ceil((start - 1) / limit) + 1;
+
+                        page = page < 1 ? 1 : page;
+
+                        this.__setPaging({ 
+                            total: total,
+                            pages: pages,
+                            page: page
+                        });
+
+                        this.dispatchEvent(new CustomEvent('load'));
+
+                        this.set('busy', false);
+                    });
+                }
+
+                getModelForValue(value) {
+                    let model;
+                    if (this.items) {
+                        model = this.filteredItems.find(item => item[this.itemValuePath] == value);
+                    }
+                    return model;
+                }
+
+                getQueryField() {
+                    return this.itemQueryPath || this.itemLabelPath;
+                }
+
+                _ensureTemplatized() {
+                    if ( ! this._templatized) {
+                        this._templatized = true;
+                        this._itemTemplate = Polymer.dom(this).querySelector('template');
+                        
+                        if (this._itemTemplate) {
+                            this.templatize(this._itemTemplate);
+                        }
+                    }
+                }
+
+                _filterChanged (filter, itemValuePath, itemLabelPath) {
+                    if (filter === undefined || itemValuePath === undefined || itemLabelPath === undefined) {
+                        return;
+                    }
+                    
+                    if ( ! this.__remoteQuery) {
+                        if (this.items) {
+                            this.filteredItems = this._filterItems(this.items, filter);
+                        }
+                    } else {
+                        let reload = false;
+
+                        if (filter == '') {
+                            reload = true;
+                        } else {
+                            if (this.items) {
+                                this.filteredItems = this._filterItems(this.items, filter);
+                                reload = this.filteredItems.length == 0;
+                            }  else {
+                                reload = true;
+                            }    
+                        }
+                        
+                        if (reload) {
+                            this.__setPayload({ 
+                                query: filter,
+                                start: 0,
+                                fields: [ this.getQueryField() ]
+                            }, true);
+                        }
+                    }
+                }
+
+                _setOverlayItems(items) {
+                    this.$.overlay.notifyPath('_items', undefined);
+                    this.$.overlay.set('_items', items);
+
+                    // this.$.overlay.hidden = !this._hasItems(items);
+                    this.$.overlay.hidden = false;
+                    this.$.overlay.notifyResize();
+
+                    this.set('__hasResult', this._hasItems(items) > 0);
+                }
+
+                _onTap(e) {
+                    super._onTap(e);
+
+                    let path = Polymer.dom(e).path;
+                    
+                    if (path.indexOf(this._clearElement) !== -1) {
+                        this.__setPayload({ 
+                            start: 0, 
+                            query: '',
+                            fields: [ this.getQueryField() ]
+                        }, true);
+                    } else if (path.indexOf(this.inputElement) !== -1) {
+                        if (this.__remoteQuery && ! this.autoload && ! this.__hasLoaded) {
+                            this.load();
+                        }
+                    }
+                }
+
+                _onOpened() {
+                  Polymer.flush && Polymer.flush();
+
+                  // this.$.overlay.hidden = !this._hasItems(this.$.overlay._items) && !this.loading;
+                  this.$.overlay.hidden = this.loading;
+                  
+                  this.$.overlay.ensureItemsRendered();
+
+                  this.$.overlay.updateViewportBoundaries();
+                  this.$.overlay.async(this.$.overlay.adjustScrollPosition);
+                  this.$.overlay.async(this.$.overlay.notifyResize, 1);
+
+                  this._previousDocumentPointerEvents = document.body.style.pointerEvents;
+                  document.body.style.pointerEvents = 'none';
+
+                  this._lastCommittedValue = this.value;
+                }
+
+                _valueChanged (value) {
+                    if (this._isValidValue(value)) {
+
+                        if (this._getItemValue(this.selectedItem) !== value) {
+                            var valueIndex = this._indexOfValue(value, this.filteredItems);
+                            
+                            if (valueIndex >= 0) {
+                                this.selectedItem = this.filteredItems[valueIndex];
+                            } else {
+                                this.selectedItem = null;
+
+                                if (this.__remoteQuery) {
+                                    let params = {};
+
+                                    params[this.itemValuePath] = value;
+
+                                    this.__setPayload({ 
+                                        start: 0,  
+                                        limit: 1,
+                                        params: params
+                                    });
+
+                                    this.load().then(() => {
+                                        this.__setPayload({
+                                            limit: this.pageSize,
+                                            params: {}
+                                        });
+                                        
+                                        let valueIndex = this._indexOfValue(value, this.filteredItems);
+
+                                        if (valueIndex >= 0) {
+                                            this.selectedItem = this.filteredItems[valueIndex];    
+                                        } else {
+                                            this.selectedItem = null;
+
+                                            if (this.allowCustomValue) {
+                                                this._inputElementValue = value;
+                                            }
+
+                                            this._setHasValue(this.value !== '');
+                                            this._lastCommittedValue = undefined;
+
+                                            this.__setPayload({ 
+                                                start: 0,  
+                                                fields: [ this.getQueryField() ],
+                                                query: ''
+                                            }, true);
+                                        }
+                                    });
+                                }
+
+                            }
+
+                        } else {
+                            var item = this.selectedItem;
+                        }
+
+                        if ( ! item && this.allowCustomValue) {
+                            this._inputElementValue = value;
+                        }
+
+                        this._setHasValue(this.value !== '');
+                    } else {
+                        this.selectedItem = null;
+                    }
+
+                    this._lastCommittedValue = undefined;
+                }
+
+                __setPayload(data, reload = false) {
+                    let payload = Object.assign({}, this.payload);
+
+                    Object.keys(data).forEach(k => {
+                        payload[k] = data[k];
+                    });
+
+                    this.set('payload', payload);
+
+                    if (reload) {
+                        this.__request();
+                    }
+                }
+
+                __setPaging(data) {
+                    let paging = Object.assign({}, this.paging);
+                    
+                    Object.keys(data).forEach(k => {
+                        paging[k] = data[k];
+                    });
+
+                    this.set('paging', paging);
+                }
+
+                __request() {
+                    if ( ! this.__remoteQuery) {
+                        return;
+                    }
+
+                    if ( ! this.url) {
+                        console.warn(`Invalid URL`);
+                        return;
+                    }
+
+                    this.__requesting = Polymer.Debouncer.debounce(
+                        this.__requesting,
+                        Polymer.Async.timeOut.after(this.delay),
+                        () => {
+                            this.load();
+                        }
+                    );
+
+                    Polymer.enqueueDebouncer(this.__requesting);
+                }
+
+                __toolbarChanged(changed) {
+                    if (changed.path == 'toolbar') {
+                        this.set('__hasToolbar', (changed.value || []).length > 0);
+                    }
+                }
+
+                __proxyChanged(url, pageSize) {
+                    let limit = pageSize || 0;
+
+                    this.set('__remoteQuery', url !== undefined);
+                    this.set('__hidePaging', pageSize === undefined);
+
+                    this.__setPaging({ limit: limit });
+                    this.__setPayload({ limit: limit });
+
+                    if (this.__remoteQuery && this.autoload) {
+                        this.__request();
+                    }
+                }
+
+                __paramsChanged(changed) {
+                    if (changed.path == 'params') {
+                        this.__setPayload({
+                            params: this.params
+                        }, true);
+                    }
+                }
+
+                __lookupContext() {
+                    let parentNode = this.parentNode;
+
+                    while(parentNode) {
+                        let host = parentNode.host;
+                        if (host) {
+                            this.context = host;
+                            break;
+                        }
+
+                        if (parentNode.localName == 'body') {
+                            break;
+                        }
+
+                        parentNode = parentNode.parentNode;
+                    }
+                }
+
+                __onPagination(e) {
+                    let action = e.detail.action,
+                        paging = this.paging,
+                        pages  = isNaN(+paging.pages) ? 0 : +paging.pages,
+                        limit  = isNaN(+paging.limit) ? 0 : +paging.limit,
+                        page = isNaN(+paging.page) ? 1 : +paging.page;
+
+                    switch(action) {
+                        case 'first':
+                            page = 1;
+                            break   
+                        case 'prev':
+                            page -= 1;
+                            
+                            if (page <= 1) {
+                                page = 1;
+                            }
+
+                            break
+                        case 'next':
+                            page += 1;
+                            if (page >= pages) {
+                                page = pages;
+                            }
+
+                            break
+                        case 'last':
+                            page = pages;
+                            
+                            break
+                    }
+
+                    let start = (page - 1) * limit;
+
+                    this.__setPayload({ start: start });
+                    this.load();
+                }
+
+                __onNoResultTap() {
+                    this.close();
+                }
+
+                __onToolbarItemTap(e) {
+                    let tool = e.model.item;
+                    if (tool.tap) {
+
+                        if ( ! this.context) {
+                            this.__lookupContext();
+                        }
+
+                        if (this.context) {
+                            if (this.context[tool.tap]) {
+                                this.context[tool.tap](e);
+                            }
+                        }
+
+                        if (tool.close) {
+                            let timer = setTimeout(() => {
+                                clearTimeout(timer);
+                                timer = null;
+                                this.close();
+                            }, 200);
+                            
+                        }
+                    }
+                }
+            }
+
+            customElements.define(KctCombobox.is, KctCombobox);
+        }
+    </script>
+</dom-module>

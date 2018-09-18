@@ -1,0 +1,198 @@
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="mixins/chart.html">
+<link rel="import" href="styles/chart-styles.html">
+
+<dom-module id="kct-chart-column">
+    <template>
+        <style include="chart-styles">
+            #container {
+                height: 400px;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            /* Link the series colors to axis colors */
+            .highcharts-color-0 {
+                fill: #7cb5ec;
+                stroke: #7cb5ec;
+            }
+            .highcharts-axis.highcharts-color-0 .highcharts-axis-line {
+                stroke: #7cb5ec;
+            }
+            .highcharts-axis.highcharts-color-0 text {
+                fill: #7cb5ec;
+            }
+            .highcharts-color-1 {
+                fill: #90ed7d;
+                stroke: #90ed7d;
+            }
+            .highcharts-axis.highcharts-color-1 .highcharts-axis-line {
+                stroke: #90ed7d;
+            }
+            .highcharts-axis.highcharts-color-1 text {
+                fill: #90ed7d;
+            }
+
+
+            .highcharts-yaxis .highcharts-axis-line {
+                stroke-width: 2px;
+            }
+
+        </style>
+        <div class="panel">
+            <!-- <div class="toolbar" hidden$="[[ !showToolbar ]]">
+                <slot name="toolbar"></slot>
+                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>        
+            </div> -->
+            <div id="chart"></div>
+        </div>
+    </template>
+    <script>
+        class KctChartColumn extends Mixins(Polymer.Element).use(Mixins.Chart) {
+            static get is() {
+                return 'kct-chart-column';
+            }
+            static get properties() {
+                return {
+                    labelY: { type: String },
+                    labelX: { type: String },
+                    categories: { type: Array },
+                    series: { type: Array },
+                    max: {
+                        type: String,
+                        value: null
+                    }
+                };
+            }
+            static get observers() {
+                return [
+                    '__categoriesChanged(categories.*)',
+                    '__seriesChanged(series.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__animated = false;
+            }
+            ready() {
+                super.ready();
+                this.__setup();
+            }
+            __setup() {
+                let showLegend = this.showLegend;
+                let showLabel = this.showLabel;
+
+                let xMax = this.max;
+                console.log('xMax', this.max);
+                let me = this;
+
+                let options = Highcharts.merge(this.styles, {
+                    chart: {
+                        type: 'column',
+                        renderTo: this.$.chart,
+                        reflow: false
+                    },
+                    title: false,
+                    subtitle: false,
+                    exporting: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        crosshair: true,
+                        categories: []
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: this.labelY
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                        pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                            '<td style="padding:0"><b>{point.y:.0f}</b></td></tr>',
+                        footerFormat: '</table>',
+                        shared: true,
+                        useHTML: true
+                    },
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0,
+                            showInLegend: showLegend,
+                            dataLabels: {
+                                enabled: showLabel ? showLabel : false
+                            }
+                        }
+                    },
+                    scrollbar: {
+                        enabled: true
+                    },
+                    series: []
+                });
+
+                // if (this.title) {
+                //     options.title.text = this.title;
+                // }
+
+                // if (this.subtitle) {
+                //     options.subtitle.text = this.subtitle;
+                // }
+
+                // if ( ! this.showHeaders) {
+                //     options.title.style.display = 'none';
+                //     options.subtitle.style.display = 'none';
+                // }
+
+                this.chart = new Highcharts.Chart(options);
+            }
+
+            __updateCategories() {
+                if ( ! this.chart) return;
+                let categories = (this.categories || []).slice();
+                this.chart.xAxis[0].setCategories(categories);
+
+                let rotation = categories.length > 12 ? -45 : 0;
+
+                this.chart.update({
+                    xAxis: {
+                        labels: {
+                            rotation: rotation
+                        }
+                    }
+                }, true, false, false);
+            }
+
+            __updateSeries() {
+                if ( ! this.chart) return;
+                let series = (this.series || []).slice();
+
+                while(this.chart.series.length > 0) {
+                    this.chart.series[0].remove(true);
+                }
+
+                series.forEach((s, i) => {
+                    this.chart.addSeries(s);
+                });
+            }
+
+            __categoriesChanged() {
+                this.__updateCategories();
+            }
+
+            __seriesChanged() {
+                this.__updateSeries();
+            }
+
+            __formatingTooltip(series, x, y) {
+                console.log('masuk __formatingTooltip');
+                console.log(x, y, series);
+            }
+
+            __maxChanged() {
+                if(! this.chart) return;
+            }
+        }
+        customElements.define(KctChartColumn.is, KctChartColumn);
+    </script>
+</dom-module>

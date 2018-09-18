@@ -1,0 +1,15 @@
+<link rel="import" href="../maps-provider.html">
+
+<dom-module id="mapserver-maps-provider">
+    <template>
+        
+    </template>
+    <script>
+        class MapserverMapsProvider extends MapsProvider {
+            static get is() {
+                return 'mapserver-maps-provider';
+            }
+        }
+        customElements.define(MapserverMapsProvider.is, MapserverMapsProvider);
+    </script>
+</dom-module>

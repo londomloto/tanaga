@@ -1,0 +1,197 @@
+<link rel="import" href="../../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-input-autocomplete">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            #popup {
+                background: red;
+            }
+            #listbox {
+                @apply --shadow-elevation-2dp;
+            }
+            paper-item {
+                cursor: pointer;
+                font-weight: 400;
+                padding: 5px 16px;
+                --paper-item-min-height: 32px;
+            }
+            paper-item + paper-item {
+                border-top: 1px solid #dfdfdf;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-input 
+            id="input" 
+            label="[[ label ]]" 
+            value="{{ value }}" 
+            on-keypress="__onInputKeypress" 
+            on-keydown="__onInputKeydown"></paper-input>
+        <iron-dropdown 
+            id="popup" 
+            opened="{{ opened }}" 
+            vertical-offset="56" 
+            horizontal-align="left"  
+            vertical-align="top" 
+            no-animations 
+            no-auto-focus 
+            on-iron-overlay-canceled="__onIronOverlayCanceled"> 
+            <paper-listbox 
+                id="listbox" 
+                slot="dropdown-content" 
+                selected="{{ selected }}" 
+                attr-for-selected="name">
+                <template is="dom-repeat" items="[[ items ]]">
+                    <paper-item name="[[ __computeItemValue(item) ]]">[[ __computeItemLabel(item) ]]</paper-item>
+                </template>
+            </paper-listbox>        
+        </iron-dropdown>
+    </template>
+    <script>
+        class KctInputAutocomplete extends Polymer.Element {
+            static get is() {
+                return 'kct-input-autocomplete';
+            }
+            static get properties() {
+                return {
+                    url: { type: String },
+                    label: { type: String },
+                    value: { type: String, notify: true }, 
+                    selected: { type: String }, 
+                    itemLabelPath: { type: String, value: 'label' },
+                    itemValuePath: { type: String, value: 'value' },
+                    items: { type: Array, value: () => ([]) }
+                };
+            }
+            static get observers() {
+                return [
+                    '__openedChanged(opened)',
+                    '__selectedChanged(selected)',
+                    '__itemsChanged(items.*)',
+                    '__valueChanged(value)'
+                ];
+            }
+            ready() {
+                super.ready();
+            }
+            __open() {
+                if (this.opened) {
+                    return;
+                }
+                this.$.popup.open();
+            }
+            __close() {
+                if ( ! this.opened) {
+                    return;
+                }
+
+                this.$.popup.close();
+                this.__restoreFocus();
+                
+            }
+            __restoreFocus() {
+                // restore focus
+                let timer = setTimeout(() => {
+                    this.$.input.focus();
+                    clearTimeout(timer);
+                    timer = null;
+                }, 10);
+            }
+            __computeItemValue(item) {
+                return item[this.itemValuePath] || '';
+            }
+            __computeItemLabel(item) {
+                return item[this.itemLabelPath] || '';
+            }
+            __valueChanged(value) {
+                if (value == '') {
+                    this.__close();
+                }
+            }
+            __openedChanged(opened) {
+                if (opened) {
+                    this.__resize();
+                }
+            }
+            __itemsChanged(changed) {
+                let items = this.items || [];
+
+                if (items.length) {
+                    this.__open();
+                } else {
+                    this.__close(); 
+                }
+            }
+            __selectedChanged(selected) {
+                if (selected) {
+                    let model = (this.items || []).find(e => e[this.itemValuePath] == selected);    
+
+                    if (model) {
+                        this.set('value', model[this.itemLabelPath]);
+                        this.dispatchEvent(new CustomEvent('complete', {
+                            detail: {
+                                selected: model
+                            }
+                        }));
+                    }
+                }
+                this.__close();
+                
+            }
+            __resize() {
+                if (this.__resized) return;
+                this.__resized = true;
+
+                let width = this.$.input.clientWidth;
+                this.$.popup.style.width = width + 'px';
+            }
+            __load() {
+                let query = this.$.input.value;
+                this.set('selected', '');
+
+                if (query.length) {
+                    let payload = {
+                        query: query,
+                        fields: [ this.itemLabelPath ]
+                    };
+
+                    this.$.ajax.GET(this.url, payload).then(res => {
+                        let items = res.data || [];
+                        this.set('items', items);
+                    });        
+                }
+                
+            }
+            __onInputKeydown(e) {
+                if (e.key == 'ArrowDown' || e.key == 'ArrowUp') {
+                    e.preventDefault();
+                    let items = (this.items || []);
+                    if (items.length) {
+                        this.__open();
+                        this.$.listbox.focus();     
+                    }
+                }
+            }
+            __onInputKeypress(e) {
+                this.__debounce = Polymer.Debouncer.debounce(
+                    this.__debounce,
+                    Polymer.Async.timeOut.after(500),
+                    this.__load.bind(this)
+                );
+                Polymer.enqueueDebouncer(this.__debounce);    
+            }
+            __onIronOverlayCanceled(e) {
+                this.__restoreFocus();
+            }
+        }
+        customElements.define(KctInputAutocomplete.is, KctInputAutocomplete);
+    </script>
+</dom-module>

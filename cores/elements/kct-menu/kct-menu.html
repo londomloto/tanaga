@@ -1,0 +1,255 @@
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../mixins/theme.html">
+
+<dom-module id="kct-menu">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                overflow: hidden;
+                max-height: var(--menu-max-height, auto);
+                transition: max-height 0.2s ease-out;
+            }
+            paper-listbox {
+                padding: 0;
+                background-color: transparent;
+            }
+            paper-item {
+
+                cursor: pointer;
+                color: #666;
+                --paper-item-min-height: 32px;
+                --paper-item-selected-weight: normal;
+            }
+            paper-item > .gutt {
+                width: var(--item-gutter, 0px);
+                height: var(--paper-item-min-height);
+            }
+            paper-item > .text {
+                padding: 0 5px;
+                font-size: 14px;
+                @apply --layout-flex;
+            }
+            paper-item > .icon {
+                
+            }
+            paper-item:focus > .icon {
+                
+            }
+            paper-item > .icon > iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                position: relative;
+                top: -1px;
+            }
+            paper-item > .tool {
+                display: none;
+            }
+            paper-item.item-parent > .tool {
+                display: block;
+            }
+            paper-item.item-parent > .tool > iron-icon {
+                transform: rotate(0deg);
+                transition: transform 0.3s ease;
+            }
+            paper-item.item-parent.item-expanded > .tool > iron-icon {
+                transform: rotate(180deg);
+                transition: transform 0.3s ease;
+            }
+            .menu-header {
+                color: var(--paper-grey-500);
+                font-size: 11px;
+                text-transform: uppercase;
+                margin: 12px 0;
+                position: relative;
+                padding-left: 10px;
+            }
+            .menu-header span {
+                position: relative;
+                z-index: 2;
+                background: #fff;
+                padding: 0 8px;
+            }
+            .menu-header::before {
+                content: '';
+                display: block;
+                height: 1px;
+                border-bottom: 1px solid var(--paper-grey-300);
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 50%;
+                margin-top: -1px;
+            }
+        </style>
+        <paper-listbox selectable="paper-item">
+            <template is="dom-repeat" items="[[ menus ]]">
+                <template is="dom-if" if="[[ item.smn_group ]]">
+                    <div class="menu-header">
+                        <span>[[ item.smn_group ]]</span>
+                    </div>
+                </template>
+                <paper-item data-visible$="[[ item.smn_visible ]]" on-tap="__onItemTap" class$="[[ item.smn_class ]]">
+                    <div class="gutt"></div>
+                    <div class="icon"><iron-icon icon="[[ item.smn_icon ]]"></iron-icon></div>
+                    <div class="text">[[ item.smn_title ]]</div>
+                    <div class="tool"><iron-icon icon="expand-more"></iron-icon></div>
+                </paper-item>
+                <template is="dom-if" if="[[ item.smn_is_parent ]]">
+                    <kct-menu 
+                        menus="[[ item.smn_children ]]" 
+                        level="[[ __computeLevel() ]]" 
+                        collapsed$="[[ !item.smn_expanded ]]"></kct-menu>
+                </template>
+            </template>
+        </paper-listbox>
+    </template>
+    <script>   
+        {
+            function cascade(menus, handler) {
+                menus.forEach((m) => {
+                    handler(m);
+                    if (m.smn_children) {
+                        cascade(m.smn_children, handler);
+                    }
+                });
+            }
+
+            class KctMenu extends Mixins(Polymer.Element).use(Mixins.Theme) {
+                static get is() {
+                    return 'kct-menu';
+                }
+                static get properties() {
+                    return {
+                        menus: { type: Array },
+                        level: { type: Number, value: 0 },
+                        collapsed: { type: Boolean, value: false },
+                        navigation: { type: String }
+                    }
+                }
+                static get observers() {
+                    return [
+                        '__menusChanged(menus.*)',
+                        '__levelChanged(level)',
+                        '__collapsedChanged(collapsed)',
+                        '__navigationChanged(navigation)'
+                    ];
+                }
+                constructor() {
+                    super();
+                    this.__indexes = {};
+                }
+                ready() {
+                    super.ready();
+                }
+                resize() {
+                    let collapsed = this.collapsed;
+
+                    if (this.menus && this.menus.length) {
+                        if (collapsed) {
+                            this.updateStyles({ '--menu-max-height': '0px' });
+                        } else {
+                            let height = 0;
+
+                            cascade(this.menus, function(m){
+                                if (m.smn_visible) {
+                                    height += 48;
+                                }
+                            });
+
+                            this.updateStyles({ '--menu-max-height': height + 'px' });
+
+
+                            let owner = this.parentNode && this.parentNode.parentNode && this.parentNode.parentNode.host
+                            
+                            if (owner && owner.localName == 'kct-menu') {
+                                owner.resize();
+                            }
+
+                        }
+                    }
+                }
+                __menusChanged(changed) {
+                    if (changed.path == 'menus') {
+                        if (this.menus && this.menus.length) {
+                            let group = null;
+
+                            this.menus.forEach((elem, index) => {
+                                elem.smn_parent_id = '' + elem.smn_parent_id;
+                                elem.smn_class = 'item';
+                                elem.smn_visible = !this.collapsed;
+
+                                if (elem.smn_children) {
+                                    elem.smn_is_parent = true;
+                                    elem.smn_class += ' item-parent';
+                                    elem.smn_expanded = false;
+                                }
+                                if (group == elem.smn_group) {
+                                    elem.smn_group = null;
+                                }
+                                group = elem.smn_group;
+                            });
+                        }
+                    }
+                }
+                __levelChanged(level) {
+                    this.updateStyles({
+                        '--item-gutter': (level * 28) + 'px'
+                    });
+                }
+                __collapsedChanged(collapsed) {
+                    let eventData = {
+                        detail: {
+                            expanded: !collapsed
+                        }
+                    };
+
+                    this.dispatchEvent(new CustomEvent('toggle', eventData));
+                    this.resize();
+                }
+                __computeLevel() {
+                    return this.level + 1;
+                }
+                __computeItemTool(item) {
+                    return item.smn_expanded ? 'expand-more' : 'expand-less';
+                }
+                
+                __onItemTap(e) {
+                    e.stopPropagation();
+
+                    let node = e.currentTarget,
+                        item  = e.model.item,
+                        index = e.model.index;
+
+                    if (item.smn_is_parent) {
+                        let expanded = item.smn_expanded,
+                            classes  = item.smn_class;
+
+                        classes  = classes.replace(/\s?item-expanded/, '');
+                        classes += expanded ? '': ' item-expanded';
+
+                        item.smn_children.forEach((c, i) => {
+                            this.set('menus.' + index + '.smn_children.' + i + '.smn_visible', !expanded);
+                        });
+
+                        this.set('menus.' + index + '.smn_expanded', !expanded);
+                        this.set('menus.' + index + '.smn_collapsed', expanded);
+                        this.set('menus.' + index + '.smn_class', classes);
+                    } else {
+                        let eventData = {
+                            bubble: true,
+                            composed: true,
+                            detail: item
+                        };
+
+                        this.dispatchEvent(new CustomEvent('navigation', eventData));
+                    }
+                }
+            }
+            customElements.define(KctMenu.is, KctMenu);
+        }
+        
+    </script>
+</dom-module>

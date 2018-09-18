@@ -1,0 +1,26 @@
+<link rel="import" href="/bower_components/polymer/polymer-element.html">
+
+<!--
+`<relative-time>` receives a time string, and optionally formatting and timezone
+options, and converts it into another time string or, by default, relative time string
+
+Examples:
+
+  <relative-time time=[[mytime]]></relative-time>
+
+  <relative-time input-format="M/D/YY h:mm:ss A"
+                 time="4/6/17 2:34:58 PM UTC"
+                 input-timezone="UTC"
+                 output-format="fromNow"></relative-time>
+
+where `mytime` is any time object accepted by [moment.js](http://momentjs.com/docs/#/parsing/) by default
+-->
+<dom-module id="relative-time">
+  <template>
+    <link rel="stylesheet" type="text/css" href="relative-time.css?__inline=true">
+
+    <span>[[renderedTime]]</span>
+
+  </template>
+  <script src="relative-time.js?__inline=true"></script>
+</dom-module>
