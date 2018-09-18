@@ -4,9 +4,6 @@
             :host {
                 height: 100%;
             }
-            .list {
-                width: calc(100% / 2);
-            }
             .item {
                 text-align: center;
             }
@@ -19,30 +16,52 @@
                 color: #fff;
                 margin-bottom: 10px;
             }
+            .text {
+                font-size: 12px;
+                width: 70%;
+                margin: 0 auto;
+            }
             .icon paper-icon-button {
                 width: 56px;
                 height: 56px;
                 padding: 16px;
+            }
+            .group {
+                margin-bottom: 15px;
+            }
+            .group > h3 {
+                margin: 0 0 15px 0;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            .list-group {
+                width: calc(100% / 2);
             }
         </style>
 
         <kct-vbox>
             <module-header-block text="Referensi" desc="Referensi Kegiatan" hide-nav></module-header-block>
             <div class="flex scroll-y padding">
-                <div class="list">
-                    
-                    <kct-column columns="5" spacer="60px">
-                        <template is="dom-repeat" items="[[ menus ]]">
-                            <div class="item">
-                                <div class="icon">
-                                    <paper-icon-button icon="[[ item.icon ]]" on-tap="__onMenuTap"></paper-icon-button>
-                                </div>
-                                <div class="text">[[ item.text ]]</div>
+                <div class="list-group">
+                    <template is="dom-repeat" items="[[ menus ]]" as="group">
+                        <div class="group">
+                            <h3>[[ group.text ]]</h3>
+                            <div class="list">
+                                <kct-column columns="6">
+                                    <template is="dom-repeat" items="[[ group.items ]]">
+                                        <div class="item">
+                                            <div class="icon">
+                                                <paper-icon-button icon="[[ item.icon ]]" on-tap="__onMenuTap"></paper-icon-button>
+                                            </div>
+                                            <div class="text">[[ item.text ]]</div>
+                                        </div>
+                                    </template>
+                                </kct-column>
                             </div>
-                        </template>
-                    </kct-column>
-
+                        </div>
+                    </template>
                 </div>
+
             </div>
         </kct-vbox>
 
@@ -57,9 +76,26 @@
                     menus: {
                         type: Array,
                         value: () => ([
-                            { name: 'kategori-group', text: 'Kategori Group', icon: 'view-list' },
-                            { name: 'init-group', text: 'Init Group', icon: 'view-list' },
-                            { name: 'init-ponpes', text: 'Init Ponpes', icon: 'view-list' }
+                            {
+                                name: 'kategori',
+                                text: 'Kategori & Group Instrumen',
+                                items: [
+                                    { name: 'kode-kategori', text: 'Kode Kategori', icon: 'view-list' },
+                                    { name: 'kode-group', text: 'Kode Group', icon: 'view-list' }
+                                ]
+                            },
+                            {
+                                name: 'instrumen',
+                                text: 'Kode Instrumen',
+                                items: [
+                                    { name: 'instrumen-santri', text: 'Instrumen Santri', icon: 'view-list' },
+                                    { name: 'instrumen-kegiatan-santri', text: 'Instrumen Kegiatan Santri', icon: 'view-list' },
+                                    { name: 'instrumen-kegiatan-ponpes', text: 'Instrumen Kegiatan Pesantren', icon: 'view-list' },
+                                    { name: 'instrumen-keuangan-ponpes', text: 'Instrumen Keuangan Pesantren', icon: 'view-list' },
+                                    { name: 'instrumen-sarana-ponpes', text: 'Instrumen Sarana Pesantren', icon: 'view-list' }
+                                ]
+                            }
+                            
                         ])
                     }
                 };
