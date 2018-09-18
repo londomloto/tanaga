@@ -1,4 +1,4 @@
-<dom-module id="master-santri-index">
+<dom-module id="master-instrumen-index">
     <template>
         <style include="theme-helper">
             :host {
@@ -40,7 +40,7 @@
         </style>
 
         <kct-vbox>
-            <module-header-block text="Referensi" desc="Referensi Kegiatan" hide-nav></module-header-block>
+            <module-header-block text="Referensi" desc="Referensi Instrumen" hide-nav></module-header-block>
             <div class="flex scroll-y padding">
                 <div class="list-group">
                     <template is="dom-repeat" items="[[ menus ]]" as="group">
@@ -67,9 +67,9 @@
 
     </template>
     <script>
-        class MasterSantriIndex extends KctView {
+        class MasterInstrumenIndex extends KctView {
             static get is() {
-                return 'master-santri-index';
+                return 'master-instrumen-index';
             }
             static get properties() {
                 return {
@@ -78,10 +78,10 @@
                         value: () => ([
                             {
                                 name: 'kategori',
-                                text: 'Kategori & Group Instrumen',
+                                text: 'Kategori & Group',
                                 items: [
-                                    { name: 'kode-kategori', text: 'Kode Kategori', icon: 'view-list' },
-                                    { name: 'kode-group', text: 'Kode Group', icon: 'view-list' }
+                                    { name: 'kategori', text: 'Kategori', icon: 'view-list' },
+                                    { name: 'group', text: 'Group', icon: 'view-list' }
                                 ]
                             },
                             {
@@ -102,9 +102,9 @@
             }
             __onMenuTap(e) {
                 let item = e.model.item;
-                this.set('route.path', '/master-santri/pages/' + item.name);
+                this.set('route.path', '/master-instrumen/pages/' + item.name);
             }
         }
-        customElements.define(MasterSantriIndex.is, MasterSantriIndex);
+        customElements.define(MasterInstrumenIndex.is, MasterInstrumenIndex);
     </script>
 </dom-module>

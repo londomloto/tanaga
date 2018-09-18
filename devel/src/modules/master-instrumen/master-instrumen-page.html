@@ -5,7 +5,7 @@
 <link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../blocks/module-header-block.html">
 
-<dom-module id="master-santri-page">
+<dom-module id="master-instrumen-page">
     <template>
         <style include="theme-helper">
             :host {
@@ -18,28 +18,28 @@
             }
         </style>
         <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
-            <master-santri-index state="[[ state ]]" route="{{ route }}" id="index" import="pages/master-santri-index.html"></master-santri-index>
+            <master-instrumen-index state="[[ state ]]" route="{{ route }}" id="index" import="pages/master-instrumen-index.html"></master-instrumen-index>
         </kct-pages>
     </template>
     <script>
-        class MasterSantriPage extends KctView {
+        class MasterInstrumenPage extends KctView {
             static get is() {
-                return 'master-santri-page';
+                return 'master-instrumen-page';
             }
             static get properties() {
                 return {
-                    title: { type: String, value: 'Referensi Kegiatan', notify: true },
+                    title: { type: String, value: 'Referensi Instrumen', notify: true },
                     page: { type: String }
                 };
             }
             handleRouteParams(page) {
                 if ( ! page) {
-                    this.set('route.path', '/master-santri/pages/index');
+                    this.set('route.path', '/master-instrumen/pages/index');
                 } else {
                     this.set('page', page);
                 }
             }
         }
-        customElements.define(MasterSantriPage.is, MasterSantriPage);
+        customElements.define(MasterInstrumenPage.is, MasterInstrumenPage);
     </script>
 </dom-module>
