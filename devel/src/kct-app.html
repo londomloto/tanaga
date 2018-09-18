@@ -221,7 +221,6 @@
                     e.preventDefault();
 
                     this.$.auth.authenticate().then(authenticated => {
-                        console.log(authenticated);
                         if ( ! authenticated) { // 401
                             if (this.__numRedir <= this.__maxRedir) {
                                 this.__numRedir++;

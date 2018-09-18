@@ -26,9 +26,8 @@
         </div> -->
 
         <kct-vbox>
-            <setting-header-block icon="settings" text="Settings" desc="General Settings" on-back-tap="__onBackTap">
-                <div class="separator"></div>
-                <paper-button data-perm="manage@general" style="margin-left: 5px;" class="btn-blue" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            <setting-header-block icon="settings" text="Pengaturan" desc="Pengaturan Umum" on-back-tap="__onBackTap">
+                <paper-button data-perm="manage@general" style="margin-left: 5px;" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan Perubahan</paper-button>
             </setting-header-block>
             <!-- <page-header-block icon="settings" title="Application" description="General Settings">
                 <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
@@ -37,12 +36,12 @@
                 <div class="padding">
                     <kct-column columns="2">
                         <div>
-                            <paper-input label="App Title" value="{{ config.app_title }}" required auto-validate error-message="App title is required!"></paper-input>
-                            <paper-input label="App Version" value="{{ config.app_version }}"></paper-input>
-                            <paper-input label="Description" value="{{ config.app_description }}"></paper-input>
-                            <paper-input label="Keywords" value="{{ config.app_keywords }}"></paper-input>
+                            <paper-input label="Nama Aplikasi" value="{{ config.app_title }}" required auto-validate error-message="Nama aplikasi wajib diisi"></paper-input>
+                            <paper-input label="Versi" value="{{ config.app_version }}"></paper-input>
+                            <paper-input label="Deskripsi" value="{{ config.app_description }}"></paper-input>
+                            <paper-input label="Keyword" value="{{ config.app_keywords }}"></paper-input>
                             <paper-input label="Author" value="{{ config.app_author }}" readonly></paper-input>
-                            <kct-checkbox value="{{ tour }}">Enable tour guide</kct-checkbox>
+                            <kct-checkbox value="{{ tour }}">Aktifkan tour guide</kct-checkbox>
                         </div>
                         <div></div>
                     </kct-column>
@@ -59,7 +58,7 @@
 
             static get properties() {
                 return {
-                    title: { type: String, notify: true, value: 'General Settings' },
+                    title: { type: String, notify: true, value: 'Pengaturan Umum' },
                     tour: { type: String }
                 }
             }

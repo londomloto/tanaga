@@ -1,0 +1,108 @@
+<link rel="import" href="../../../../cores/mixins/mixins.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+
+<script>
+    Mixins.MasterTable = Polymer.dedupingMixin(superclass => {
+        return class extends superclass {
+            static get properties() {
+                return {
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object },
+                    search: { type: String }
+                }
+            }
+            handleRouteParams(page) {
+                if (page != this.id) return;
+                this.resizeGrid();
+                this.loadGrid();
+            }
+            saveRecord() {
+                let payload = this.editingRecord || {};
+                let key = payload[this.identity];
+
+                if (key) {
+                    this.$.ajax.PUT(this.api + '/' + key, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST(this.api, payload).then(done.bind(this));
+                }
+
+                function done() {
+                    this.loadGrid();
+                }
+            }
+            resizeGrid() {
+                this.$.grid.resize();
+            }
+            loadGrid() {
+                this.$.grid.selected = null;
+                this.$.grid.load();
+            }
+            resetEditor() {
+                this.set('editingRecord', {});
+            }
+            openEditor() {
+                this.$.editor.open();
+            }
+            closeEditor() {
+                this.$.editor.close();
+            }
+            __onAddTap() {
+                this.resetEditor();
+                this.openEditor();
+            }
+            __onEditTap() {
+                let payload = this.$.grid.selected;
+
+                if ( ! payload) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, payload));
+                this.openEditor();
+            }
+            __onRemoveTap() {
+                let payload = this.$.grid.selected;
+                if ( ! payload) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus record terpilih?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE(this.api + '/' + payload[this.identity]).then(() => {
+                            this.loadGrid();
+                        });
+                    }
+                });
+            }
+            __onEditorSaveTap() {
+                this.saveRecord();
+                this.closeEditor();
+            }
+            __onEditorCloseTap() {
+                this.closeEditor();
+            }
+            __onReloadTap() {
+                this.loadGrid();
+            }
+            __onSearchEnter(e) {
+                if (e.key == 'Enter') {
+                    let payload = {};
+
+                    if (this.search) {
+                        payload.query = this.search;
+                        payload.fields = (this.columns || []).filter(elem => !!elem.dataIndex).map(elem => elem.dataIndex);
+                    }
+
+                    this.$.grid.params = payload;
+                }
+            }
+            __onBackTap() {
+                this.set('route.path', this.homepage);
+            }
+        };
+    });
+</script>

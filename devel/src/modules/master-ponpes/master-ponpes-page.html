@@ -1,0 +1,56 @@
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../blocks/module-header-block.html">
+
+<dom-module id="master-ponpes-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
+            <master-ponpes-index state="[[ state ]]" route="{{ route }}" id="index" import="pages/master-ponpes-index.html"></master-ponpes-index>
+            <master-ponpes-tipe state="[[ state ]]" route="{{ route }}" id="tipe-ponpes" import="pages/master-ponpes-tipe.html"></master-ponpes-tipe>
+            <master-ponpes-organizer state="[[ state ]]" route="{{ route }}" id="organizer" import="pages/master-ponpes-organizer.html"></master-ponpes-organizer>
+            <master-ponpes-jabatan state="[[ state ]]" route="{{ route }}" id="jabatan" import="pages/master-ponpes-jabatan.html"></master-ponpes-jabatan>
+            <master-ponpes-lembaga state="[[ state ]]" route="{{ route }}" id="lembaga" import="pages/master-ponpes-lembaga.html"></master-ponpes-lembaga>
+            <master-ponpes-jenis-organisasi state="[[ state ]]" route="{{ route }}" id="jenis-organisasi" import="pages/master-ponpes-jenis-organisasi.html"></master-ponpes-jenis-organisasi>
+            <master-ponpes-kelompok-kitab state="[[ state ]]" route="{{ route }}" id="kelompok-kitab" import="pages/master-ponpes-kelompok-kitab.html"></master-ponpes-kelompok-kitab>
+            <master-ponpes-jenis-sarana state="[[ state ]]" route="{{ route }}" id="jenis-sarana" import="pages/master-ponpes-jenis-sarana.html"></master-ponpes-jenis-sarana>
+            <master-ponpes-sarana state="[[ state ]]" route="{{ route }}" id="sarana" import="pages/master-ponpes-sarana.html"></master-ponpes-sarana>
+        </kct-pages>
+
+    </template>
+
+    <script>
+        class MasterPonpesPage extends KctView {
+            static get is() {
+                return 'master-ponpes-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Referensi Pesantren', notify: true },
+                    page: { type: String }
+                };
+            }
+            handleRouteParams(page) {
+                if ( ! page) {
+                    this.set('route.path', '/master-ponpes/pages/index');
+                } else {
+                    this.set('page', page);
+                }
+            }
+        }
+        customElements.define(MasterPonpesPage.is, MasterPonpesPage);
+    </script>
+</dom-module>

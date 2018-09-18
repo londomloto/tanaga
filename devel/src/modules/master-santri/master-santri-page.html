@@ -1,0 +1,45 @@
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../blocks/module-header-block.html">
+
+<dom-module id="master-santri-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
+            <master-santri-index state="[[ state ]]" route="{{ route }}" id="index" import="pages/master-santri-index.html"></master-santri-index>
+        </kct-pages>
+    </template>
+    <script>
+        class MasterSantriPage extends KctView {
+            static get is() {
+                return 'master-santri-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Referensi Santri', notify: true },
+                    page: { type: String }
+                };
+            }
+            handleRouteParams(page) {
+                if ( ! page) {
+                    this.set('route.path', '/master-santri/pages/index');
+                } else {
+                    this.set('page', page);
+                }
+            }
+        }
+        customElements.define(MasterSantriPage.is, MasterSantriPage);
+    </script>
+</dom-module>

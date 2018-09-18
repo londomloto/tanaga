@@ -1,0 +1,79 @@
+<dom-module id="master-ponpes-index">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .list {
+                width: calc(100% / 2);
+            }
+            .item {
+                text-align: center;
+            }
+            .icon {
+                width: 56px;
+                height: 56px;
+                margin: 0 auto;
+                border-radius: 50%;
+                background-color: var(--google-red-300);
+                color: #fff;
+                margin-bottom: 10px;
+            }
+            .icon paper-icon-button {
+                width: 56px;
+                height: 56px;
+                padding: 16px;
+            }
+        </style>
+
+        <kct-vbox>
+            <module-header-block text="Referensi" desc="Referensi Pesantren" hide-nav></module-header-block>
+            <div class="flex scroll-y padding">
+                <div class="list">
+                    
+                    <kct-column columns="5" spacer="60px">
+                        <template is="dom-repeat" items="[[ menus ]]">
+                            <div class="item">
+                                <div class="icon">
+                                    <paper-icon-button icon="[[ item.icon ]]" on-tap="__onMenuTap"></paper-icon-button>
+                                </div>
+                                <div class="text">[[ item.text ]]</div>
+                            </div>
+                        </template>
+                    </kct-column>
+
+                </div>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class MasterPonpesIndex extends KctView {
+            static get is() {
+                return 'master-ponpes-index';
+            }
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { name: 'tipe-ponpes', text: 'Tipe Ponpes', icon: 'view-list' },
+                            { name: 'organizer', text: 'Organizer', icon: 'view-list' },
+                            { name: 'jabatan', text: 'Jabatan', icon: 'view-list' },
+                            { name: 'lembaga', text: 'Lembaga', icon: 'communication:business' },
+                            { name: 'jenis-organisasi', text: 'Jenis Org', icon: 'view-list' },
+                            { name: 'kelompok-kitab', text: 'Kel. Kitab', icon: 'view-list' },
+                            { name: 'jenis-sarana', text: 'Jenis Sarana', icon: 'view-list' },
+                            { name: 'sarana', text: 'Sarana', icon: 'view-list' }
+                        ])
+                    }
+                };
+            }
+            __onMenuTap(e) {
+                let item = e.model.item;
+                this.set('route.path', '/master-ponpes/pages/' + item.name);
+            }
+        }
+        customElements.define(MasterPonpesIndex.is, MasterPonpesIndex);
+    </script>
+</dom-module>

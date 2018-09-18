@@ -1,0 +1,62 @@
+<dom-module id="master-style">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .button-group {
+                position: relative;
+                top: 12px;
+            }
+            .button-group paper-button {
+                padding: 5px 8px;
+                font-size: 14px;
+                text-transform: none;
+                border: 1px solid #dfdfdf;
+                display: block;
+                float: left;
+                margin: 0 0 0 -1px;
+                border-radius: 0;
+            }
+            .button-group paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
+            .button-group paper-button:first-child {
+                border-radius: 15px 0 0 15px; 
+            } 
+            .button-group paper-button:last-child {
+                border-radius: 0 15px 15px 0;
+            } 
+            .grid-search {
+                border: 1px solid #dfdfdf;
+                padding: 4px 8px;
+                border-radius: 15px;
+                position: relative;
+                top: 11px;
+                min-width: 300px;
+            }
+
+            .grid-search paper-input {
+                --paper-input-container: {
+                    padding: 0;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .grid-search paper-input iron-icon {
+                color: #999;
+                --iron-icon-width: 17px;
+                --iron-icon-height: 17px;
+                position: relative;
+                margin-right: 5px;
+            }
+        </style>
+    </template>
+</dom-module>

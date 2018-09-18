@@ -100,12 +100,11 @@ class RoleProvider extends \Micro\Component {
         foreach($menus as $idx => $elem) {
             if ($elem->smn_parent_id == $parentId) {
                 $node = $elem->toArray();
-
                 if (self::__menuIsParent($elem, $stack)) {
                     $node['smn_children']  = array();
                     self::__createTreeMenu($menus, $elem->smn_id, $node['smn_children']);
                 } else {
-                    array_splice($stack, $idx, 1);
+                    //array_splice($stack, $idx, 1);
                 }
                 $result[] = $node;
             }

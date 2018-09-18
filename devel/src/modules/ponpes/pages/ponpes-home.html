@@ -12,11 +12,16 @@
             .menu .icon {
                 background-color: var(--google-red-300);
                 color: #fff;
-                width: 40px;
-                height: 40px;
+                width: 56px;
+                height: 56px;
                 border-radius: 50%;
                 margin: 0 auto;
                 margin-bottom: 10px;
+            }
+            .menu .icon paper-icon-button {
+                width: 56px;
+                height: 56px;
+                padding: 16px;
             }
             .menu .text {
                 font-size: 14px;
@@ -28,7 +33,7 @@
         <kct-vbox>
             <module-header-block text="Pesantren" desc="Pesantren [[ record.nama_ponpes ]]" on-back-tap="__onBackTap"></module-header-block>
             <div class="flex scroll-y padding">
-                <kct-column columns="5">
+                <kct-column columns="6">
                     <template is="dom-repeat" items="[[ menus ]]">
                         <div class="menu box box-shadow">
                             <div class="box-body" on-tap="__onMenuTap">

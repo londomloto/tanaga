@@ -1,0 +1,73 @@
+<dom-module id="master-masjid-index">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .list {
+                width: calc(100% / 2);
+            }
+            .item {
+                text-align: center;
+            }
+            .icon {
+                width: 56px;
+                height: 56px;
+                margin: 0 auto;
+                border-radius: 50%;
+                background-color: var(--google-red-300);
+                color: #fff;
+                margin-bottom: 10px;
+            }
+            .icon paper-icon-button {
+                width: 56px;
+                height: 56px;
+                padding: 16px;
+            }
+        </style>
+
+        <kct-vbox>
+            <module-header-block text="Referensi" desc="Referensi Wilayah" hide-nav></module-header-block>
+            <div class="flex scroll-y padding">
+                <div class="list">
+                    
+                    <kct-column columns="5" spacer="60px">
+                        <template is="dom-repeat" items="[[ menus ]]">
+                            <div class="item">
+                                <div class="icon">
+                                    <paper-icon-button icon="[[ item.icon ]]" on-tap="__onMenuTap"></paper-icon-button>
+                                </div>
+                                <div class="text">[[ item.text ]]</div>
+                            </div>
+                        </template>
+                    </kct-column>
+
+                </div>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class MasterMasjidIndex extends KctView {
+            static get is() {
+                return 'master-masjid-index';
+            }
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { name: 'jenis-masjid', text: 'Jenis Masjid', icon: 'view-list' },
+                            { name: 'rumah-ibadah', text: 'Rumah Ibadah', icon: 'view-list' }
+                        ])
+                    }
+                };
+            }
+            __onMenuTap(e) {
+                let item = e.model.item;
+                this.set('route.path', '/master-masjid/pages/' + item.name);
+            }
+        }
+        customElements.define(MasterMasjidIndex.is, MasterMasjidIndex);
+    </script>
+</dom-module>

@@ -39,8 +39,8 @@
                 
             }
             paper-item > .icon > iron-icon {
-                --iron-icon-width: 18px;
-                --iron-icon-height: 18px;
+                --iron-icon-width: 17px;
+                --iron-icon-height: 17px;
                 position: relative;
                 top: -1px;
             }
@@ -59,12 +59,13 @@
                 transition: transform 0.3s ease;
             }
             .menu-header {
-                color: var(--paper-grey-500);
-                font-size: 11px;
+                color: var(--paper-blue-grey-500);
+                font-size: 10px;
                 text-transform: uppercase;
-                margin: 12px 0;
+                margin: 5px 0;
                 position: relative;
                 padding-left: 10px;
+                font-weight: 600;
             }
             .menu-header span {
                 position: relative;
@@ -95,7 +96,7 @@
                     <div class="gutt"></div>
                     <div class="icon"><iron-icon icon="[[ item.smn_icon ]]"></iron-icon></div>
                     <div class="text">[[ item.smn_title ]]</div>
-                    <div class="tool"><iron-icon icon="expand-more"></iron-icon></div>
+                    <div class="tool"><iron-icon icon="arrow-drop-down"></iron-icon></div>
                 </paper-item>
                 <template is="dom-if" if="[[ item.smn_is_parent ]]">
                     <kct-menu 
@@ -213,7 +214,7 @@
                     return this.level + 1;
                 }
                 __computeItemTool(item) {
-                    return item.smn_expanded ? 'expand-more' : 'expand-less';
+                    return item.smn_expanded ? 'arrow-drop-down' : 'arrow-drop-up';
                 }
                 
                 __onItemTap(e) {

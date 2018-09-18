@@ -25,15 +25,11 @@
             }
             handleRouteParams(menu) {
                 if (['create', 'update'].indexOf(menu) === -1) return;
-
-                if (menu == 'create') {
-                    this.set('title', 'Tambah Record');
-                }
-
+                this.set('title', menu == 'create' ? 'Tambah Pesantren' : 'Sunting Pesantren');
                 this.resetForm();
             }
             resetForm() {
-
+                
             }
             saveForm() {
 
