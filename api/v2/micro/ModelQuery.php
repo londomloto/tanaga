@@ -190,6 +190,10 @@ class ModelQuery {
                             case 'not in':
                                 $this->__builder->notInWhere($attr['field'], $val[1]);
                                 break;
+                            case 'like':
+                                $bind[$pkey] = $val[1];
+                                $this->__builder->andWhere($attr['field']." LIKE :{$pkey}:", $bind);
+                                break;
                         }
                     } else {
                         $bind[$pkey] = $val;
@@ -199,7 +203,7 @@ class ModelQuery {
             }
         }
 
-        // print_r($this->__builder->getQuery()->getSql());
+        //print_r($this->__builder->getQuery()->getSql());
 
         return $this;
     }

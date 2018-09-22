@@ -1,0 +1,30 @@
+<dom-module id="ponpes-update">
+    <script>
+        class PonpesUpdate extends PonpesEditor {
+            static get is() {
+                return 'ponpes-update';
+            }
+            handleRouteParams(id, action) {
+                if (action != 'update') return;
+                this.set('identity', id);
+                this.set('headerDesc', 'Edit Pesantren');
+                this.loadRecord();
+            }
+            loadRecord() {
+                
+                this.resetForm();
+
+                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
+                    if (res.success) {
+                        this.set('headerText', res.data.nama_ponpes);
+                        this.set('record', res.data);
+                    }
+                });
+            }
+            __onBackTap() {
+                this.set('route.path', '/ponpes/' + this.identity);
+            }
+        }
+        customElements.define(PonpesUpdate.is, PonpesUpdate);
+    </script>
+</dom-module>

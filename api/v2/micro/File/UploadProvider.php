@@ -91,11 +91,11 @@ class UploadProvider  {
 
 
     /**
-     * [uploadaction description]
+     * [__doUpload description]
      * @param  string $file [description]
      * @return [type]       [description]
      */
-    public function uploadaction( $file = "" ) {
+    private function __doUpload( $file = "" ) {
 
         if ( is_object( $file ) ) {
             $mime = $file->getType();
@@ -133,17 +133,17 @@ class UploadProvider  {
 
                 $path = str_replace('\\', '/', $this->_path.$name );
 
-                $path_quarantine = $this->__folder_quarantine.$name;
-                $path_quarantine = str_replace('\\', '/', $path_quarantine);
+                //$path_quarantine = $this->__folder_quarantine.$name;
+                //$path_quarantine = str_replace('\\', '/', $path_quarantine);
 
                 // move file to quarantine 
-                if (@$file->moveTo($path_quarantine)) {
+                if (@$file->moveTo($path)) {
                     // collecting all result
                     
                     $collect_results = new \stdClass;
                     $collect_results->origname = $orig;
                     $collect_results->filename = $name;
-                    $collect_results->filepath = $path_quarantine;
+                    $collect_results->filepath = $path;
                     $collect_results->filetype = $mime;
                     $collect_results->filesize = $file->getSize();
 
@@ -152,8 +152,8 @@ class UploadProvider  {
                     $this->_results[] = $collect_results;
                     $this->_result    = $collect_results;
 
-                    //$this->reset();
-                    //return TRUE;
+                    $this->reset();
+                    return TRUE;
                 } else {
                     $this->_message = 'Upload failed';
                     $this->_messages[] = 'Upload failed';
@@ -165,8 +165,8 @@ class UploadProvider  {
 
 
 
-        //$this->reset();
-        //return FALSE;
+        $this->reset();
+        return FALSE;
     }
 
     /**
@@ -187,7 +187,7 @@ class UploadProvider  {
 
             // check file is exists
             $file = $file[0];
-            $this->uploadaction( $file );
+            $this->__doUpload( $file );
         } else {
             $this->_message = 'No file to upload';
             $this->_messages[] = 'No file to upload';
@@ -195,7 +195,7 @@ class UploadProvider  {
         }
 
 
-        $this->__virusScanner();
+        //$this->__virusScanner();
 
 
         return $this;
@@ -217,7 +217,7 @@ class UploadProvider  {
             $files = $request->getFiles();
             if ( is_array( $files ) && count($files) > 0 ) {
                 foreach ( $files as $key_position => $file ) {
-                    $this->uploadaction( $file , $key_position );
+                    $this->__doUpload( $file , $key_position );
                 }
             }
         } else {

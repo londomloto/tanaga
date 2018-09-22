@@ -31,4 +31,13 @@ class Kota extends \Micro\Model {
         $this->last_edit_user = $this->getEditorName();
     }
 
+    public static function findFirstByKode($kode) {
+        return self::findFirst(array(
+            'kode_kota = :kode:',
+            'bind' => array(
+                'kode' => $kode
+            )
+        ));
+    }
+
 }

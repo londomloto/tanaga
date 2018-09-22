@@ -29,8 +29,12 @@
                     this.$.ajax.POST(this.api, payload).then(done.bind(this));
                 }
 
-                function done() {
-                    this.loadGrid();
+                function done(res) {
+                    if (res.success) {
+                        this.loadGrid();    
+                    } else {
+                        this.toast('ERROR', res.message, 'danger');
+                    }
                 }
             }
             resizeGrid() {

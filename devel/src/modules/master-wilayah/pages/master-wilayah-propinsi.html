@@ -49,7 +49,8 @@
                         label="Kode Region" 
                         value="{{ editingRecord.kode_region }}" 
                         item-value-path="kode_region" 
-                        item-label-path="nama_region"></kct-combobox>
+                        item-label-path="nama_region" 
+                        page-size="10"></kct-combobox>
                     <paper-input label="Nama Propinsi" value="{{ editingRecord.nama_propinsi }}"></paper-input>
                 </div>
                 <div slot="dialog-footer">
@@ -75,7 +76,7 @@
                         value: () => ([
                             { type: 'rownumber' }, 
                             { text: 'Kode Propinsi', dataIndex: 'kode_propinsi' },
-                            { text: 'Kode Region', dataIndex: 'kode_region' },
+                            { text: 'Region', dataIndex: 'nama_region' },
                             { text: 'Nama Propinsi', dataIndex: 'nama_propinsi' }
                         ])
                     }

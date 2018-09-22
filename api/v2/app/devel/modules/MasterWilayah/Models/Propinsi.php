@@ -3,8 +3,27 @@ namespace App\MasterWilayah\Models;
 
 class Propinsi extends \Micro\Model {
 
+    public function initialize() {
+        $this->belongsTo(
+            'kode_region',
+            'App\MasterWilayah\Models\Region',
+            'kode_region',
+            array(
+                'alias' => 'Region'
+            )
+        );
+    }
+
     public function getSource() {
         return 'm_tbl_propinsi';
+    }
+
+    public function toArray($columns = NULL) {
+        $data = parent::toArray($columns);
+        if ($this->region) {
+            $data['nama_region'] = $this->region->nama_region;
+        }
+        return $data;
     }
 
     public function getEditorName() {

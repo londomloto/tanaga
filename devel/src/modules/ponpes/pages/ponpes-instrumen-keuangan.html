@@ -1,0 +1,190 @@
+<link rel="import" href="../../../../../cores/elements/kct-input/kct-input-number.html">
+<link rel="import" href="../../master-mixins/master-style.html">
+
+<dom-module id="ponpes-instrumen-keuangan">
+    <template>
+        <style include="master-style">
+            .table {
+
+            }
+            .table th {
+                background-color: var(--paper-grey-100);
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 12px;
+            }
+            .table td {
+                border-bottom: 1px solid #dfdfdf;
+            }
+            .table th + th, 
+            .table td + td {
+                border-left: 1px solid #dfdfdf;
+            }
+            .table td.editable {
+                background-color: #F5F6F7;
+                padding: 0;
+            }
+            .cell-editor {
+                --paper-input-container: {
+                    padding: 0 5px;
+                };
+                --paper-input-container-input: {
+                    text-align: right;
+                    height: 28px;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .cell-message {
+                font-size: 10px;
+                color: #999;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="[[ headerText ]]" desc="Pendanaan Keuangan" on-back-tap="__onBackTap">
+                <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+            </module-header-block>
+            <div class="flex">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">No</th>
+                            <th class="text-left">Kode</th>
+                            <th class="text-left">Instrumen</th>
+                            <th class="text-right" style="width: 200px;">Nilai</th>
+                            <th style="width: 30%"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template is="dom-repeat" items="[[ items ]]">
+                            <tr>
+                                <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                <td>[[ item.kode_init ]]</td>
+                                <td>[[ item.deskripsi ]]</td>
+                                <td class="editable">
+                                    <kct-input-number mask="#,###" on-change="__onCellEditorChange" value="{{ item.nilai }}" class="cell-editor" no-label-float></kct-input-number>
+                                </td>
+                                <td>&nbsp;<span class="cell-message">[[ item.message ]]</span></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </kct-vbox>
+        
+    </template>
+    <script>
+        class PonpesInstrumenKeuangan extends KctView {
+            static get is() {
+                return 'ponpes-instrumen-keuangan';
+            }
+            static get properties() {
+                return {
+                    items: {
+                        type: Array,
+                        value: () => ([])
+                    },
+                    api: { type: String, value: '/ponpes/instrumen' },
+                    params: {
+                        type: Object,
+                        value: () => ({
+                            context: ['E1']
+                        })
+                    },
+                    record: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            { text: 'Jenis', dataIndex: 'jenis_org' },
+                            { text: 'Nama Organisasi', dataIndex: 'nama_org' }
+                        ])
+                    },
+                    headerText: { type: String, value: 'Pesantren' },
+                    editingRecord: { type: Object, value: () => ({}) },
+                    ketersediaan: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Ada', value: 'Ada' },
+                            { label: 'Tidak', value: 'Tidak' }
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(id, action) {
+                if (action != 'instrumen-keuangan') return;
+                this.set('identity', id);
+                this.loadRecord();
+            }
+            loadRecord() {
+                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
+                    if (res.success) {
+                        this.set('headerText', res.data.nama_ponpes);
+                        this.set('record', res.data);
+                        this.loadGrid();
+                    }
+                }); 
+            }
+            loadGrid() {
+                let payload = {
+                    id_ponpes: this.identity,
+                    context: JSON.stringify(['E'])
+                };
+
+                this.$.ajax.GET('/ponpes/instrumen', payload).then(res => {
+                    if (res.success) {
+                        this.set('items', res.data);
+                        if ( ! res.data.length) {
+                            this.alert('Perhatian', 'Kode instrumen belum diinput di master data');
+                        }
+                    }
+                });
+            }
+            __computeSequence(index) {
+                return index + 1;
+            }
+            __onCellEditorChange(e) {
+                let item = e.model.item;
+                let index = this.items.indexOf(item);
+                let payload = item || {};
+                
+                payload.id_ponpes = this.identity;
+                payload.nilai = +payload.nilai;
+                
+                this.set('items.' + index + '.message', 'sedang menyimpan...');
+
+                if (item.id_data) {
+                    this.$.ajax.PUT('/ponpes/instrumen/' + item.id_data, payload).then(res => {
+                        if (res.success) {
+                            // do nothing
+                            this.set('items.' + index + '.message', '');
+                        }
+                    });
+                } else {
+                    this.$.ajax.POST('/ponpes/instrumen', payload).then(res => {
+                        if (res.success) {
+                            if (index !== -1) {
+                                this.set('items.' + index + '.id_data', res.data.id_data);
+                                this.set('items.' + index + '.message', '');
+                            }
+                        }
+                    });
+                }
+            } 
+            __onReloadTap() {
+                this.loadGrid();
+            }
+            __onBackTap() {
+                this.set('route.path', '/ponpes/' + this.identity + '/home');
+            }
+        }
+        customElements.define(PonpesInstrumenKeuangan.is, PonpesInstrumenKeuangan);
+    </script>
+</dom-module>

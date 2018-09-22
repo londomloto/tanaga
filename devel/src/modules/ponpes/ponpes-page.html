@@ -6,6 +6,8 @@
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../blocks/module-header-block.html">
+<link rel="import" href="style/ponpes-style.html">
+<link rel="import" href="pages/ponpes-editor.html">
 
 <dom-module id="ponpes-page">
     <template>
@@ -21,7 +23,19 @@
         <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
             <ponpes-list id="list" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-list.html"></ponpes-list>
             <ponpes-home id="home" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-home.html"></ponpes-home>
-            <ponpes-edit id="edit" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-edit.html"></ponpes-edit>
+            <ponpes-create id="create" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-create.html"></ponpes-create>
+            <ponpes-update id="update" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-update.html"></ponpes-update>
+            <ponpes-author id="author" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-author.html"></ponpes-author>
+            <ponpes-sdm id="sdm" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-sdm.html"></ponpes-sdm>
+            <ponpes-lembaga id="lembaga" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-lembaga.html"></ponpes-lembaga>
+            <ponpes-organisasi id="organisasi" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-organisasi.html"></ponpes-organisasi>
+            <ponpes-instrumen-santri id="instrumen-santri" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-santri.html"></ponpes-instrumen-santri>
+            <ponpes-instrumen-kegiatan id="instrumen-kegiatan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-kegiatan.html"></ponpes-instrumen-kegiatan>
+            <ponpes-instrumen-potensi id="instrumen-potensi" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-potensi.html"></ponpes-instrumen-potensi>
+            <ponpes-instrumen-keuangan id="instrumen-keuangan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-keuangan.html"></ponpes-instrumen-keuangan>
+            <ponpes-keuangan-bulanan id="keuangan-bulanan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-keuangan-bulanan.html"></ponpes-keuangan-bulanan>
+            <ponpes-keuangan-tahunan id="keuangan-tahunan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-keuangan-tahunan.html"></ponpes-keuangan-tahunan>
+            <ponpes-kebutuhan-tambahan id="kebutuhan-tambahan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-kebutuhan-tambahan.html"></ponpes-kebutuhan-tambahan>
         </kct-pages>
     </template>
     <script>
@@ -35,7 +49,7 @@
                     page: { type: String }
                 };
             }
-            handleRouteParams(menu) {
+            handleRouteParams(menu, action) {
                 if ( ! menu) {
                     this.set('route.path', '/ponpes/list');
                 } else {
@@ -46,13 +60,14 @@
                             page = 'list';
                             break;
                         case 'create':
-                            page = 'edit';
-                            break;
-                        case 'update':
-                            page = 'edit';
+                            page = 'create';
                             break;
                         default:
-                            page = 'home';
+                            if (action) {
+                                page = action;
+                            } else {
+                                page = 'home';
+                            }
                             break;
                     }
 

@@ -51,7 +51,8 @@
                         label="Group Instrumen" 
                         value="{{ editingRecord.kode_group }}" 
                         item-label-path="label_group" 
-                        item-value-path="kode_group"></kct-combobox>
+                        item-value-path="kode_group" 
+                        page-size="10"></kct-combobox>
                     <paper-input label="Kode Instrumen" value="{{ editingRecord.kode_init }}"></paper-input>
                     <paper-input label="Nama Instrumen" value="{{ editingRecord.nama_init }}"></paper-input>
                     <paper-input label="Deskripsi" value="{{ editingRecord.deskripsi }}"></paper-input>
@@ -76,7 +77,7 @@
                         type: Object,
                         value: () => ({
                             params: {
-                                kode_group: ["IN", ["F1"]]    
+                                context: ['F']
                             }
                         })
                     },

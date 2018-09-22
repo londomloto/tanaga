@@ -35,9 +35,8 @@
         </div> -->
 
         <kct-vbox>
-            <setting-header-block icon="perm-identity" text="Settings" desc="User Editor" on-back-tap="__onBackTap">
-                <div class="separator"></div>
-                <paper-button data-perm="manage@users" class="btn-blue m-l-sm" on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            <setting-header-block icon="perm-identity" text="Pengaturan" desc="Editor User" on-back-tap="__onBackTap">
+                <paper-button data-perm="manage@users" on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Simpan Perubahan</paper-button>
             </setting-header-block>
             <!-- <page-header-block image="[[ avatar ]]" icon="perm-identity" title="User Editor" description="[[ record.su_fullname ]]">
                 <paper-button on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
@@ -47,30 +46,37 @@
                 <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
                     <kct-column columns="3">
                         <div class="p-r">
-                            <h3>Account Information</h3>
-                            <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required auto-validate error-message="Valid email address is required"></paper-input>
+                            <h3>Info Akun</h3>
+                            <paper-input id="email" label="Alamat Email" type="email" value="{{ record.su_email }}" required auto-validate error-message="Alamat email wajib diisi"></paper-input>
                              <vaadin-combo-box 
-                                label="Member of role" 
+                                label="Role" 
                                 value="{{ record.su_sr_id }}" 
                                 items="[[ roles ]]" 
                                 item-label-path="sr_name" 
                                 item-value-path="sr_id" 
-                                required auto-validate error-message="Role is required"></vaadin-combo-box>
+                                required auto-validate error-message="Role wajib diisi"></vaadin-combo-box>
                             <paper-input label="Password" type="password" value="{{ password1 }}" hidden$="[[ !record.su_id ]]"></paper-input>
                             <paper-input label="Password confirm" type="password" value="{{ password2 }}" hidden$="[[ !record.su_id ]]"></paper-input>
-                            <kct-checkbox value="{{ record.su_active }}" hidden$="[[ !record.su_id ]]">Check to activate this user</kct-checkbox>
+                            <kct-checkbox value="{{ record.su_active }}" hidden$="[[ !record.su_id ]]">Cek untuk mengaktifkan</kct-checkbox>
                         </div>
                         <div class="p-r">
-                            <h3>Personal Information</h3>
-                            <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}" readonly></paper-input>
-                            <paper-input label="Gender" value="{{ record.su_sex }}"  readonly></paper-input>
-                            <paper-input label="Date of Birth" value="{{ record.su_dob }}"  readonly></paper-input>
-                            <paper-input label="Job Description" value="{{ record.su_job_title }}"  readonly></paper-input>
+                            <h3>Info Pribadi</h3>
+                            <paper-input id="fullname" label="Nama Lengkap" value="{{ record.su_fullname }}"></paper-input>
+                            <paper-input label="Jenis Kelamin" value="{{ record.su_sex }}"></paper-input>
+                            <!-- <paper-input label="Tanggal Lahir" value="{{ record.su_dob }}"></paper-input> -->
+                            <paper-input label="Pekerjaan (Jabatan)" value="{{ record.su_job_title }}"></paper-input>
+                            <vaadin-combo-box 
+                                label="Tipe Lembaga" 
+                                value="{{ record.su_org_type }}" 
+                                items="[[ orgTypes ]]" 
+                                item-label-path="label" 
+                                item-value-path="value"></vaadin-combo-box>
+                            <paper-input label="Nama Lembaga" value="{{ record.su_org_name }}"></paper-input>
                         </div>
                         <div class="p-r" hidden$="[[ !record.su_id ]]" data-perm="manage@users" >
-                            <h3>Account Removal</h3>
-                            <p>Removing user will remove all user data and all related documents.</p>
-                            <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-raised m-t">Delete User</paper-button>
+                            <h3>Hapus Akun</h3>
+                            <p>Klik tombol di bawah ini untuk menghapus akun.</p>
+                            <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-raised m-t">Hapus</paper-button>
                         </div>
                     </kct-columns>  
                 </kct-form-validator>
@@ -92,6 +98,13 @@
                     avatar: {
                         type: String,
                         computed: '__computeAvatar(record.su_avatar_thumb)'
+                    },
+                    orgTypes: {
+                        type: Array,
+                        value: () => ([
+                            { value: 'Sarana Ibadah', label: 'Sarana Ibadah' },
+                            { value: 'Pendidikan', label: 'Pendidikan' }
+                        ])
                     }
                 };
             }

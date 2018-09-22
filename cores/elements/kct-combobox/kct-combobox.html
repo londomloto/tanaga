@@ -256,7 +256,8 @@
                         toolbar: { type: Array },
                         itemQueryPath: { type: String },
                         listWidth: { type: Number },
-                        busy: { type: Boolean, value: false }
+                        busy: { type: Boolean, value: false },
+                        silent: { type: Boolean, value: false }
                     }
                 }
 
@@ -614,9 +615,15 @@
 
                 __paramsChanged(changed) {
                     if (changed.path == 'params') {
+                        let load = !this.silent;
+                        
                         this.__setPayload({
                             params: this.params
-                        }, true);
+                        }, load);
+
+                        if (this.silent) {
+                            this.set('silent', false);
+                        }
                     }
                 }
 

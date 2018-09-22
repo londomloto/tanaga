@@ -1,0 +1,18 @@
+<dom-module id="ponpes-create">
+    <script>
+        class PonpesCreate extends PonpesEditor {
+            static get is() {
+                return 'ponpes-create';
+            }
+            handleRouteParams(menu) {
+                if (menu != 'create') return;
+                this.set('headerDesc', 'Tambah Pesantren');
+                this.resetForm();
+            }
+            __onBackTap() {
+                this.set('route.path', '/ponpes');
+            }
+        }
+        customElements.define(PonpesCreate.is, PonpesCreate);
+    </script>
+</dom-module>

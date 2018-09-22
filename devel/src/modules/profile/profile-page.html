@@ -68,26 +68,33 @@
                     <div class="flex">
                         <paper-card class="block">
                             <div class="card-content">
-                                <h3 class="block-title">Personal Information</h3>
-                                <paper-input label="Full Name" value="{{ user.su_fullname }}" required auto-validate error-message="Full name is required"></paper-input>
-                                <paper-input label="Gender" value="{{ user.su_sex }}"></paper-input>
-                                <vaadin-date-picker label="Birthday" value="{{ user.su_dob }}"></vaadin-date-picker>
-                                <paper-input label="Job Description" value="{{ user.su_job_title }}"></paper-input>
+                                <h3 class="block-title">Info Pribadi</h3>
+                                <paper-input label="Nama Lengkap" value="{{ user.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                                <paper-input label="Jenis Kelamin" value="{{ user.su_sex }}"></paper-input>
+                                <!-- <vaadin-date-picker label="Birthday" value="{{ user.su_dob }}"></vaadin-date-picker> -->
+                                <paper-input label="Pekerjaan (Jabatan)" value="{{ user.su_job_title }}"></paper-input>
+                                <vaadin-combo-box 
+                                    label="Tipe Lembaga" 
+                                    value="{{ user.su_org_type }}" 
+                                    items="[[ orgTypes ]]" 
+                                    item-label-path="label" 
+                                    item-value-path="value"></vaadin-combo-box>
+                                <paper-input label="Nama Lembaga" value="{{ user.su_org_name }}"></paper-input>
                                 <div class="m-t">
-                                    <paper-button disabled$="[[ __profileInvalid ]]" class="btn-primary" on-tap="__onSaveBasicTap">Update Profile</paper-button> 
+                                    <paper-button disabled$="[[ __profileInvalid ]]" class="btn-primary" on-tap="__onSaveBasicTap">Update Profil</paper-button> 
                                 </div>
                             </div>
                         </paper-card>
 
                         <paper-card class="block">
                             <div class="card-content">
-                                <h3 class="block-title">Account Information</h3>
-                                <paper-input label="Email address" value="{{ user.su_email }}" readonly></paper-input>
-                                <paper-input label="Group Access (Role)" value="{{ user.sr_name }}" readonly></paper-input>
+                                <h3 class="block-title">Info Akun</h3>
+                                <paper-input label="Alamat Email" value="{{ user.su_email }}" readonly></paper-input>
+                                <paper-input label="Role" value="{{ user.sr_name }}" readonly></paper-input>
                                 <paper-input label="Password" type="password" value="{{ __account.password1 }}" id="password1" error-message="Password doesn't match"></paper-input>
                                 <paper-input label="Password confirm" type="password" value="{{ __account.password2 }}" id="password2" error-message="Password doesn't match"></paper-input>
                                 <div class="m-t">
-                                    <paper-button disabled$="[[ __accountInvalid ]]" class="btn-primary" on-tap="__onSaveAccountTap">Update Account</paper-button>
+                                    <paper-button disabled$="[[ __accountInvalid ]]" class="btn-primary" on-tap="__onSaveAccountTap">Update Akun</paper-button>
                                 </div>
                             </div>
                         </paper-card>
@@ -105,7 +112,14 @@
 
             static get properties() {
                 return {
-                    title: { type: String, notify: true, value: 'Profile' }
+                    title: { type: String, notify: true, value: 'Profile' },
+                    orgTypes: {
+                        type: Array,
+                        value: () => ([
+                            { value: 'Sarana Ibadah', label: 'Sarana Ibadah' },
+                            { value: 'Pendidikan', label: 'Pendidikan' }
+                        ])
+                    }
                 };
             }
 

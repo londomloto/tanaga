@@ -1,6 +1,6 @@
 <dom-module id="ponpes-home">
     <template>
-        <style include="theme-helper">
+        <style include="ponpes-style">
             :host {
                 height: 100%;
                 background-color: var(--page-background-color);
@@ -26,6 +26,9 @@
             .menu .text {
                 font-size: 14px;
             }
+            .menu .icon.trash {
+                background-color: var(--paper-blue-grey-500);
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -37,11 +40,11 @@
                     <template is="dom-repeat" items="[[ menus ]]">
                         <div class="menu box box-shadow">
                             <div class="box-body" on-tap="__onMenuTap">
-                                <div class="icon">
+                                <div class$="icon [[ item.name ]]">
                                     <paper-icon-button icon="[[ item.icon ]]"></paper-icon-button>
                                 </div>
                                 <div class="text">
-                                    [[ item.text ]]
+                                    <a href="javascript:;" on-click="__onMenuTap">[[ item.text ]]</a>
                                 </div>
                             </div>
                         </div>
@@ -60,10 +63,19 @@
                     menus: {
                         type: Array,
                         value: () => ([
-                            { name: 'identitas', text: 'Identitas', icon: 'communication:business' },
-                            { name: 'tenaga', text: 'Ketenagaan', icon: 'social:people' },
-                            { name: 'lembaga', text: 'Kelembagaan', icon: 'social:school' },
-                            { name: 'santri', text: 'Santri', icon: 'social:group' }
+                            { name: 'update', text: 'Identitas', icon: 'dashboard' },
+                            { name: 'sdm', text: 'Ketenagaan', icon: 'dashboard' },
+                            { name: 'lembaga', text: 'Kelembagaan', icon: 'dashboard' },
+                            { name: 'organisasi', text: 'Organisasi', icon: 'dashboard' },
+                            { name: 'instrumen-santri', text: 'Instrumen Santri', icon: 'dashboard' },
+                            { name: 'instrumen-kegiatan', text: 'Kegiatan Pesantren', icon: 'dashboard' },
+                            { name: 'instrumen-potensi', text: 'Potensi Pesantren', icon: 'dashboard' },
+                            { name: 'instrumen-keuangan', text: 'Pendanaan Keuangan', icon: 'dashboard' },
+                            { name: 'keuangan-bulanan', text: 'Keuangan Bulanan', icon: 'dashboard' },
+                            { name: 'keuangan-tahunan', text: 'Keuangan Tahunan', icon: 'dashboard' },
+                            { name: 'kebutuhan-tambahan', text: 'Kebutuhan Tambahan', icon: 'dashboard' },
+                            { name: 'author', text: 'Pengolah', icon: 'dashboard' },
+                            { name: 'trash', text: 'Hapus', icon: 'delete-forever' }
                         ])
                     },
                     identity: { type: String },
@@ -88,6 +100,19 @@
             }
             __onMenuTap(e) {
                 let item = e.model.item;
+                if (item.name == 'trash') {
+                    this.confirm('Konfirmasi', 'Anda yakin akan menghapus dokumen pesantren ini?').then(y => {
+                        if (y) {
+                            this.$.ajax.DELETE('/ponpes/' + this.identity).then(res => {
+                                if (res.success) {
+                                    this.set('route.path', '/ponpes');
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    this.set('route.path', '/ponpes/' + this.identity + '/' + item.name);    
+                }
             }
             __onBackTap() {
                 this.set('route.path', '/ponpes');

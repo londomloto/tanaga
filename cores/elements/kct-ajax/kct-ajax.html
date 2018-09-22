@@ -184,7 +184,7 @@
                     // create mask indicator
                     let mask = document.createElement('spinner-mask');
                     document.body.appendChild(mask);
-                    mask.text = 'Uploading...';
+                    mask.text = 'Mengunggah...';
                     mask.open();
 
                     // create ajax
@@ -192,7 +192,7 @@
                     xhr.upload.addEventListener('progress', (e) => {
                         if (e.lengthComputable) {
                             let pct = parseInt((e.loaded / e.total) * 100, 10);
-                            mask.text = 'Uploading...' + pct + '%';
+                            mask.text = 'Mengunggah...' + pct + '%';
                         }
                     });
 

@@ -45,4 +45,13 @@ class Kecamatan extends \Micro\Model {
         $this->last_edit_user = $this->getEditorName();
     }
 
+    public static function findFirstByKode($kode) {
+        return self::findFirst(array(
+            'kode_kecamatan = :kode:',
+            'bind' => array(
+                'kode' => $kode
+            )
+        ));
+    }
+
 }

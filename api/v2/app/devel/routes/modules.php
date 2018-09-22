@@ -34,3 +34,10 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/ponpes',
+    'handler' => 'App\Ponpes\Controllers\PonpesController',
+    'middleware' => 'auth'
+))
+->post('/{id}/upload', 'upload');

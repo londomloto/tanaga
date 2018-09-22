@@ -1,25 +1,32 @@
 <dom-module id="ponpes-list">
     <template>
-        <style include="theme-helper">
+        <style include="ponpes-style">
             :host {
                 height: 100%;
                 background-color: var(--page-background-color);
             }
             .item {
                 color: #333;
+                font-size: 14px;
+            }
+            .item > paper-card {
+                display: block;
+            }
+            .item .card-content {
+                height: 50px;
             }
             .item .card-actions {
                 text-align: center;
             }
             .item .card-actions paper-button {
                 padding: 3px 5px;
-                font-size: 14px;
+                font-size: 13px;
                 text-transform: none;
             }
             .item .card-header h3 {
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: 600;
-                color: var(--google-red-500);
+                color: var(--google-red-300);
                 margin: 0;
             }
             .item .card-meta {
@@ -39,28 +46,34 @@
 
         <kct-vbox>
             <module-header-block text="Pesantren" desc="Database Pesantren" hide-nav>
+                <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
                 <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Record</paper-button>
+                <div slot="right-toolbar">
+                    <div class="form-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div>
             </module-header-block>
             <div class="flex scroll-y padding">
                 <kct-column columns="5">
                     <template is="dom-repeat" items="[[ records ]]">
                         <div class="item">
-                            <paper-card image="[[ item.img_gedung_thumb ]]&w=200&h=100">
-                              <div class="card-content">
-                                <div class="card-header">
-                                    <h3>[[ item.nama_ponpes ]]</h3>
-                                    <div class="card-meta">
-                                        <span>[[ item.alamat ]], [[ item.kelurahan ]], Kab. [[ item.nama_kota ]]</span>
+                            <paper-card image="[[ item.img_gedung_thumb ]]&w=210&h=100">
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <h3>[[ item.nama_ponpes ]]</h3>
+                                        <div class="card-meta">
+                                            <span>[[ item.text_alamat ]]</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="card-body">
-                                    Tipe, manhaj dan keterangan tambahan
-                                </div>
-                              </div>
-                              <div class="card-actions">
+                                <div class="card-actions">
                                     <paper-button on-tap="__onDetailTap">Detail</paper-button>
-                                    <paper-button on-tap="__onRemoveTap">Hapus</paper-button>
-                              </div>
+                                </div>
                             </paper-card>
                         </div>
                         
@@ -83,8 +96,8 @@
                 if (page != this.id) return;
                 this.loadRecords();
             }
-            loadRecords() {
-                this.$.ajax.GET('/ponpes').then(res => {
+            loadRecords(payload = {}) {
+                this.$.ajax.GET('/ponpes', payload).then(res => {
                     if (res.success) {
                         this.set('records', res.data);
                     }
@@ -103,6 +116,22 @@
                         this.loadRecords();
                     }
                 });
+            }
+            __onReloadTap() {
+                this.loadRecords();
+            }
+            __onSearchEnter(e) {
+                if (e.key == 'Enter') {
+                    let v = e.target.value;
+                    if (v) {
+                        this.loadRecords({
+                            query: v,
+                            fields: ['nama_ponpes']
+                        });
+                    } else {
+                        this.loadRecords();
+                    }
+                }
             }
         }
         customElements.define(PonpesList.is, PonpesList);

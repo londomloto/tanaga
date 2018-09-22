@@ -1,0 +1,151 @@
+<link rel="import" href="../../master-mixins/master-table.html">
+<link rel="import" href="../../master-mixins/master-style.html">
+
+<dom-module id="ponpes-sdm">
+    <template>
+        <style include="master-style">
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="[[ headerText ]]" desc="Ketenagaan" on-back-tap="__onBackTap">
+                <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <!-- <div>&nbsp;</div>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <div slot="right-toolbar">
+                    <div class="grid-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div> -->
+            </module-header-block>
+            <div class="flex">
+                <kct-grid 
+                    id="grid" 
+                    url="[[ api ]]" 
+                    columns="[[ columns ]]" 
+                    selection-model="row"
+                    hide-header></kct-grid>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Tambah Tenaga" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        url="/master-ponpes/jabatan" 
+                        label="Jabatan" 
+                        value="{{ editingRecord.id_jabatan }}" 
+                        item-label-path="nama_jabatan" 
+                        item-value-path="id_jabatan" 
+                        page-size="10"></kct-combobox>
+                    <paper-input label="Jumlah Pria" value="{{ editingRecord.jml_pria }}"></paper-input>
+                    <paper-input label="Jumlah Wanita" value="{{ editingRecord.jml_wanita }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+        
+    </template>
+    <script>
+        class PonpesSdm extends Mixins(KctView).use(Mixins.MasterTable) {
+            static get is() {
+                return 'ponpes-sdm';
+            }
+            static get properties() {
+                return {
+                    api: { type: String, value: '/ponpes/sdm' },
+                    record: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            { text: 'Jabatan', dataIndex: 'nama_jabatan' },
+                            { text: 'Jumlah Pria', dataIndex: 'jml_pria', align: 'right' },
+                            { text: 'Jumlah Wanita', dataIndex: 'jml_wanita', align: 'right' }
+                        ])
+                    },
+                    headerText: { type: String, value: 'Pesantren' },
+                    editingRecord: { type: Object, value: () => ({}) }
+                };
+            }
+            handleRouteParams(id, action) {
+                if (action != 'sdm') return;
+                this.set('identity', id);
+                this.loadRecord();
+            }
+            loadRecord() {
+                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
+                    if (res.success) {
+                        this.set('headerText', res.data.nama_ponpes);
+                        this.set('record', res.data);
+                        this.loadGrid();
+                    }
+                }); 
+            }
+            loadGrid() {
+                this.$.grid.params.id_ponpes = this.identity;
+                this.$.grid.load();
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onRemoveTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus record tepilih?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/ponpes/sdm/' + this.$.grid.selected.id_sdm).then(() => {
+                            this.loadGrid();
+                        });
+                    }
+                }); 
+            } 
+            __onReloadTap() {
+                this.loadGrid();
+            }
+            __onEditorSaveTap() {
+                let payload = this.editingRecord || {};
+                payload.id_ponpes = this.identity;
+                
+                if (payload.id_sdm) {
+                    this.$.ajax.PUT('/ponpes/sdm/' + payload.id_sdm, payload).then(done.bind(this));
+                } else { 
+                    this.$.ajax.POST('/ponpes/sdm', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.$.editor.close();
+                    this.loadGrid();
+                }
+            }
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+            __onBackTap() {
+                this.set('route.path', '/ponpes/' + this.identity + '/home');
+            }
+        }
+        customElements.define(PonpesSdm.is, PonpesSdm);
+    </script>
+</dom-module>

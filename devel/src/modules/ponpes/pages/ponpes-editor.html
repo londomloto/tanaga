@@ -1,0 +1,272 @@
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file-button.html">
+
+<dom-module id="ponpes-editor">
+    <template>
+        <style include="ponpes-style">
+            :host {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="[[ headerText ]]" desc="[[ headerDesc ]]" on-back-tap="__onBackTap">
+                <paper-button disabled$="[[ invalid ]]" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
+            </module-header-block>
+            <div class="flex scroll-y padding">
+                
+                <kct-column columns="2">
+                    <div class="section">
+                        <h3>IDENTITAS PONDOK PESANTREN</h3>
+                        <div>
+                            <kct-column columns="2" spacer="0">
+                                <div>
+                                    <paper-input value="{{ record.no_statistik }}" label="No. Statistik" maxlength="50"></paper-input>
+                                </div>
+                                <div>
+                                    <paper-input value="{{ record.nama_statistik_baru }}" label="Nama Statistik Baru"></paper-input>
+                                    
+                                </div>
+                            </kct-column>
+                            <kct-column columns="2" spacer="0">
+                                <div>
+                                    <paper-input value="{{ record.kode_ponpes }}" label="ID/Kode Ponpes"></paper-input>
+                                </div>
+                                <div>
+                                    <paper-input value="{{ record.nama_ponpes }}" label="Nama Pondok Pesantren *)" required auto-validate error-message="Nama ponpes wajib diisi"></paper-input>
+                                </div>
+                            </kct-column>
+                            
+                            <kct-column columns="2" spacer="0">
+                                <div>
+                                    <paper-input value="{{ record.thn_berdiri_masehi }}" label="Tahun Berdiri (Masehi)"></paper-input>
+                                </div>
+                                <div>
+                                    <paper-input value="{{ record.thn_berdiri_hijr }}" label="Tahun Berdiri (Hijr)"></paper-input>
+                                </div>
+                            </kct-column>
+
+                            <vaadin-combo-box 
+                                label="Berbadan Hukum" 
+                                value="{{ record.stat_badan_hukum }}" 
+                                items="[[ statusBadanHukum ]]"
+                                item-label-path="label" 
+                                item-value-path="value"></vaadin-combo-box>
+
+                            <kct-column columns="2" spacer="0">
+                                <div>
+                                    <paper-input value="{{ record.nomor_sk }}" label="Nomor SK"></paper-input>
+                                </div>
+                                <div>
+                                    <paper-input value="{{ record.tanggal_sk }}" label="Tanggal SK" placeholder="dd/mm/yyyy"></paper-input>
+                                </div>
+                            </kct-column>
+
+                            <paper-input value="{{ record.no_izin }}" label="No. Izin Operasional"></paper-input>
+
+                            <kct-combobox 
+                                url="/master-ponpes/tipe" 
+                                label="Tipe Pesantren" 
+                                value="{{ record.id_tipe }}" 
+                                item-label-path="nama_tipe" 
+                                item-value-path="id_tipe" 
+                                page-size="10"></kct-combobox>
+
+                            <kct-combobox 
+                                url="/master-ponpes/organizer" 
+                                label="Penyelenggara" 
+                                value="{{ record.id_orgz }}" 
+                                item-label-path="nama_orgz" 
+                                item-value-path="id_orgz" 
+                                page-size="10"></kct-combobox>
+
+                            <div style="padding: 8px 0">
+                                <kct-file-button id="cover" file="{{ cover }}" value="[[ record.img_gedung ]]" label="Cover/Gambar Pesantren"></kct-file-button>    
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="section">
+                        <h3>ALAMAT DAN KONTAK</h3>
+                        <div>
+                            <paper-input value="{{ record.alamat }}" label="Alamat"></paper-input>
+                            <paper-input  value="{{ record.kelurahan }}" label="Desa / Kelurahan"></paper-input>
+                            <kct-column columns="2" spacer="0">
+                                <div>
+                                    <kct-combobox 
+                                        id="combo-propinsi" 
+                                        url="/master-wilayah/propinsi" 
+                                        label="Propinsi" 
+                                        value="{{ record.kode_propinsi }}" 
+                                        item-label-path="nama_propinsi" 
+                                        item-value-path="kode_propinsi" 
+                                        page-size="10" 
+                                        on-change="__onComboPropinsiChange"></kct-combobox>
+                                </div>
+                                <div>
+                                    <kct-combobox 
+                                        id="combo-kota" 
+                                        url="/master-wilayah/kota" 
+                                        label="Kabupaten/Kota" 
+                                        value="{{ record.kode_kota }}" 
+                                        item-label-path="nama_kota" 
+                                        item-value-path="kode_kota" 
+                                        page-size="10" 
+                                        on-beforeload="__onComboKotaBeforeLoad"  
+                                        on-change="__onComboKotaChange"></kct-combobox>
+                                </div>
+                            </kct-column>
+                            <kct-column columns="2" spacer="0">
+                                <div>
+                                    <kct-combobox 
+                                        id="combo-kecamatan" 
+                                        url="/master-wilayah/kecamatan" 
+                                        label="Kecamatan" 
+                                        value="{{ record.kode_kecamatan }}" 
+                                        item-label-path="nama_kecamatan" 
+                                        item-value-path="kode_kecamatan" 
+                                        page-size="10" 
+                                        on-beforeload="__onComboKecamatanBeforeLoad"></kct-combobox>
+                                </div>
+                                <div>
+                                    <paper-input value="{{ record.kode_pos }}" label="Kode Pos"></paper-input>
+                                </div>
+                            </kct-column>
+                            
+                            <paper-input value="{{ record.no_telepon }}" label="Nomor Telepon"></paper-input>
+                        </div>
+                    </div>
+                </kct-column>
+
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class PonpesEditor extends KctView {
+            static get is() {
+                return 'ponpes-editor';
+            }
+            static get properties() {
+                return {
+                    headerText: { type: String, value: 'Pesantren' },
+                    headerDesc: { type: String, value: 'Editor Pesantren' },
+                    identity: { type: String },
+                    record: { type: Object },
+                    invalid: { type: Boolean, value: false },
+                    statusBadanHukum: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Ya', value: 'Ya' },
+                            { label: 'Tidak', value: 'Tidak' }
+                        ])
+                    }
+                };
+            }
+            static get observers() {
+                return [
+                    '__validationChanged(record.nama_ponpes)'
+                ];
+            }
+            resetForm() {
+                this.set('record', {});
+            }
+            saveForm() {
+                let phantom = !this.identity;
+                let payload = (this.record || {});
+
+                if (phantom) {
+                    this.$.ajax.POST('/ponpes', payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.PUT('/ponpes/' + this.identity, payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        let id = res.data.id_ponpes;
+                        if (this.cover) {
+                            this.$.ajax.UPLOAD('/ponpes/' + id + '/upload', {
+                                files: [
+                                    { name: 'userfile', file: this.cover }
+                                ]
+                            }).then(() => {
+                                this.toast('INFO', 'Data pesantren berhasil disimpan', 'info');        
+                                this.$.cover.file = null;
+                                if (phantom) {
+                                    this.set('route.path', '/ponpes/' + res.data.id_ponpes + '/home');
+                                }
+                            });
+                        } else {
+                            this.toast('INFO', 'Data pesantren berhasil disimpan', 'info');        
+                            if (phantom) {
+                                this.set('route.path', '/ponpes/' + res.data.id_ponpes + '/home');
+                            }
+                        }
+                    } else {
+                        this.toast('ERROR', res.message, 'danger');
+                    }
+                }
+            }
+            back() {
+                this.set('route.path', '/ponpes');
+            }
+            __onComboPropinsiChange(e) {
+                let c = e.target;
+                let v = c.value;
+
+                if (v) {
+                    this.$['combo-kota'].load({ params: { kode_propinsi: v } });
+                    this.$['combo-kecamatan'].value = '';
+                } else {
+                    this.$['combo-kota'].value = '';
+                    this.$['combo-kecamatan'].value = '';    
+                }
+            }
+            __validationChanged(nama_ponpes) {
+                let valid = true;
+                valid = valid && !!nama_ponpes;
+                this.set('invalid', !valid);
+            }
+            __onComboKotaChange(e) {
+                let c = e.target;
+                let v = c.value;
+
+                if (v) {
+                    this.$['combo-kecamatan'].load({ params: { kode_kota: v } });
+                } else {
+                    this.$['combo-kecamatan'].value = '';
+                }
+                
+            }
+            __onComboKotaBeforeLoad(e) {
+                let c = e.target;
+                let v = this.$['combo-propinsi'].value;
+                if (v) {
+                    c.silent = true;
+                    c.params = {
+                        kode_propinsi: v
+                    };
+                }
+            }
+            __onComboKecamatanBeforeLoad(e) {
+                let c = e.target;
+                let v = this.$['combo-kota'].value;
+                if (v) {
+                    c.silent = true;
+                    c.params = {
+                        kode_kota: v
+                    };
+                }
+            }
+            __onSaveTap() {
+                this.saveForm();
+            }
+            __onBackTap() {
+                this.back();
+            }
+        }
+        customElements.define(PonpesEditor.is, PonpesEditor);
+    </script>
+</dom-module>

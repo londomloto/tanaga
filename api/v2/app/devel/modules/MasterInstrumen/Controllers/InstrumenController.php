@@ -5,7 +5,24 @@ use App\MasterInstrumen\Models\Instrumen;
 
 class InstrumenController extends \Micro\Controller {
     public function findAction() {
-        return Instrumen::get()->filterable()->sortable()->paginate();
+        $payload = $this->request->getQuery();
+        $query = Instrumen::get()
+            ->filterable();
+        
+        if (isset($payload['params'])) {
+            $params = json_decode($payload['params'], TRUE);
+            if (isset($params['context'])) {
+                $w = array();
+                foreach($params['context'] as $item) {
+                    $w[] = "UPPER(kode_group) LIKE '".$item."%'";
+                }
+                if (count($w) > 0) {
+                    $query->andWhere('('.implode(' OR ', $w).')');
+                }
+            }
+        }
+
+        return $query->sortable()->paginate();
     }
 
     public function createAction() {
