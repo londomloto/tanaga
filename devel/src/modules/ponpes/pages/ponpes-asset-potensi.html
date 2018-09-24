@@ -238,7 +238,18 @@
                 this.$.editor.open();
             }
             __onRemoveTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang terpilih', 'warn');
+                    return;
+                }
 
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus data tersebut?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/ponpes/asset-potensi/' + this.$.grid.selected.id_asset_potensi).then(() => {
+                            this.loadGrid();
+                        });
+                    }
+                }); 
             }
             __onEditorSaveTap() {
                 let payload = this.editingRecord || {};
