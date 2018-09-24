@@ -2,6 +2,7 @@
 namespace App\Ponpes\Controllers;
 
 use App\Ponpes\Models\AssetPotensi;
+use App\Ponpes\Models\AssetGambar;
 
 class AssetPotensiController extends \Micro\Controller {
     public function findAction() {
@@ -13,6 +14,10 @@ class AssetPotensiController extends \Micro\Controller {
         $data = new AssetPotensi();
 
         if ($data->save($post)) {
+            if (isset($post['images'])) {
+                $data->saveImages($post['images']);
+            }
+            
             return AssetPotensi::get($data->id_asset_potensi);
         }
         return AssetPotensi::none();
@@ -24,6 +29,10 @@ class AssetPotensiController extends \Micro\Controller {
 
         if ($item->data) {
             $item->data->save($post);
+
+            if (isset($post['images'])) {
+                $item->data->saveImages($post['images']);
+            }
         }
 
         return $item;

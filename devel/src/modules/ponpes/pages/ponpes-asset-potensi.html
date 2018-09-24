@@ -3,9 +3,63 @@
 <link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/vendors/swiper/swiper.html">
+<link rel="import" href="../../../../../cores/vendors/swiper/swiper-style.html">
 
 <dom-module id="ponpes-asset-potensi">
     <template>
+        <style include="swiper-style">
+            #slider {
+                position: absolute;
+                left: 30px;
+                top: 30px;
+                bottom: 30px;
+                right: 30px;
+                background-color: #000;
+                box-shadow: 0 0 15px rgba(0,0,0,.5);
+            }
+            #slider[hidden] {
+                display: none;
+            }
+            .swiper-slide {
+                background-repeat: no-repeat;
+                background-size: cover;
+            }
+            #slider-next,
+            #slider-prev {
+                position: absolute;
+                top: 50%;
+                margin-top: -20px;
+                border-radius: 50%;
+                background-color: rgba(0,0,0,.2);
+                z-index: 20;
+                color: #fff;
+            }
+            #slider-prev {
+                left: 15px;
+            }
+            #slider-next {
+                right: 15px;
+            }
+            #slider-exit {
+                position: absolute;
+                width: 100px;
+                left: 50%;
+                margin-left: -50px;
+                text-align: center;
+                background-color: rgba(0,0,0,.3);
+                z-index: 100;
+                top: 0;
+                color: #fff;
+                cursor: pointer;
+                border-radius: 0 0 12px 12px;
+                padding: 5px;
+            }
+            #slider-exit:hover {
+                background-color: rgba(0,0,0,.5);
+            }
+        </style>
         <style include="ponpes-table-style">
             :host {
                 height: 100%;
@@ -31,6 +85,7 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-file id="file" on-change="__onFileBrowserChange"></kct-file>
 
         <kct-vbox>
             <module-header-block text="[[ headerText ]]" desc="Asset Potensi" on-back-tap="__onBackTap">
@@ -68,12 +123,20 @@
                             url="/ponpes/asset-potensi" 
                             columns="[[ columns ]]" 
                             selection-model="row" 
-                            row-height="50"
+                            row-height="50" 
+                            on-cellclick="__onGridCellClick" 
                             hide-header>
                             <template preserve-content>
                                 <style>
                                     .label-group-potensi {
                                         color: var(--google-red-300);
+                                    }
+                                    .label-desc-asset {
+                                        color: #999;
+                                    }
+                                    .label-link a {
+                                        font-size: 12px;
+                                        color: var(--google-blue-300);
                                     }
                                 </style>
                             </template>        
@@ -83,39 +146,108 @@
             </div>
         </kct-vbox>
 
-        <kct-dialog id="editor" title="Editor" width="400" height="100%">
+        <kct-dialog id="editor" title="Editor" width="800" height="100%">
             <template preserve-content>
-                <style include="theme-helper"></style>
+                <style include="theme-helper">
+                    .column {
+                        box-sizing: border-box;
+                        border: 1px solid #dfdfdf;
+                        padding: 15px;
+                    }
+
+                    .list-image h3 {
+                        font-size: 14px;
+                        margin: 0 0 15px 0;
+                    }
+                    .thumb {
+                        position: relative;
+                        
+                        height: 104px;
+                    }
+                    .thumb img {
+                        display: block;
+                        margin: 2px auto;
+                    }
+                    .thumb.action {
+                        background-color: var(--paper-grey-100);
+                    }
+                    .thumb.action paper-icon-button {
+                        position: absolute;
+                        left: 50%;
+                        margin-left: -20px;
+                        top: 50%;
+                        margin-top: -20px;
+                    }
+                    .tool {
+                        color: #fff;
+                        position: absolute;
+                        right: 2px;
+                        top: 2px;
+                        width: 24px;
+                        height: 24px;
+                        background-color: rgba(0,0,0,.3);
+                    }
+
+                    .tool paper-icon-button {
+
+                        width: 24px;
+                        height: 24px;
+                        padding: 4px;
+                    }
+                </style>
                 <div slot="dialog-body">
-                    <paper-input label="Tahun Laporan Asset" value="{{ editingRecord.tahun }}"></paper-input>
-                    <kct-combobox 
-                        id="combo-group"
-                        url="/master-instrumen/group" 
-                        params='{"kode_kategori": "PTN"}'
-                        label="Group" 
-                        value="{{ editingRecord.kode_group }}" 
-                        item-label-path="label_group" 
-                        item-value-path="kode_group" 
-                        page-size="10" 
-                        on-change="__onComboGroupChange"></kct-combobox>
-                    <kct-combobox 
-                        id="combo-potensi" 
-                        url="/master-instrumen/instrumen" 
-                        label="Potensi" 
-                        value="{{ editingRecord.kode_init }}" 
-                        item-label-path="label_init" 
-                        item-value-path="kode_init" 
-                        page-size="10"></kct-combobox>
-                    <paper-input label="Nama Asset" value="{{ editingRecord.nama_asset }}"></paper-input>
                     <kct-column columns="2">
-                        <div>
-                            <paper-input label="Nilai" value="{{ editingRecord.besar_asset }}"></paper-input>        
+                        <div class="column">
+                            <paper-input label="Tahun Laporan Asset" value="{{ editingRecord.tahun }}"></paper-input>
+                            <kct-combobox 
+                                id="combo-group"
+                                url="/master-instrumen/group" 
+                                params='{"kode_kategori": "PTN"}'
+                                label="Group" 
+                                value="{{ editingRecord.kode_group }}" 
+                                item-label-path="label_group" 
+                                item-value-path="kode_group" 
+                                page-size="10" 
+                                on-change="__onComboGroupChange"></kct-combobox>
+                            <kct-combobox 
+                                id="combo-potensi" 
+                                url="/master-instrumen/instrumen" 
+                                label="Potensi" 
+                                value="{{ editingRecord.kode_init }}" 
+                                item-label-path="label_init" 
+                                item-value-path="kode_init" 
+                                page-size="10"></kct-combobox>
+                            <paper-input label="Nama Asset" value="{{ editingRecord.nama_asset }}"></paper-input>
+                            <kct-column columns="2">
+                                <div>
+                                    <paper-input label="Nilai" value="{{ editingRecord.besar_asset }}"></paper-input>        
+                                </div>
+                                <div>
+                                    <paper-input label="Satuan" value="{{ editingRecord.sat_unit_asset }}"></paper-input>        
+                                </div>
+                            </kct-column>
+                            <paper-textarea label="Deskripsi" value="{{ editingRecord.deskripsi }}"></paper-textarea>
+                            
                         </div>
-                        <div>
-                            <paper-input label="Satuan" value="{{ editingRecord.sat_unit_asset }}"></paper-input>        
+                        <div class="column">
+                            <div class="list-image">
+                                <h3>Gambar Asset</h3>
+                                <kct-column columns="3">
+                                    <template is="dom-repeat" items="[[ imagesItems ]]">
+                                        <div class="thumb">
+                                            <div class="tool">
+                                                <paper-icon-button title="Hapus gambar" icon="close" on-tap="__onRemoveImageTap"></paper-icon-button>
+                                            </div>
+                                            <img src$="[[ item.gambar_thumb ]]&w=100&h=100">
+                                        </div>
+                                    </template>
+                                    <div class="thumb action">
+                                        <paper-icon-button on-tap="__onAddImageTap" icon="add"></paper-icon-button>
+                                    </div>
+                                </kct-column>
+                            </div>
                         </div>
                     </kct-column>
-                    <paper-textarea label="Deskripsi" value="{{ editingRecord.deskripsi }}"></paper-textarea>
                     
                 </div>
                 <div slot="dialog-footer">
@@ -124,6 +256,21 @@
                 </div>
             </template>
         </kct-dialog>
+
+        <div id="slider" class="swiper-container" hidden$="[[ hideSlider ]]">
+            <div class="swiper-wrapper">
+                <template is="dom-repeat" items="[[ slidesItems ]]">
+                    <div class="swiper-slide" style$="background-image: url([[ item.gambar_url ]])"></div>
+                </template>
+            </div>
+            <div id="slider-page" class="swiper-pagination"></div>
+            <paper-icon-button icon="chevron-right" id="slider-next"></paper-icon-button>
+            <paper-icon-button icon="chevron-left" id="slider-prev"></paper-icon-button>
+            <div id="slider-exit" on-click="__onCloseSliderTap">
+                <span style="pointer-events: none;">Tutup Slider</span>
+            </div>
+            
+        </div>
 
     </template>
     <script>
@@ -162,17 +309,15 @@
                                 renderer: e => {
                                     if (e.data) {
                                         let nama = e.data.nama_asset || '';
-                                        let desc = e.data.deskripsi || '(tidak ada deskripsi)';
                                         let link = '';
 
-                                        if (e.data.images) {
-                                            link = '<a href="javascript:;">Lihat Gambar</a>';
+                                        if (e.data.has_images) {
+                                            link = '<a data-action="show-images" style="pointer-events:all" href="javascript:;">Lihat Gambar</a>';
                                         }
 
                                         return `
-                                            <div class="label-nama-asset">${nama}</div>
-                                            <div class="label-desc-asset">${desc}</div>
-                                            <div>${link}<div>
+                                            <div style="pointer-events:none" class="label-nama-asset">${nama}</div>
+                                            <div style="pointer-events:none" class="label-link">${link}<div>
                                         `;
                                     }
                                     return '';
@@ -182,7 +327,10 @@
                         ])
                     },
                     headerText: { type: String, value: 'Pesantren' },
-                    editingRecord: { type: Object }
+                    editingRecord: { type: Object },
+                    imagesItems: { type: Array, value: () => ([]) },
+                    hideSlider: { type: Boolean, value: true },
+                    slidesItems: { type: Array, value: () => ([]) }
                 };
             }
             handleRouteParams(id, action) {
@@ -222,10 +370,26 @@
                 this.$.grid.params = payload;
                 this.$.grid.load();
             }
+            __loadImages() {
+                let payload = {
+                    params: {
+                        id_asset_potensi: this.editingRecord.id_asset_potensi
+                    }
+                };
+
+                this.$.ajax.GET('/ponpes/asset-gambar', payload).then(res => {
+                    if (res.success) {
+                        this.set('imagesItems', res.data);
+                    }
+                });
+            }
             __onAddTap() {
                 this.set('editingRecord', {
                     tahun: (new Date()).getFullYear()
                 });
+                
+                this.set('imagesItems', []);
+
                 this.$.editor.open();
             }
             __onEditTap() {
@@ -235,6 +399,8 @@
                 }
 
                 this.set('editingRecord', Object.assign({}, this.$.grid.selected));
+                this.__loadImages();
+
                 this.$.editor.open();
             }
             __onRemoveTap() {
@@ -251,9 +417,14 @@
                     }
                 }); 
             }
+            __onRemoveImageTap(e) {
+                let index = e.model.index;
+                this.splice('imagesItems', index, 1);
+            }
             __onEditorSaveTap() {
                 let payload = this.editingRecord || {};
                 payload.id_ponpes = this.identity;
+                payload.images = this.imagesItems || [];
 
                 if (payload.id_asset_potensi) {
                     this.$.ajax.PUT('/ponpes/asset-potensi/' + payload.id_asset_potensi, payload).then(done.bind(this));
@@ -309,6 +480,70 @@
                     timer = null;
                 }, 1);
                 
+            }
+            __onAddImageTap() {
+                this.$.file.browse();
+            }
+            __onFileBrowserChange(e) {
+                let file = e.target.file().files[0];
+                if (file) {
+                    this.$.ajax.UPLOAD('/ponpes/asset-gambar/upload', {
+                        files: [
+                            { name: 'usefile', file: file }
+                        ]
+                    }).then(res => {
+                        if (res.success) {
+                            this.push('imagesItems', {
+                                gambar: res.data.gambar,
+                                gambar_thumb: res.data.thumb
+                            });
+                        }
+                    });
+                }
+            }
+            __onGridCellClick(e) {
+                let target = e.detail.elem;
+                if (target && target.dataset.action && target.dataset.action == 'show-images') {
+                    
+                    this.$.ajax.GET('/ponpes/asset-gambar', {
+                        params: {
+                            id_asset_potensi: e.detail.data.id_asset_potensi    
+                        }
+                    }).then(res => {
+                        if (res.success) {
+
+                            this.set('slidesItems', res.data);
+                            this.set('hideSlider', false);
+
+                            if (this.swiper) {
+                                this.swiper.destroy(true);
+                                this.swiper = null;
+                            }
+
+                            let timer = setTimeout(() => {
+                                clearTimeout(timer);
+                                timer = null;
+
+                                this.swiper = new Swiper(this.$.slider, {
+                                    loop: true,
+                                    pagination: {
+                                        el: this.$['slider-page'],
+                                        dynamicBullets: false
+                                    },
+                                    navigation: {
+                                        nextEl: this.$['slider-next'],
+                                        prevEl: this.$['slider-prev']
+                                    }
+                                }); 
+                            }, 100);
+
+                            
+                        }
+                    })
+                }
+            }
+            __onCloseSliderTap() {
+                this.set('hideSlider', true);
             }
         }
         customElements.define(PonpesAssetPotensi.is, PonpesAssetPotensi);

@@ -41,3 +41,10 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/{id}/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/ponpes/asset-gambar',
+    'handler' => 'App\Ponpes\Controllers\AssetGambarController',
+    'middleware' => 'auth'
+))
+->post('/upload', 'upload');

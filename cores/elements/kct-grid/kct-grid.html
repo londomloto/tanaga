@@ -1052,10 +1052,12 @@
                     let columnType = args.colDef.columnType;
 
                     if (columnType != 'action') {
+                        let path = args.event.path || [];
                         this.dispatchEvent(new CustomEvent('cellclick', {
                             detail: {
                                 data: args.data,
-                                node: args.node
+                                node: args.node,
+                                elem: path[0]
                             }
                         }));
                         
