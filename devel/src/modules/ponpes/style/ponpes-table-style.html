@@ -82,12 +82,25 @@
             .table td.indicator {
                 padding: 3px 5px;
             }
-            .cell-editor {
+            paper-input.cell-editor {
                 --paper-input-container: {
                     padding: 0 5px;
                 };
                 --paper-input-container-input: {
                     height: 28px;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            vaadin-combo-box.cell-editor {
+                padding: 0;
+                --paper-input-container-input: {
+                    height: 28px;
+                    padding-left: 5px;
                 };
                 --paper-input-container-underline: {
                     display: none;

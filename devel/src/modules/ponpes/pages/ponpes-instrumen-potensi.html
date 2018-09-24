@@ -26,7 +26,15 @@
                                 <td>[[ item.kode_init ]]</td>
                                 <td>[[ item.deskripsi ]]</td>
                                 <td class="editable">
-                                    <paper-input on-change="__onCellEditorChange" value="{{ item.nilai }}" class="cell-editor" no-label-float></paper-input>
+                                    <vaadin-combo-box 
+                                        class="cell-editor"
+                                        value="{{ item.nilai }}" 
+                                        items="[[ comboItems ]]" 
+                                        item-label-path="label" 
+                                        item-value-path="value" 
+                                        on-change="__onCellEditorChange" 
+                                        no-label-float></vaadin-combo-box>
+                                    <!-- <paper-input on-change="__onCellEditorChange" value="{{ item.nilai }}" class="cell-editor" no-label-float></paper-input> -->
                                 </td>
                                 <td class="indicator">
                                     <paper-spinner-lite active$="[[ item.busy ]]"></paper-spinner-lite>
@@ -50,29 +58,12 @@
                         type: Array,
                         value: () => ([])
                     },
-                    api: { type: String, value: '/ponpes/instrumen' },
-                    params: {
-                        type: Object,
-                        value: () => ({
-                            context: ['D']
-                        })
-                    },
-                    record: { type: Object },
-                    columns: {
-                        type: Array,
-                        value: () => ([
-                            { type: 'rownumber' }, 
-                            { text: 'Jenis', dataIndex: 'jenis_org' },
-                            { text: 'Nama Organisasi', dataIndex: 'nama_org' }
-                        ])
-                    },
                     headerText: { type: String, value: 'Pesantren' },
-                    editingRecord: { type: Object, value: () => ({}) },
-                    ketersediaan: {
+                    comboItems: {
                         type: Array,
                         value: () => ([
                             { label: 'Ada', value: 'Ada' },
-                            { label: 'Tidak', value: 'Tidak' }
+                            { label: 'Tidak Ada', value: 'Tidak Ada' }
                         ])
                     }
                 };
