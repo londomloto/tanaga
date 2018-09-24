@@ -7,6 +7,12 @@ class Instrumen extends \Micro\Model {
         return 'm_tbl_init_dt_ponpes';
     }
 
+    public function toArray($columns = NULL) {
+        $data = parent::toArray($columns);
+        $data['label_init'] = $data['kode_init'].' - '.$data['deskripsi'];
+        return $data;
+    }
+
     public function getEditorName() {
         $user = \Micro\App::getDefault()->auth->user();
         $part = explode(' ', $user['su_fullname']);

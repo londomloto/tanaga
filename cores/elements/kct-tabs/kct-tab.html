@@ -6,7 +6,6 @@
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../../mixins/language.html">
  
 <dom-module id="kct-tab">
     <template>
@@ -109,7 +108,7 @@
 
         <div>
             <div class="tab-content">
-                <span>{{ _(title) }}</span>
+                <span>[[ title ]]</span>
             </div>
             <div class="tab-menu">
                 <paper-icon-button on-tap="__onCloseTap" icon="close"></paper-icon-button>
@@ -121,7 +120,7 @@
 
             let Superclass = customElements.get('paper-tab'); 
 
-            class KctTab extends Mixins(Superclass).use(Mixins.Language) {
+            class KctTab extends Superclass {
 
                 static get is() {
                     return 'kct-tab';

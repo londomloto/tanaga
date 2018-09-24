@@ -117,7 +117,13 @@
                 }); 
             }
             loadGrid() {
-                this.$.grid.params.id_ponpes = this.identity;
+                let payload = {
+                    params: {
+                        id_ponpes: this.identity
+                    }
+                };
+
+                this.$.grid.params = payload;
                 this.$.grid.load();
             }
             __onAddTap() {

@@ -2,7 +2,6 @@
 <link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../../mixins/resolver.html">
 <link rel="import" href="../../mixins/location.html">
-<link rel="import" href="../../mixins/language.html">
 <link rel="import" href="../kct-toast/kct-toast.html">
 <link rel="import" href="../kct-message/kct-confirm.html">
 <link rel="import" href="../kct-message/kct-alert.html">
@@ -14,8 +13,7 @@
 
         class KctView extends Mixins(Polymer.Element).use(
             Mixins.Location, 
-            Mixins.Resolver,
-            Mixins.Language
+            Mixins.Resolver
         ) {
             
             static get is() {

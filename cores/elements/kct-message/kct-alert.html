@@ -3,7 +3,6 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../mixins/resolver.html">
 <link rel="import" href="../../mixins/dialog.html">
-<link rel="import" href="../../mixins/language.html">
 
 <dom-module id="kct-alert">
     <template>
@@ -45,22 +44,21 @@
             <div class="body text-center">
                 <iron-icon icon="[[ icon ]]"></iron-icon>
                 <slot name="title">
-                    <h2>{{ _(title) }}</h2>
+                    <h2>[[ title ]]</h2>
                 </slot>
                 <slot>
-                    <p>{{ _(message) }}</p>
+                    <p>[[ message ]]</p>
                 </slot>
             </div>
             <div class="footer">
-                <paper-button on-tap="__onDismissTap" autofocus>{{ _(button) }}</paper-button>
+                <paper-button on-tap="__onDismissTap" autofocus>[[ button ]]</paper-button>
             </div>
         </paper-dialog>
     </template>    
     <script>
         class KctAlert extends Mixins(Polymer.Element).use(
             Mixins.Dialog, 
-            Mixins.Resolver,
-            Mixins.Language
+            Mixins.Resolver
         ) {
             static get is() {
                 return 'kct-alert';

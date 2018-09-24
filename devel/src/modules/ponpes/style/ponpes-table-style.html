@@ -1,0 +1,112 @@
+<dom-module id="ponpes-table-style">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .button-group {
+                position: relative;
+                top: 12px;
+            }
+            .button-group paper-button {
+                padding: 5px 8px;
+                font-size: 14px;
+                text-transform: none;
+                border: 1px solid #dfdfdf;
+                display: block;
+                float: left;
+                margin: 0 0 0 -1px;
+                border-radius: 0;
+            }
+            .button-group paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
+            .button-group paper-button:first-child {
+                border-radius: 15px 0 0 15px; 
+            } 
+            .button-group paper-button:last-child {
+                border-radius: 0 15px 15px 0;
+            } 
+            .grid-search {
+                border: 1px solid #dfdfdf;
+                padding: 4px 8px;
+                border-radius: 15px;
+                position: relative;
+                top: 11px;
+                min-width: 300px;
+            }
+
+            .grid-search paper-input {
+                --paper-input-container: {
+                    padding: 0;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .grid-search paper-input iron-icon {
+                color: #999;
+                --iron-icon-width: 17px;
+                --iron-icon-height: 17px;
+                position: relative;
+                margin-right: 5px;
+            }
+
+            .table {
+                
+            }
+            .table th {
+                background-color: var(--paper-grey-100);
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 12px;
+            }
+            .table td {
+                font-size: 12px;
+                border-bottom: 1px solid #dfdfdf;
+            }
+            .table th + th, 
+            .table td + td {
+                border-left: 1px solid #dfdfdf;
+            }
+            .table td.editable {
+                background-color: #F5F6F7;
+                padding: 0;
+            }
+            .table td.indicator {
+                padding: 3px 5px;
+            }
+            .cell-editor {
+                --paper-input-container: {
+                    padding: 0 5px;
+                };
+                --paper-input-container-input: {
+                    height: 28px;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .cell-message {
+                font-size: 10px;
+                color: #999;
+            }
+            .table td paper-spinner-lite {
+                position: relative;
+                top: 2px;
+                width: 20px;
+                height: 20px;
+                --paper-spinner-stroke-width: 2px;
+            }
+        </style>
+    </template>
+</dom-module>

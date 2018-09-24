@@ -30,7 +30,7 @@
                 margin: 0;
             }
             .item .card-meta {
-                font-size: 12px;
+                font-size: 11px;
                 margin: 0 0 8px 0;
                 color: var(--paper-blue-grey-500);
             }
@@ -65,7 +65,7 @@
                             <paper-card image="[[ item.img_gedung_thumb ]]&w=210&h=100">
                                 <div class="card-content">
                                     <div class="card-header">
-                                        <h3>[[ item.nama_ponpes ]]</h3>
+                                        <h3><a href="javascript:;" on-click="__onDetailTap">[[ item.nama_ponpes ]]</a></h3>
                                         <div class="card-meta">
                                             <span>[[ item.text_alamat ]]</span>
                                         </div>

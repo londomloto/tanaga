@@ -55,9 +55,9 @@
                 <iron-icon icon="[[ icon ]]"></iron-icon>
             </div>
             <div class="text">
-                <h3 class="title">{{ _(title) }}</h3>
+                <h3 class="title">[[ title ]]</h3>
                 <p>
-                    {{ _(message) }}
+                    [[ message ]]
                     <template is="dom-if" if="[[ button ]]">
                         <br>
                         <a class="btn" href="javascript:;">{{ _(button) }}</a>    
@@ -68,7 +68,7 @@
         </paper-toast>
     </template>
     <script>
-        class KctToast extends Mixins(Polymer.Element).use(Mixins.Language) {
+        class KctToast extends Polymer.Element {
             static get is() {
                 return 'kct-toast';
             }
