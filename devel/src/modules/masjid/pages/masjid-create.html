@@ -1,0 +1,18 @@
+<dom-module id="masjid-create">
+    <script>
+        class MasjidCreate extends MasjidEditor {
+            static get is() {
+                return 'masjid-create';
+            }
+            handleRouteParams(menu) {
+                if (menu != 'create') return;
+                this.set('headerDesc', 'Tambah Rumah Ibadah');
+                this.resetForm();
+            }
+            __onBackTap() {
+                this.set('route.path', '/masjid');
+            }
+        }
+        customElements.define(MasjidCreate.is, MasjidCreate);
+    </script>
+</dom-module>

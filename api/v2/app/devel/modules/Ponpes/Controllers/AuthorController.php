@@ -18,6 +18,17 @@ class AuthorController extends \Micro\Controller {
         return Author::none();
     }
 
+    public function updateAction($id) {
+        $post = $this->request->getJson();
+        $item = Author::get($id);
+
+        if ($item->data) {
+            $item->data->save($post);
+        }
+
+        return $item;
+    }
+
     public function deleteAction($id) {
         $data = Author::get($id)->data;
         $done = FALSE;

@@ -1,6 +1,10 @@
 <?php
 namespace App\Auth\Controllers;
 
+use App\Config\Models\Config;
+use App\Users\Models\User;
+use App\Roles\Models\Role;
+
 class AuthController extends \Micro\Controller {
 
     public function testAction() {
@@ -11,17 +15,17 @@ class AuthController extends \Micro\Controller {
         $post = $this->request->getJson();
         
         if ( ! isset($post['email']) || ! isset($post['password'])) {
-            throw new \Phalcon\Exception('Invalid parameters');
+            throw new \Phalcon\Exception('Parameter login tidak valid');
         }
 
         if ($this->auth->isCaptchaEnabled()) {
             if ( ! isset($post['captcha'])) {
-                throw new \Phalcon\Exception('Invalid parameters');
+                throw new \Phalcon\Exception('Parameter login tidak valid');
             }
 
             // validate captcha first
             if ( $post['captcha'] !== FALSE && ! $this->security->verifyCaptcha($post['captcha'])) {
-                throw new \Phalcon\Exception('Invalid security code');
+                throw new \Phalcon\Exception('Kode keamanan tidak valid');
             }
         }
         
@@ -38,7 +42,7 @@ class AuthController extends \Micro\Controller {
             $this->auth->logout();
             return array(
                 'success' => FALSE,
-                'message' => 'You are not allowed to login through this device'
+                'message' => 'Anda tidak diizinkan untuk login melalui perangkat ini'
             );
         }
 
@@ -70,7 +74,7 @@ class AuthController extends \Micro\Controller {
 
                 if ($this->role->has($permission) && ! $this->role->can($permission)) {
                     $this->auth->logout();
-                    $result['message'] = 'You are not allowed to access through this device';
+                    $result['message'] = 'Anda tidak diizinkan untuk mengakses aplikasi melalui perangkat ini';
                 } else {
                     $result['success'] = TRUE;
                     $result['data'] = $data;
@@ -147,19 +151,19 @@ class AuthController extends \Micro\Controller {
                     $data = $user->toArray();
                     $result['data'] = $this->auth->secure($data);
                 } else {
-                    $result['message'] = 'Invalid recovery code';
+                    $result['message'] = 'Kode perubahan password tidak valid';
                 }
             } else {
                 $result['message'] = $verify['message'];
             }
         } else {
-            $result['message'] = 'Invalid recovery code';
+            $result['message'] = 'Kode perubahan password tidak valid';
         }
 
         return $result;
     }
 
-    public function resetAction() {
+    /*public function resetAction() {
         $post = $this->request->getJson();
         $user = \App\Users\Models\User::findFirst(array('su_email = :email:', 'bind' => array('email' => $post['email'])));
 
@@ -175,6 +179,39 @@ class AuthController extends \Micro\Controller {
 
         return array(
             'success' => FALSE
+        );
+    }*/
+
+    public function registerAction() {
+        $post = $this->request->getJson();
+        $user = User::findFirst(array('su_email = :email:', 'bind' => array('email' => $post['su_email'])));
+        $role = Role::defaultRole();
+
+        $success = FALSE;
+        $message = NULL;
+
+        if ($user) {
+            $message = 'Alamat email sudah terdaftar';
+        } else {
+            $user = new User();
+
+            $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
+            $post['su_active'] = 0;
+            $post['su_created_date'] = date('Y-m-d H:i:s');
+            $post['su_created_by'] = 'user';
+            
+            if ($role) {
+                $post['su_sr_id'] = $role->sr_id;
+            }
+
+            if ($user->save($post)) {
+                $success = TRUE;
+            }
+        }
+
+        return array(
+            'success' => $success,
+            'message' => $message
         );
     }
 
@@ -193,15 +230,15 @@ class AuthController extends \Micro\Controller {
 
             $body = $this->view->render('password_recovery', array(
                 'user' => $data,
-                'href' => $this->url->getScheme().'://'.$this->url->getHost().'/'.$this->config->app->name.'/recover?code='.$code
+                'href' => $post['link'].'?code='.$code
             ));
 
             // send recover email
             $options = array(
-                'from' => array('no-reply@worksaurus.com' => 'Worksaurus Admin'),
+                'from' => array(Config::value('app_support_email') => Config::value('app_support')),
                 'to' => $data['su_email'],
-                'bcc' => 'roso@kct.co.id',
-                'subject' => 'WS Team Password Recovery Instruction',
+                'bcc' => 'roso.sasongko@gmail.com',
+                'subject' => 'Instruksi perubahan password',
                 'body' => $body
             );
 

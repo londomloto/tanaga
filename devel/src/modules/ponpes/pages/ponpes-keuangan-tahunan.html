@@ -7,36 +7,50 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <module-header-block text="[[ headerText ]]" desc="Keuangan Tahunan" on-back-tap="__onBackTap">
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="Keuangan Tahunan" on-back-tap="__onBackTap">
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
             </module-header-block>
-            <div class="flex scroll-y">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 40px;">No</th>
-                            <th class="text-left" style="width: 80px;">Kode</th>
-                            <th class="text-left">Instrumen</th>
-                            <th class="text-left" style="width: 200px;">Nilai</th>
-                            <th style="width: 30%"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template is="dom-repeat" items="[[ items ]]">
-                            <tr>
-                                <td class="text-center">[[ __computeSequence(index) ]]</td>
-                                <td>[[ item.kode_init ]]</td>
-                                <td>[[ item.deskripsi ]]</td>
-                                <td class="editable">
-                                    <kct-input-number mask="#,###" on-change="__onCellEditorChange" value="{{ item.nilai }}" class="cell-editor" no-label-float></kct-input-number>
-                                </td>
-                                <td class="indicator">
-                                    <paper-spinner-lite active$="[[ item.busy ]]"></paper-spinner-lite>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+            <div class="flex">
+                <kct-hbox fit>
+                    <div class="side">
+                        <h3>PARAMETER</h3>
+                        <div>
+                            <paper-input label="Tahun Anggaran" value="{{ params.tahun }}"></paper-input>
+                            <div class="m-t">
+                                <paper-button on-tap="__onSubmitFilterTap" class="button-filter">Tampilkan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a on-click="__onResetFilterTap" href="javascript:;">reset parameter</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="main flex scroll-y">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 40px;">No</th>
+                                    <th class="text-left" style="width: 80px;">Kode</th>
+                                    <th class="text-left">Instrumen</th>
+                                    <th class="text-left" style="width: 200px;">Nilai</th>
+                                    <th style="width: 30%"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ items ]]">
+                                    <tr>
+                                        <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                        <td>[[ item.kode_init ]]</td>
+                                        <td>[[ item.deskripsi ]]</td>
+                                        <td class="editable">
+                                            <kct-input-number mask="#,###" on-change="__onCellEditorChange" value="{{ item.nilai }}" class="cell-editor" no-label-float></kct-input-number>
+                                        </td>
+                                        <td class="indicator">
+                                            <paper-spinner-lite active$="[[ item.busy ]]"></paper-spinner-lite>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </kct-hbox>
+                
             </div>
         </kct-vbox>
         
@@ -52,51 +66,36 @@
                         type: Array,
                         value: () => ([])
                     },
-                    api: { type: String, value: '/ponpes/instrumen' },
-                    params: {
-                        type: Object,
-                        value: () => ({
-                            context: ['E2']
-                        })
-                    },
-                    record: { type: Object },
-                    columns: {
-                        type: Array,
-                        value: () => ([
-                            { type: 'rownumber' }, 
-                            { text: 'Jenis', dataIndex: 'jenis_org' },
-                            { text: 'Nama Organisasi', dataIndex: 'nama_org' }
-                        ])
-                    },
-                    headerText: { type: String, value: 'Pesantren' },
-                    editingRecord: { type: Object, value: () => ({}) },
-                    ketersediaan: {
-                        type: Array,
-                        value: () => ([
-                            { label: 'Ada', value: 'Ada' },
-                            { label: 'Tidak', value: 'Tidak' }
-                        ])
-                    }
+                    params: { type: Object, value: () => ({}) },
+                    record: { type: Object }
                 };
+            }
+            ready() {
+                super.ready();
+                this.resetParams();
+            }
+            resolveYear() {
+                let year = +this.params.tahun;
+                if ( ! year) {
+                    year = (new Date).getFullYear();
+                }
+                return year + '';
+            }
+            resetParams() {
+                this.set('params', {
+                    tahun: (new Date()).getFullYear()
+                });
             }
             handleRouteParams(id, action) {
                 if (action != 'keuangan-tahunan') return;
                 this.set('identity', id);
-                this.loadRecord();
-            }
-            loadRecord() {
-                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
-                    if (res.success) {
-                        this.set('headerText', res.data.nama_ponpes);
-                        this.set('record', res.data);
-                        this.loadGrid();
-                    }
-                }); 
+                this.loadGrid();
             }
             loadGrid() {
                 let payload = {
                     id_ponpes: this.identity,
-                    context: JSON.stringify(['E3'])
+                    context: JSON.stringify(['E3']),
+                    tahun: this.resolveYear()
                 };
 
                 this.$.ajax.GET('/ponpes/instrumen', payload).then(res => {
@@ -119,6 +118,7 @@
                 
                 payload.id_ponpes = this.identity;
                 payload.nilai = +payload.nilai;
+                payload.tahun = this.resolveYear();
                 
                 this.set('items.' + index + '.busy', true);
 
@@ -145,6 +145,13 @@
             }
             __onBackTap() {
                 this.set('route.path', '/ponpes/' + this.identity + '/home');
+            }
+            __onSubmitFilterTap() {
+                this.loadGrid();
+            }
+            __onResetFilterTap() {
+                this.resetParams();
+                this.loadGrid();
             }
         }
         customElements.define(PonpesKeuanganTahunan.is, PonpesKeuanganTahunan);

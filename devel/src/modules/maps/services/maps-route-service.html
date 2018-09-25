@@ -1,0 +1,299 @@
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<script>
+    Mixins.MapsRouteService = Polymer.dedupingMixin(superclass => {
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    routepathSite: { type: String },
+                    peers: { type: Array, value: () => ([]) },
+                    networking: { type: Array, value: [] },
+                    loadingTowerDetail: { type: Boolean, value: false },
+                    hideTowerNetworking: { type: Boolean, value: true },
+                    hideTowerPeers: { type: Boolean, value: true }
+                };
+            }
+
+            constructor() {
+                super();
+                this.routeTips = [];
+                this.routeMarkers = [];
+                this.routeLinks = [];
+            }
+
+            showRoutepath(site, type = 'L') {
+                this.clearRoutepath();
+                this.set('routepathSite', site);
+
+                this.$.ajax.GET('/routepath/geodetic', {
+                    site: site,
+                    type: type
+                }).then(res => {
+                    if (res.success) {
+                        if (res.data.length) {
+                            this.__handleRouteNodes(site, res.data);
+                            this.__handleRouteLinks(site, res.data);    
+                        } else {
+                            this.set('routepathSite', null);
+                            if (type == 'L') {
+                                this.toast('Warning', 'No last to hut routes for site ' + site, 'warn');    
+                            } else {
+                                this.toast('Warning', 'No hut to last routes for site ' + site, 'warn');
+                            }
+                        }
+                    }
+                });
+            }
+
+            hideRoutepath(site) {
+                this.clearRoutepath();
+            }
+
+            clearRoutepath() {
+                this.set('routepathSite', null);
+                this.clearRouteMarkers();
+                this.clearRouteLinks();
+                this.clearRouteTips();
+                this.clearTooltips();
+            }
+
+            clearRouteMarkers() {
+                this.routeMarkers.forEach(m => {
+                    m.setMap(null);
+                });
+                this.routeMarkers = [];
+            }
+
+            clearRouteTips() {
+                this.routeTips.forEach(t => {
+                    t.setMap(null);
+                });
+                this.routeTips = [];
+            }
+
+            clearRouteLinks() {
+                this.routeLinks.forEach(p => {
+                    p.setMap(null);
+                });
+                this.routeLinks = [];
+            }
+
+            loadNetworking(tower) {
+                return this.$.ajax.GET('/routepath/networking', {
+                    params: {
+                        nc_tower_index: tower
+                    } 
+                }).then(res => {
+                    this.set('loadingTowerDetail', false);
+
+                    if (res.success) {
+                        let items = res.data;
+                        let array = {};
+
+                        items.forEach(row => {
+                            if (array[row.nc_site_id] == undefined) {
+                                array[row.nc_site_id] = {
+                                    site_id: row.nc_site_id,
+                                    site_name: row.nc_site_name,
+                                    items: []
+                                };
+                            }
+                            array[row.nc_site_id].items.push(row);
+                        });
+
+                        items = Object.values(array);
+
+                        this.set('networking', items);
+                        this.set('hideTowerNetworking', items.length === 0);
+                    }
+                });
+            }
+
+            loadPeers(tower) {
+                this.set('peers', []);
+
+                return this.$.ajax.GET('/routepath/peers', {
+                    tower_index: tower
+                }).then(res => {
+                    let peers = [];
+                    
+                    if (res.success) {
+                        peers = res.data;
+                    }
+
+                    this.set('peers', peers);
+                    this.set('hideTowerPeers', peers.length === 0);
+                });
+            }
+
+            showTowerDetail(tower_index) {
+                this.$['tower-dialog'].title = tower_index + ' TOWER DETAIL';
+                this.$['tower-dialog'].open();
+
+                Promise.all([
+                    this.loadNetworking(tower_index),
+                    this.loadPeers(tower_index)
+                ]).then(() => {
+                    this.set('loadingTowerDetail', false);
+                });
+            }
+
+            __handleRouteNodes(site, data) {
+                this.clearRouteTips();
+                this.clearRouteMarkers();
+
+                let nodes = data.filter(item => item.elem == 'node' && item.data.latitude && item.data.longitude),
+                    markerBase = this.resolveUrl('../markers'),
+                    Tooltip = this.declareTooltip();
+
+                if (nodes.length) {
+                    nodes.forEach(node => {
+                        let lat = +node.data.latitude, 
+                            lon = +node.data.longitude,
+                            pos = new google.maps.LatLng(lat, lon);
+
+                        let marker = new google.maps.Marker({
+                            map: this.map,
+                            position: pos,
+                            title: node.data.tower_index, 
+                            zIndex: 200, //Math.round(lat * -100000)<<5,
+                            clickable: node.site == 'fo' ? true : false,
+                            icon: {
+                                url: markerBase + '/' + node.icon,
+                                anchor: new google.maps.Point(12, 12),
+                                draggable: false
+                            }
+                        });
+
+                        if (node.site == 'fo') {
+                            google.maps.event.addListener(marker, 'click', e => {
+                                let pos = e.latLng;
+                                let content = document.createElement('div');
+                                content.classList.add('popup-content');
+
+                                let html = '';
+                                html += '<table>';
+                                html += '<tbody>';
+                                html += '<tr class="row-header"><td colspan="2">FO SITE - #' + node.data.site_id + '</td></tr>';
+                                html += '<tr><td style="width: 80px;">Site Name</td><td>' + node.data.site_name + '</td></tr>';
+                                html += '<tr><td>Region</td><td>' + node.data.region + '</td></tr>';
+                                html += '<tr><td>Kabupaten</td><td>' + node.data.kabupaten + '</td></tr>';
+                                html += '<tr><td>Longitude</td><td>' + node.data.longitude + '</td></tr>';
+                                html += '<tr><td>Latitude</td><td>' + node.data.latitude + '</td></tr>';
+                                html += '</tbody>';
+                                html += '</table>';
+
+                                content.innerHTML = html;
+
+                                this.popup.setOptions({
+                                    content: content,
+                                    position: pos,
+                                    zIndex: 201
+                                });
+
+                                this.popup.open(this.map);   
+                            });
+                        }
+
+                        let tip = new Tooltip(pos);
+                        
+                        tip.setContent(node.data.site_id);
+                        tip.setMap(this.map);
+
+                        this.routeTips.push(tip);
+                        this.routeMarkers.push(marker);
+                    });
+                }
+            }
+
+            __handleRouteLinks(site, data) {
+                this.clearRouteLinks();
+
+                let links = data.filter(item => item.elem == 'path' && !!item.path);
+                let lines = [];
+
+
+                links.forEach(link => {
+                    let poly, options;
+
+                    if (link.link == 'fo') {
+                        options = {
+                            path: link.path,
+                            geodesic: false,
+                            strokeColor: '#2196F3',
+                            strokeOpacity: 0,
+                            strokeWeight: 3,
+                            icons: [
+                                // arrow icon
+                                {
+                                    icon: {
+                                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                        strokeWeight: 0,
+                                        fillColor: '#2196F3',
+                                        fillOpacity: 1
+                                    },
+                                    offset: '50%'
+                                },
+                                // dash icon
+                                {
+                                    icon: {
+                                        path: 'M 0,-1 0,1',
+                                        strokeOpacity: 1,
+                                        strokeColor: '#2196F3',
+                                        scale: 3
+                                    },
+                                    offset: '0',
+                                    repeat: '16px'
+                                }
+                            ]
+                        };
+                    } else {
+                        options = {
+                            path: link.path,
+                            geodesic: false,
+                            strokeColor: link.color,
+                            //strokeOpacity: 1,
+                            strokeWeight: 3,
+                            icons: [
+                                // arrow icon
+                                {
+                                    icon: {
+                                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                        strokeWeight: 0,
+                                        fillColor: link.color,
+                                        fillOpacity: 1
+                                    },
+                                    offset: '50%'
+                                }
+                            ]
+                        };
+                    }
+
+                    poly = new google.maps.Polyline(options);
+
+                    google.maps.event.addListener(poly, 'click', e => {
+                        let pos = e.latLng;
+                        let content = document.createElement('info-link');
+
+                        content.link = link;
+                        
+                        this.popup.setOptions({
+                            position: pos,
+                            content: content
+                        });
+
+                        this.popup.open(this.map);
+                    });
+
+                    poly.setMap(this.map);
+                    this.routeLinks.push(poly);
+                });
+            }
+
+            __onTowerEditorCloseTap() {
+                this.$['tower-dialog'].close();
+            }
+
+        };
+    });
+</script>

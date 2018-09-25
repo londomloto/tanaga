@@ -8,10 +8,11 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <module-header-block text="[[ headerText ]]" desc="User Pengolah" on-back-tap="__onBackTap">
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="User Pengolah" on-back-tap="__onBackTap">
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
                 <div class="button-group">
                     <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>    
                     <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
                 </div>
                 <!-- <div>&nbsp;</div>
@@ -39,7 +40,7 @@
             </div>
         </kct-vbox>
 
-        <kct-dialog id="editor" title="Tambah Pengolah" width="400" height="100%">
+        <kct-dialog id="editor" title="Editor Pengolah" width="400" height="100%">
             <template preserve-content>
                 <style include="theme-helper"></style>
                 <div slot="dialog-body">
@@ -50,6 +51,12 @@
                         item-label-path="su_email" 
                         item-value-path="su_id" 
                         page-size="10"></kct-combobox>
+                    <vaadin-combo-box 
+                        label="Posisi" 
+                        value="{{ editingRecord.posisi }}" 
+                        items="[[ positionsItems ]]" 
+                        item-label-path="label" 
+                        item-value-path="value"></vaadin-combo-box>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
@@ -73,27 +80,26 @@
                         value: () => ([
                             { type: 'rownumber' }, 
                             { text: 'Nama User', dataIndex: 'su_fullname' },
+                            { text: 'Posisi', dataIndex: 'posisi' },
                             { text: 'Tipe Lembaga', dataIndex: 'su_org_type' },
                             { text: 'Nama Lembaga', dataIndex: 'su_org_name' }
                         ])
                     },
-                    headerText: { type: String, value: 'Pesantren' },
-                    editingRecord: { type: Object, value: () => ({}) }
+                    editingRecord: { type: Object, value: () => ({}) },
+                    positionsItems: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Operator', value: 'Operator' },
+                            { label: 'Surveyor', value: 'Surveyor' },
+                            { label: 'Pemeriksa', value: 'Pemeriksa' }
+                        ])
+                    }
                 };
             }
             handleRouteParams(id, action) {
                 if (action != 'author') return;
                 this.set('identity', id);
-                this.loadRecord();
-            }
-            loadRecord() {
-                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
-                    if (res.success) {
-                        this.set('headerText', res.data.nama_ponpes);
-                        this.set('record', res.data);
-                        this.loadGrid();
-                    }
-                }); 
+                this.loadGrid();
             }
             loadGrid() {
                 let payload = {
@@ -107,6 +113,15 @@
             }
             __onAddTap() {
                 this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onEditTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.$.grid.selected));
                 this.$.editor.open();
             }
             __onRemoveTap() {
@@ -127,14 +142,19 @@
             }
             __onEditorSaveTap() {
                 let payload = this.editingRecord || {};
-                if (payload.su_id) {
-                    payload.id_ponpes = this.identity;
-                    this.$.ajax.POST('/ponpes/author', payload).then(res => {
-                        if (res.success) {
-                            this.loadGrid();
-                            this.$.editor.close();
-                        }
-                    });
+                payload.id_ponpes = this.identity;
+
+                if (payload.id_author) {
+                    this.$.ajax.PUT('/ponpes/author/' + payload.id_author, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/ponpes/author', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.loadGrid();
+                        this.$.editor.close();
+                    }
                 }
             }
             __onEditorCloseTap() {

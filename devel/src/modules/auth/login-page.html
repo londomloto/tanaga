@@ -217,9 +217,13 @@
 
                         <div class="text-center m-t">
                             <p class="m-b-xs">Lupa password Anda? <a on-tap="__onForgotTap" href="javascript:;">klik di sini</a></p>
+                            <p class="m-b-xs">Belum punya akun? <a on-tap="__onRegisterTap" href="javascript:;">daftar</a></p>
                             <a class="powered" href="javascript:;" target="_blank">
                                 <img src$="[[ resolveUrl('../../../images/logos/logo-48x48.png') ]]">
-                                <span class="block">POWERED BY <b>TANAGA</b></span>
+                                <div style="text-align: center; text-transform: uppercase; width: 200px; margin: auto;">
+                                    <div>POWERED BY</div>
+                                    <div>[[ config.app_author ]]</div>
+                                </div>
                             </a>
                         </div>
 
@@ -284,6 +288,10 @@
             __onForgotTap(e) {
                 this.set('route.path', '/forgot');
             }
+
+            __onRegisterTap(e) {
+                this.set('route.path', '/register');
+            }
             
             __onAuthLoaded() {
                 // force to logout
@@ -309,7 +317,7 @@
             }
 
             __onLoginButtonTap(e) {
-                this.mask('Logging in...');
+                this.mask('Login...');
                 this.$.auth.login(this.email, this.password, this.captcha, false).then((user) => {
                     if (user) {
                         this._debounce(

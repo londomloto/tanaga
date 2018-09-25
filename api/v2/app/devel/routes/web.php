@@ -25,9 +25,17 @@ Router::get('/test/ldap', function(){
 });
 
 Router::get('/test/mail', function(){
-    return array(
-        'success' => TRUE
-    );
+    $mailer = App::getDefault()->mailer;
+    $sent = $mailer->send(array(
+        'from' => array('Admin Tanaga' => 'tanagadevel@gmail.com'),
+        'to' => 'roso.sasongko@gmail.com',
+        'subject' => 'Terima kasih',
+        'body' => 'Hello apa kabar'
+    ));
+    var_dump($sent);
+    // return array(
+    //     'success' => TRUE
+    // );
 });
 
 Router::post('/test/upload', function(){

@@ -1,0 +1,28 @@
+<dom-module id="ponpes-error">
+    <template>
+        <style include="theme-helper">
+            .container {
+                padding: 15px;
+                font-size: 14px;
+            }
+            h3 {
+                font-size: 18px;
+                font-weight: 600;
+                margin: 0;
+                color: var(--google-red-500);
+            }
+        </style>
+        <div class="container">
+            <h3>403 - Forbidden</h3>
+            <div>Anda tidak memiliki hak untuk mengakses halaman ini.</div>
+        </div>
+    </template>
+    <script>
+        class PonpesError extends KctView {
+            static get is() {
+                return 'ponpes-error';
+            }
+        }
+        customElements.define(PonpesError.is, PonpesError);
+    </script>
+</dom-module>

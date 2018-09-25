@@ -5,7 +5,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <module-header-block text="[[ headerText ]]" desc="Potensi Pesantren" on-back-tap="__onBackTap">
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="Potensi Pesantren" on-back-tap="__onBackTap">
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
             </module-header-block>
             <div class="flex scroll-y">
@@ -58,7 +58,6 @@
                         type: Array,
                         value: () => ([])
                     },
-                    headerText: { type: String, value: 'Pesantren' },
                     comboItems: {
                         type: Array,
                         value: () => ([
@@ -71,16 +70,7 @@
             handleRouteParams(id, action) {
                 if (action != 'instrumen-potensi') return;
                 this.set('identity', id);
-                this.loadRecord();
-            }
-            loadRecord() {
-                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
-                    if (res.success) {
-                        this.set('headerText', res.data.nama_ponpes);
-                        this.set('record', res.data);
-                        this.loadGrid();
-                    }
-                }); 
+                this.loadGrid();
             }
             loadGrid() {
                 let payload = {

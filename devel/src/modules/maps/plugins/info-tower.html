@@ -1,0 +1,148 @@
+<dom-module id="info-tower">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .container {
+                font-size: 11px;
+            }
+            .header {
+                margin-bottom: 10px;
+            }
+            .title {
+                font-size: 12px;
+                margin: 0;
+            }
+            .center {
+                text-align: center;
+            }
+            .table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            .table + .table {
+                margin-top: 10px;
+            }
+            .table th {
+                background-color: #f4f4f4;
+            }
+            .table th,
+            .table td {
+                padding: 2px 5px;
+                font-size: 11px;
+                border: 1px solid #dfdfdf;
+            }
+            .table td .action {
+                width: 18px;
+                height: 18px;
+                padding: 2px;
+                color: #555;
+            }
+            .footer {
+                margin-top: 10px;
+                color: #555;
+            }
+            .location {
+                font-weight: bold;
+                font-size: 11px;
+            }
+            .location iron-icon {
+                --iron-icon-width: 12px;
+                --iron-icon-height: 12px;
+                position: relative;
+                top: -1px;
+            }
+        </style>
+        <div class="container">
+            <div class="header">
+                <h3 class="title">[[ tower.tower_index ]]</h3>
+                <div class="description">Region [[ tower.region ]], Kabupaten [[ tower.kabupaten ]]</div>
+                <div style="padding: 3px 0">
+                    <a href="javascript:;" on-click="__onDetailTap">Show Tower Detail</a>
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>SITE ID</th>
+                        <th>SITE NAME</th>
+                        <th>SITE TYPE</th>
+                        <th>ROUTEPATH</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template is="dom-repeat" items="[[ sites ]]">
+                        <tr>
+                            <td class="center">[[ __computeSequence(index) ]]</td>
+                            <td>[[ item.site_id ]]</td>
+                            <td>[[ item.site_name ]]</td>
+                            <td class="center">[[ item.bts_type ]]</td>
+                            <td class="center">
+                                <paper-icon-button icon="[[ __computeRouteIcon(item) ]]" class="action" on-tap="__onActionTap" data-action="toggle-routepath"></paper-icon-button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <div class="footer">
+                <span class="location"><iron-icon icon="maps:place"></iron-icon>&nbsp;[[ tower.latitude ]], [[ tower.longitude ]]</span>
+            </div>
+        </div>
+    </template>
+    <script>
+        class InfoTower extends Polymer.Element {
+            static get is() {
+                return 'info-tower';
+            }
+            static get properties() {
+                return {
+                    tower: { type: Object },
+                    sites: { type: Array, value: () => ([]) },
+                    route: { type: String }
+                }
+            }
+            static get observers() {
+                return [
+                    '__sitesChanged(sites)'
+                ];
+            }
+            __computeSequence(index) {
+                return index + 1;
+            }
+            __computeRouteIcon(site) {
+                if (this.route && this.route == site.site_id) {
+                    return 'visibility-off';
+                }
+                return 'visibility';
+            }
+            __sitesChanged(sites) {
+                if (sites && sites.length) {
+                    this.set('tower', sites[0]);
+                } else {
+                    this.set('tower', {});
+                }
+            }
+            __onDetailTap() {
+
+            }
+            __onActionTap(e) {
+                let action = e.target.dataset.action;
+                let detail = {};
+
+                if (action == 'toggle-routepath') {
+                    detail = {
+                        site: e.model.item,
+                        mode: e.model.item.site_id == this.route ? 'hide' : 'show'
+                    };
+                }
+
+                this.dispatchEvent(new CustomEvent('action-' + action, {
+                    detail: detail
+                }));
+            }
+        }
+        customElements.define(InfoTower.is, InfoTower);
+    </script>
+</dom-module>

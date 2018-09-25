@@ -5,7 +5,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <module-header-block text="[[ headerText ]]" desc="Kegiatan Pesantren" on-back-tap="__onBackTap">
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="Kegiatan Pesantren" on-back-tap="__onBackTap">
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
             </module-header-block>
             <div class="flex scroll-y">
@@ -66,7 +66,6 @@
                             { text: 'Nama Organisasi', dataIndex: 'nama_org' }
                         ])
                     },
-                    headerText: { type: String, value: 'Pesantren' },
                     editingRecord: { type: Object, value: () => ({}) },
                     ketersediaan: {
                         type: Array,
@@ -80,16 +79,7 @@
             handleRouteParams(id, action) {
                 if (action != 'instrumen-kegiatan') return;
                 this.set('identity', id);
-                this.loadRecord();
-            }
-            loadRecord() {
-                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
-                    if (res.success) {
-                        this.set('headerText', res.data.nama_ponpes);
-                        this.set('record', res.data);
-                        this.loadGrid();
-                    }
-                }); 
+                this.loadGrid();
             }
             loadGrid() {
                 let payload = {

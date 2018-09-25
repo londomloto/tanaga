@@ -22,23 +22,29 @@
                 height: 100%;
             }
         </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
         <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
             <ponpes-list id="list" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-list.html"></ponpes-list>
-            <ponpes-home id="home" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-home.html"></ponpes-home>
+            <ponpes-home id="home" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-home.html"></ponpes-home>
             <ponpes-create id="create" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-create.html"></ponpes-create>
-            <ponpes-update id="update" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-update.html"></ponpes-update>
-            <ponpes-author id="author" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-author.html"></ponpes-author>
-            <ponpes-sdm id="sdm" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-sdm.html"></ponpes-sdm>
-            <ponpes-lembaga id="lembaga" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-lembaga.html"></ponpes-lembaga>
-            <ponpes-organisasi id="organisasi" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-organisasi.html"></ponpes-organisasi>
-            <ponpes-instrumen-santri id="instrumen-santri" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-santri.html"></ponpes-instrumen-santri>
-            <ponpes-instrumen-kegiatan id="instrumen-kegiatan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-kegiatan.html"></ponpes-instrumen-kegiatan>
-            <ponpes-instrumen-potensi id="instrumen-potensi" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-potensi.html"></ponpes-instrumen-potensi>
-            <ponpes-instrumen-keuangan id="instrumen-keuangan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-instrumen-keuangan.html"></ponpes-instrumen-keuangan>
-            <ponpes-keuangan-bulanan id="keuangan-bulanan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-keuangan-bulanan.html"></ponpes-keuangan-bulanan>
-            <ponpes-keuangan-tahunan id="keuangan-tahunan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-keuangan-tahunan.html"></ponpes-keuangan-tahunan>
-            <ponpes-kebutuhan-tambahan id="kebutuhan-tambahan" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-kebutuhan-tambahan.html"></ponpes-kebutuhan-tambahan>
-            <ponpes-asset-potensi id="asset-potensi" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-asset-potensi.html"></ponpes-asset-potensi>
+            <ponpes-update id="update" state="[[ state ]]" route="{{ route }}" record="{{ record }}" import="pages/ponpes-update.html"></ponpes-update>
+            <ponpes-author id="author" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-author.html"></ponpes-author>
+            <ponpes-sdm id="sdm" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-sdm.html"></ponpes-sdm>
+            <ponpes-lembaga id="lembaga" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-lembaga.html"></ponpes-lembaga>
+            <ponpes-organisasi id="organisasi" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-organisasi.html"></ponpes-organisasi>
+            <ponpes-instrumen-santri id="instrumen-santri" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-instrumen-santri.html"></ponpes-instrumen-santri>
+            <ponpes-instrumen-kegiatan id="instrumen-kegiatan" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-instrumen-kegiatan.html"></ponpes-instrumen-kegiatan>
+            <ponpes-instrumen-potensi id="instrumen-potensi" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-instrumen-potensi.html"></ponpes-instrumen-potensi>
+            <ponpes-instrumen-keuangan id="instrumen-keuangan" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-instrumen-keuangan.html"></ponpes-instrumen-keuangan>
+            <ponpes-keuangan-bulanan id="keuangan-bulanan" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-keuangan-bulanan.html"></ponpes-keuangan-bulanan>
+            <ponpes-keuangan-tahunan id="keuangan-tahunan" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-keuangan-tahunan.html"></ponpes-keuangan-tahunan>
+            <ponpes-kebutuhan-tambahan id="kebutuhan-tambahan" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-kebutuhan-tambahan.html"></ponpes-kebutuhan-tambahan>
+            <ponpes-sarana id="sarana" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-sarana.html"></ponpes-sarana>
+            <ponpes-asset-potensi id="asset-potensi" state="[[ state ]]" record="[[ record ]]" route="{{ route }}" import="pages/ponpes-asset-potensi.html"></ponpes-asset-potensi>
+            <ponpes-kitab id="kitab" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-kitab.html"></ponpes-kitab>
+            <ponpes-error id="error" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-error.html"></ponpes-error>
         </kct-pages>
     </template>
     <script>
@@ -49,33 +55,46 @@
             static get properties() {
                 return {
                     title: { type: String, value: 'Pesantren', notify: true },
-                    page: { type: String }
+                    page: { type: String },
+                    record: { type: Object }
                 };
             }
             handleRouteParams(menu, action) {
-                if ( ! menu) {
-                    this.set('route.path', '/ponpes/list');
-                } else {
-                    let page;
-
-                    switch(menu) {
-                        case 'list':
-                            page = 'list';
-                            break;
-                        case 'create':
-                            page = 'create';
-                            break;
-                        default:
-                            if (action) {
-                                page = action;
-                            } else {
-                                page = 'home';
+                if (action && +menu) {
+                    this.$.ajax.GET('/ponpes/' + menu).then(res => {
+                        if (res.success) {
+                            this.set('record', res.data);
+                            this.set('page', action);
+                        } else {
+                            if (res.status == 403) {
+                                this.set('page', 'error');
                             }
-                            break;
-                    }
+                        }
+                    });
+                } else {
+                    if ( ! menu) {
+                        this.set('route.path', '/ponpes/list');
+                    } else {
+                        let page;
 
-                    this.set('page', page);
+                        switch(menu) {
+                            case 'list':
+                                this.set('page', 'list');
+                                break;
+                            case 'create':
+                                this.set('page', 'create');
+                                break;
+                            default:
+                                if (action) {
+                                    this.set('page', action);
+                                } else {
+                                    this.set('route.path', '/ponpes/list');
+                                }
+                                break;
+                        }
+                    }
                 }
+                
             }
         }
         customElements.define(PonpesPage.is, PonpesPage);

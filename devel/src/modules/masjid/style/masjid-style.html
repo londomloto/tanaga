@@ -1,0 +1,52 @@
+<dom-module id="masjid-style">
+    <template>
+        <style include="theme-helper">
+            a {
+                color: #333;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+            .section h3 {
+                font-size: 14px;
+                font-weight: 600;
+                margin: 0;
+            }
+            kct-file-button {
+                --button-browse: {
+                    text-transform: none;
+                    background-color: var(--paper-blue-grey-500);
+                    font-size: 14px;
+                };
+            }
+            .form-search {
+                border: 1px solid #dfdfdf;
+                padding: 4px 8px;
+                border-radius: 15px;
+                position: relative;
+                top: 11px;
+                min-width: 300px;
+            }
+
+            .form-search paper-input {
+                --paper-input-container: {
+                    padding: 0;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .form-search paper-input iron-icon {
+                color: #999;
+                --iron-icon-width: 17px;
+                --iron-icon-height: 17px;
+                position: relative;
+                margin-right: 5px;
+            }
+        </style>
+    </template>
+</dom-module>

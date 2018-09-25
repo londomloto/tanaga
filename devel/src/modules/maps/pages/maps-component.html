@@ -1,0 +1,411 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/mixins/google-maps.html">
+<link rel="import" href="../../../../../cores/vendors/geoxml3/geoxml3.html">
+<link rel="import" href="../../../../../cores/vendors/google/maps/markerclusterer.html">
+<link rel="import" href="../services/maps-layer-service.html">
+<link rel="import" href="../services/maps-route-service.html">
+<link rel="import" href="../services/maps-ruler-service.html">
+<link rel="import" href="../services/maps-drawing-service.html">
+<link rel="import" href="../plugins/maps-search.html">
+<link rel="import" href="../plugins/maps-panzoom.html">
+<link rel="import" href="../plugins/info-tower.html">
+<link rel="import" href="../plugins/info-link.html">
+<link rel="import" href="../styles/maps-style.html">
+
+<dom-module id="maps-component">
+    <template>
+        <style include="maps-style">
+            :host {
+                display: block;
+                height: 100%;
+                position: relative;
+            }
+            #form-search {
+                position: absolute;
+                padding: 5px;
+                background: #fff;
+                border-radius: 4px;
+                top: 20px;
+                left: 50%;
+                margin-left: -175px;
+                width: 350px;
+                @apply --shadow-elevation-2dp;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="map-message" hidden$="[[ __hideMessage(message) ]]">[[ message ]]</div>
+        
+        <div class="map-layer" collapsed$="[[ mapLayerCollapsed ]]">
+            <div class="map-layer-toggle">
+                <paper-icon-button on-tap="__onMapLayerToggleTap" icon="[[ __computeMapLayerToggle(mapLayerCollapsed) ]]"></paper-icon-button>
+            </div>
+            <div class="map-layer-content">
+                <div class="section-header">
+                    <h3 class="section-title">Layer Peta</h3>
+                    <p class="section-desc">Cek untuk mengaktifkan layer peta</p>
+                </div>
+                <div class="section-toolbar">
+                    <kct-column columns="2" gutter="0px" spacer="0px">
+                        <div class="layer-tool">
+                            <iron-icon icon="maps:layers"></iron-icon> [[ __computeLayersGroups(mapLayersGroups) ]]
+                        </div>
+                        <div class="layer-tool" style="text-align: right;" hidden$="[[ loadingLayer ]]">
+                            <a on-click="__onReloadLayersTap" href="javascript:;" style="position: relative; top: 2px;">Refresh Layer</a>
+                        </div>    
+                    </kct-column>
+                </div>
+                <div class="section-layer">
+                    <div class="list-layer">
+                        <template is="dom-repeat" items="[[ mapLayersGroups ]]">
+                            <div class="layer-item">
+                                <div class="layer-item-form">
+                                    <kct-checkbox value="{{ item.visible }}" on-change="__onLayerGroupToggle">Layer [[ item.name ]]</kct-checkbox>    
+                                </div>
+                                <paper-spinner-lite class="layer-item-mask" active$="[[ item.busy ]]"></paper-spinner-lite>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <maps-search 
+            id="map-search" 
+            class="map-search" 
+            on-search-ponpes="__onSearchPonpes" 
+            on-search-masjid="__onSearchMasjid"></maps-search>
+
+        <div class="map-tools">
+            <div class="tool-group">
+                <div class="tool-item" title="Toggle type" on-tap="__onToggleMapTypeTap">
+                    <iron-icon icon="social:public"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+            </div>
+            <div class="tool-group">
+                <div class="tool-item" title="Undo" on-tap="__onUndoTap" disabled>
+                    <iron-icon icon="reply"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+                <div class="tool-item" title="Redo" on-tap="__onRedoTap" disabled>
+                    <iron-icon icon="reply" class="flip-h"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+            </div>
+            <div class="tool-group">
+                <div data-tool="panzoom" class="tool-item" title="Toggle gesture" on-tap="__onToggleMapPanzoom">
+                    <iron-icon icon="open-with"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+                <div data-tool="draw-point" data-group="draw" class="tool-item" title="Draw point (site, hole, etc)" on-tap="__onDrawPointToggleTap">
+                    <iron-icon icon="maps:place"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+                <div data-tool="draw-line" data-group="draw" class="tool-item" title="Draw line (route, section, etc)" on-tap="__onDrawLineToggleTap">
+                    <iron-icon icon="editor:show-chart"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+                <div data-tool="draw-area" data-group="draw" class="tool-item" title="Draw area (coverage)" on-tap="__onDrawAreaToggleTap">
+                    <iron-icon icon="maps:terrain"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+            </div>
+            <!-- <div class="tool-group">
+                <div data-tool="ruler" data-group="draw" class="tool-item" title="Measurement" on-tap="__onRulerToggleTap">
+                    <iron-icon icon="image:straighten"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+            </div> -->
+            <div class="tool-group">
+                <div data-tool="trash" class="tool-item" title="Clear drawing" on-tap="__onTrashToggleTap">
+                    <iron-icon icon="delete-forever"></iron-icon>    
+                    <paper-ripple></paper-ripple>
+                </div>
+            </div>
+            <div class="clear-fix"></div>
+        </div>
+
+    </template>
+    <script>
+        {
+            const mapsViewClasses = {};
+
+            class MapsComponent extends Mixins(KctView).use(
+                Mixins.GoogleMaps, 
+                Mixins.MapsLayerService,
+                Mixins.MapsRouteService,
+                Mixins.MapsRulerService,
+                Mixins.MapsDrawingService
+            ) {
+                static get is() {
+                    return 'maps-component';
+                }
+                static get properties() {
+                    return {
+                        mapType: { type: String, value: 'roadmap' },
+                        mapGesture: { type: String, value: 'auto' },
+                        mapCenter: { type: Object, value: () => ({ lat: -7.04263888888888889, lng: 112.777277777777783 }), notify: true },
+                        mapZoom: { type: Number, value: 7, notify: true },
+                        mapBounds: { type: Object, notify: true },
+                        message: { type: String }
+                    };
+                }
+                apiReady() {
+                    super.apiReady();
+
+                    // create map
+                    this.map = new google.maps.Map(this.$.map, {
+                        center: this.mapCenter,
+                        zoom: this.mapZoom,
+                        mapTypeId: this.mapType,
+                        disableDefaultUI: true
+                    });
+
+                    this.map.addListener('click', e => {
+                        console.log(e.latLng.lat(), e.latLng.lng());
+                    });
+
+                    this.addZoomControl({
+                        sensorIcon: this.resolveUrl('../markers/sensor.svg')
+                    });
+
+                    this.$['map-search'].setup(this.map);
+                    
+                    this.activateTool('panzoom');
+
+                    let timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        timer = null;
+                        this.loadLayers();
+                    }, 1000);
+
+                    this.popup = new google.maps.InfoWindow({
+                        content: '',
+                        maxWidth: 1024
+                    });
+
+                    // this.setupRuler();
+                    // this.startMeasurement();
+
+                }
+
+                apiError() {
+                    this.loadLayers();
+                    this.toast('Oops!', 'Gagal memuat librari peta, periksa koneksi internet Anda', 'danger');
+                }
+
+                showPopup(position, title = 'Untitled', content = 'No description') {
+                    let wrapper = document.createElement('div');
+                    wrapper.classList.add('popup-content');
+
+                    let header = document.createElement('div');
+                    header.classList.add('popup-header');
+                    header.innerHTML = `<h3>${title}</h3>`;
+
+                    wrapper.appendChild(header);
+
+                    let body = document.createElement('div');
+                    body.classList.add('popup-body');
+                    body.innerHTML = content;
+
+                    wrapper.appendChild(body);
+
+                    this.popup.setContent(wrapper);
+                    this.popup.setPosition(position);
+                    this.popup.open(this.map);
+                }
+
+                hidePopup() {
+                    this.popup.close();
+                }
+
+                activateTool(name, group) {
+                    let node;
+
+                    if (group) {
+                        this.shadowRoot.querySelectorAll('[data-group="' + group + '"]').forEach(node => {
+                            node.classList.remove('active');
+                        });
+                    }
+
+                    node = this.shadowRoot.querySelector('[data-tool="' + name + '"]');
+
+                    if (node) {
+                        node.classList.add('active');
+                    }
+                }
+                deactivateTool(name) {
+                    let node = this.shadowRoot.querySelector('[data-tool="' + name + '"]');
+                    if (node) {
+                        node.classList.remove('active');
+                    }
+                }
+                declareTooltip() {
+                    if (mapsViewClasses.Tooltip) {
+                        return mapsViewClasses.Tooltip;
+                    }
+
+                    function Tooltip(position) {
+                        this.position = position;
+
+                        this.content = document.createElement('div');
+                        this.content.classList.add('marker-bubble-content');
+
+                        let bubble = document.createElement('div');
+
+                        bubble.classList.add('marker-bubble-anchor');
+                        bubble.appendChild(this.content);
+
+                        this.anchor = document.createElement('div');
+                        this.anchor.classList.add('marker-tip-anchor');
+                        this.anchor.appendChild(bubble);
+
+                        this.stopEventPropagation();
+                    }
+
+                    Tooltip.prototype = Object.create(google.maps.OverlayView.prototype);
+
+                    Tooltip.prototype.draw = function() {
+                        let pos = this.getProjection().fromLatLngToDivPixel(this.position);
+                        let display = Math.abs(pos.x) < 4000 && Math.abs(pos.y) < 4000 ? 'block' : 'none';
+
+                        if (display == 'block') {
+                            this.anchor.style.left = pos.x + 'px';
+                            this.anchor.style.top = (pos.y - 12) + 'px';
+                        }
+
+                        if (this.anchor.style.display != display) {
+                            this.anchor.style.display = display;
+                        }
+                    };
+
+                    Tooltip.prototype.setContent = function(content) {
+                        this.content.innerHTML = content;
+                    };
+
+                    Tooltip.prototype.onAdd = function() {
+                        this.getPanes().floatPane.appendChild(this.anchor);
+                    };
+
+                    Tooltip.prototype.onRemove = function() {
+                        if (this.anchor.parentElement) {
+                            this.anchor.parentElement.removeChild(this.anchor);
+                        }
+                    };
+
+                    Tooltip.prototype.stopEventPropagation = function() {
+                        let anchor = this.anchor;
+                        anchor.style.cursor = 'auto';
+
+                        ['click', 'dblclick', 'contextmenu', 'wheel', 'mousedown', 'touchstart', 'pointerdown'].forEach(event => {
+                            anchor.addEventListener(event, e => {
+                                e.stopPropagation();
+                            });
+                        });
+                    };
+
+                    mapsViewClasses.Tooltip = Tooltip;
+                    return Tooltip;
+                }
+                clearMarkers() {
+                    super.clearMarkers();
+                    this.$['map-search'].clearMarkers();
+                }
+                loadLayerGroup(layerGroup) {
+                    if (layerGroup.name == this.siteLayerGroupName) {
+                        this.$['map-search'].siteValue = '';
+                    }
+                    return super.loadLayerGroup(layerGroup);
+                }
+                renderMarkers(markers) {
+                    this.clearMarkers();
+
+                    this.mapLayersGroups.forEach((g, i) => {
+                        this.set('mapLayersGroups.' + i + '.visible', '0');
+                        this.hideLayerGroup(g);
+                    });
+
+                    markers.forEach(m => {
+                        let position = new google.maps.LatLng(m.latitude, m.longitude);
+
+                        let marker = new google.maps.Marker({
+                            position: position,
+                            icon: {
+                                url: m.icon.url,
+                                anchor: new google.maps.Point(m.icon.anchor[0], m.icon.anchor[1]),
+                                scaledSize: new google.maps.Size(m.icon.size[0], m.icon.size[1])
+                            }
+                        });
+
+                        google.maps.event.addListener(marker, 'click', e => {
+                            this.popup.setOptions({
+                                position: position,
+                                content: this.__createPopupContent(m)
+                            });
+
+                            this.popup.open(this.map);
+                        });
+
+                        marker.setMap(this.map);
+                        this.markers.push(marker);
+                    });
+                }
+                __computeSequence(index) {
+                    return index + 1;
+                }
+                __hideMessage(message) {
+                    return !(!!message);
+                }
+                
+                __onToggleMapTypeTap() {
+                    let types = ['roadmap', 'satellite', 'hybrid', 'terrain'];
+                    let index = types.indexOf(this.mapType);
+
+                    index++;
+
+                    if (types[index]) {
+                        this.set('mapType', types[index]);
+                    } else {
+                        this.set('mapType', types[0]);
+                    }
+
+                    this.map.setMapTypeId(this.mapType);
+                }
+                __onToggleMapPanzoom() {
+                    
+                    if (this.mapGesture == 'auto') {
+                        this.set('mapGesture', 'none');
+                        this.deactivateTool('panzoom');
+                    } else {
+                        this.set('mapGesture', 'auto');
+                        this.activateTool('panzoom');
+                    }
+
+                    this.map.setOptions({ gestureHandling: this.mapGesture });
+                }
+                __onMapToolTap(e) {
+                    let tool = e.target.dataset.tool;
+                    
+                }
+
+            }
+            customElements.define(MapsComponent.is, MapsComponent);
+
+        }
+        
+    </script>
+</dom-module>

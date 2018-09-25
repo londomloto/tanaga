@@ -43,8 +43,8 @@
                 static get properties() {
                     return {
                         mapApi: { type: String, value: 'https://maps.googleapis.com/maps/api/js' },
-                        mapKey: { type: String, value: 'AIzaSyAkAPLrhS4JhnMXk0DhbjX1Baco93CpLdM' },
-                        // mapKey: { type: String, value: 'AIzaSyDVS-BtasRrLlxz2ONY8JL1GzxXvVpp7b8' },
+                        // mapKey: { type: String, value: 'AIzaSyAkAPLrhS4JhnMXk0DhbjX1Baco93CpLdM' },
+                        mapKey: { type: String, value: 'AIzaSyDVS-BtasRrLlxz2ONY8JL1GzxXvVpp7b8' },
                         mapLibraries: { type: String, value: 'geometry,places,drawing' },
                         mapZoom: { type: Number, value: 10, notify: true },
                         mapCenter: { 
@@ -63,6 +63,10 @@
                 constructor() {
                     super();
                     this.apiLoaded = false;
+                    this.apiLoader = {};
+                    this.apiLoader.promise = new Promise(res => {
+                        this.apiLoader.resolve = res;
+                    });
                     
                     gmap.add(this);
 
@@ -114,9 +118,17 @@
                         }
                     }
                 }
+
+                load() {
+                    return this.apiLoader.promise;
+                }
                 
-                apiReady() {}
-                apiError() {} 
+                apiReady() {
+                    this.apiLoader.resolve(true);
+                }
+                apiError() {
+                    this.apiLoader.resolve(false);
+                } 
 
                 addMarker(options = {}) {
                     if (options.map === undefined) {

@@ -1,0 +1,457 @@
+<dom-module id="maps-style">
+    <template>
+        <style>
+            .map-container {
+                height: 100%;
+                box-sizing: border-box;
+                
+            }
+            #map {
+                height: 100%;
+            }
+            .flip-h {
+                -webkit-transform: scaleX(-1);
+                   -moz-transform: scaleX(-1);
+                     -o-transform: scaleX(-1);
+                        transform: scaleX(-1);
+                -ms-filter: "FlipH";
+                    filter: FlipH;
+            }
+            .zoom-control {
+                margin: 10px;
+            }
+            .zoom-control paper-icon-button {
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+            }
+            .zoom-control-item {
+                background-color: #fff;
+                padding: 3px;
+                box-shadow: 0 2px 2px rgba(0,0,0,.2);
+            }
+            .zoom-control-item:hover {
+                background-color: var(--paper-blue-500);
+                color: #fff;
+            }
+            .zoom-control-item.in {
+                border-radius: 3px 3px 0 0;
+                border-bottom: 1px solid #dfdfdf;
+            }
+            .zoom-control-item.out {
+                border-radius: 0 0 3px 3px;
+            }
+            .zoom-control-item.sensor {
+                margin-bottom: 10px;
+                border-radius: 3px;
+            }
+            .popup-content {
+                margin-top: 7px;
+                margin-bottom: 3px;
+                width: 300px;
+                font-size: 12px;
+                min-height: 68px;
+                overflow: hidden;
+                position: relative;
+            }
+            .popup-content .hbox {
+                @apply --layout-horizontal;
+            }
+            .popup-content .flex {
+                @apply --layout-flex-1;
+            }
+            .popup-content .icon {
+                display: block;
+                border: 1px solid #dfdfdf;
+                padding: 1px;
+                width: 68px;
+                height: 68px;
+                margin-right: 10px;
+                border: 1px solid #dfdfdf;
+                box-shadow: 0 1px 2px rgba(0,0,0,.2);
+            }
+
+            .popup-content .title {
+                font-size: 14px;
+                text-transform: uppercase;
+                margin: 0 0 5px 0;
+            }
+
+            .popup-content .description {
+                font-size: 12px;
+                margin: 0 0 5px 0;
+            }
+
+            .popup-content .coordinates {
+                font-size: 10px;
+                margin-top: 15px;
+            }
+
+            .popup-content .coordinates iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -2px;
+            }
+
+
+            .popup-content table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            .popup-content table thead th,
+            .popup-content table .row-header td {
+                background-color: #f1f1f1;
+                font-weight: bold;
+            }
+
+            .popup-content table th,
+            .popup-content table td {
+                padding: 3px 5px;
+                border: 1px solid #dfdfdf;
+            }
+
+            .popup-content table td a {
+                color: var(--paper-blue-grey-500);
+            }
+
+            .popup-content table td iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+            }
+
+            .popup-content table + table {
+                margin-top: 10px;
+            }
+
+            .popup-content .popup-mask {
+                text-align: center;
+                padding: 15px;
+            }
+
+            .popup-content .popup-header {
+                margin-bottom: 10px;
+                font-size: 11px;
+                color: #666;
+            }
+
+            .popup-content .popup-header h3,
+            .popup-content .popup-header p {
+                margin: 0;
+            }
+
+            .popup-content .popup-header h3 {
+                font-size: 12px;
+                color: #333;
+            }
+
+            .popup-content .popup-footer {
+                margin-top: 10px;
+                font-size: 11px;
+            }
+
+            .popup-content .popup-header iron-icon,
+            .popup-content .popup-footer iron-icon {
+                --iron-icon-width: 12px;
+                --iron-icon-height: 12px;
+                position: relative;
+                top: -1px;
+            }
+
+            a[href^="http://maps.google.com/maps"]{display:none !important}
+            a[href^="https://maps.google.com/maps"]{display:none !important}
+            .gmnoscreen,
+            .gmnoprint a, 
+            .gmnoprint span, 
+            .gm-style-cc {
+                display:none;
+            }
+            .gmnoprint div {
+                background:none !important;
+            }
+            
+            .marker-tip-anchor {
+                height: 0;
+                position: absolute;
+                width: 200px;
+                z-index: -1000;
+            }
+            .marker-bubble-anchor {
+                position: absolute;
+                width: 100%;
+                bottom: /* TIP_HEIGHT= */ 8px;
+                left: 0;
+            }
+            .marker-bubble-anchor::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                /* Center the tip horizontally. */
+                transform: translate(-50%, 0);
+                /* The tip is a https://css-tricks.com/snippets/css/css-triangle/ */
+                width: 0;
+                height: 0;
+                /* The tip is 8px high, and 12px wide. */
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: /* TIP_HEIGHT= */ 8px solid white;
+            }
+            .marker-bubble-content {
+                position: absolute;
+                top: 0;
+                left: 0;
+                transform: translate(-50%, -100%);
+                /* Style the info window. */
+                background-color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 11px;
+                overflow-y: auto;
+                max-height: 60px;
+                box-shadow: 0px 2px 5px 1px rgba(0,0,0,0.3);
+            }
+
+            .map-search {
+                position: absolute;
+                top: 10px;
+                left: 320px;
+                width: 500px;
+            }
+
+            .map-message {
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                background-color: rgba(255,255,255,.7);
+                border-radius: 0 4px 0 0;
+                font-size: 12px;
+                color: #333;
+                padding: 3px 8px;
+            }
+
+            .map-layer {
+                position: absolute;
+                left: 10px;
+                top: 10px;
+                background-color: #fff;
+                border-radius: 2px;
+                width: 300px;
+                box-sizing: border-box;
+                @apply --shadow-elevation-2dp;
+                font-size: 12px;
+                overflow: hidden;
+            }
+
+            .map-layer[collapsed] {
+                height: 78px;
+            }
+
+            .map-layer .map-layer-content {
+                padding: 15px;
+            }
+
+            .map-layer .section-title {
+                margin: 0;
+                font-size: 15px;
+                font-weight: 500;
+            }
+
+            .map-layer .section-desc {
+                margin: 0;
+                font-size: 12px;
+            }
+
+            .map-layer .map-layer-toggle {
+                position: absolute;
+                right: 3px;
+                top: 3px;
+            }
+
+            .map-layer .section-toolbar {
+                background-color: #f1f1f1;
+                margin: 28px -15px 15px -15px;
+                padding: 8px 15px;
+            }
+
+            .map-layer .layer-tool {
+                /*display: inline;*/
+            }
+
+            .map-layer .layer-tool iron-icon {
+                color: #777;
+            }
+
+            .map-layer .section-layer {
+                max-height: calc(100vh - 279px);
+                overflow-x: hidden;
+                overflow-y: auto;
+                margin: -15px;
+                padding: 15px;
+            }
+
+            .layer-item {
+                position: relative;
+            }
+
+            .layer-item kct-checkbox {
+                --paper-checkbox-margin: 3px 0;
+                /*font-weight: 600;*/
+                font-size: 13px;
+            }
+
+            .layer-item .layer-item-info {
+                font-size: 11px;
+                padding-left: 26px;
+                padding-right: 20px;
+                color: #888;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .layer-item .layer-item-info iron-icon {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 19px;
+                position: relative;
+                top: -2px;
+            }
+
+            .layer-item .layer-item-mask {
+                position: absolute; 
+                top: 2px;
+                right: 0;
+                width: 18px;
+                height: 18px;
+                --paper-spinner-stroke-width: 2px;
+            }
+
+            .map-tools {
+                position: absolute;
+                top: 56px;
+                left: 320px;
+            }
+
+            .map-tools .clear-fix {
+                clear: both;
+            }
+
+            .tool-group {
+                float: left;
+                @apply --shadow-elevation-2dp;
+            }
+
+            .tool-group + .tool-group {
+                margin-left: 10px;
+            }
+
+            .tool-item {
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+                background-color: #fff;
+                position: relative;
+                box-sizing: border-box;
+                cursor: pointer;
+                float: left;
+                color: #888;
+            }
+
+            .tool-item[disabled] iron-icon {
+                /*opacity: .5;*/
+            }
+
+            .tool-item.active {
+                color: var(--paper-red-500);
+            }
+
+            .tool-item + .tool-item {
+                border-left: 1px solid #dfdfdf;
+            }
+
+            .tool-item iron-icon {
+                display: block;
+                pointer-events: none;
+                --iron-icon-width: 100%;
+                --iron-icon-height: 100%;
+            }
+
+            .tool-group .tool-item:first-child {
+                border-top-left-radius: 2px;
+                border-bottom-left-radius: 2px;
+            }
+
+            .tool-group .tool-item:last-child {
+                border-top-right-radius: 2px;
+                border-bottom-right-radius: 2px;
+            }
+
+            /** ruler */
+            .ruler-svg {
+                position: absolute;
+                top: -4000px;
+                left: -4000px;
+                width: 8000px;
+                height: 8000px;
+            }
+
+            .ruler-dragging-nodes,
+            .ruler-cover-node {
+                fill: white;
+                stroke: black;
+                stroke-width: 2.5px;
+            }
+
+            .ruler-dragging-nodes:hover,
+            .ruler-cover-node:hover {
+                cursor: pointer;
+            }
+
+            .ruler-pointer {
+                fill: rgb(252, 252, 252);
+                stroke: rgb(100, 100, 100);
+                stroke-width: 2.5px;
+                pointer-events: none;
+            }
+
+            .ruler-base-line {
+                fill: none;
+                stroke: black;
+                stroke-width: 2.5px;
+            }
+
+            .ruler-aux-line {
+                fill: none;
+                stroke: transparent;
+                stroke-width: 8px;
+                cursor: pointer;
+            }
+
+            .ruler-segment-text {
+                stroke: black;
+                pointer-events: none;
+            }
+
+            .ruler-node-text {
+              text-shadow: -1.4px -1.4px rgba(255, 255, 255, 0.4),
+                           -1.4px 1.4px rgba(255, 255, 255, 0.4),
+                            1.4px 1.4px rgba(255, 255, 255, 0.4),
+                            1.4px -1.4px rgba(255, 255, 255, 0.4),
+                            -1.4px 0 rgba(255, 255, 255, 0.4),
+                            0 1.4px rgba(255, 255, 255, 0.4),
+                            1.4px 0 rgba(255, 255, 255, 0.4),
+                            0 -1.4px rgba(255, 255, 255, 0.4);
+              pointer-events: none;
+            }
+
+            .ruler-node-text.ruler-head-text {
+                visibility: hidden; 
+            }
+
+            [hidden] {
+                display: none;
+            }
+        </style>
+    </template>
+</dom-module>

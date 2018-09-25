@@ -73,6 +73,7 @@
                                 </div>
                                 <div class="card-actions">
                                     <paper-button on-tap="__onDetailTap">Detail</paper-button>
+                                    <paper-button on-tap="__onLocationTap">Lokasi</paper-button>
                                 </div>
                             </paper-card>
                         </div>
@@ -109,6 +110,32 @@
             __onDetailTap(e) {
                 let item = e.model.item;
                 this.set('route.path', '/ponpes/' + item.id_ponpes + '/home');
+            }
+            __onLocationTap(e) {
+                let item = e.model.item;
+
+                if (item.latitude && item.longitude) {
+                    
+                    this.set('route.data.markers', [
+                        {
+                            title: item.nama_ponpes,
+                            description: item.text_alamat,
+                            latitude: item.latitude,
+                            longitude: item.longitude,
+                            image: item.img_gedung_thumb,
+                            link: '/ponpes/' + item.id_ponpes + '/home',
+                            icon: {
+                                url: this.resolveUrl('../../maps/markers/ponpes.png'),
+                                anchor: [12, 12],
+                                size: [24, 24]
+                            }
+                        }
+                    ]);
+
+                    this.set('route.path', '/maps');
+                } else {
+                    this.toast('Oops!', 'Data koordinat tidak valid', 'warn');
+                }
             }
             __onRemoveTap() {
                 this.confirm('Konfirmasi', 'Menghapus data pesantren akan menghapus semua dokumen yang berkaitan. Lanjutkan?').then(b => {

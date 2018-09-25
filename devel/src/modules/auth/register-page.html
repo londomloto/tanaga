@@ -1,23 +1,302 @@
-<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-auth/kct-auth.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-message/kct-alert.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/mixins/location.html">
 
 <dom-module id="register-page">
     <template>
         <style include="theme-helper">
+            :host {
+                
+                --paper-input-container-input: {
+                    font-size: 20px;
+                    color: #fff;
+                };
+
+                --paper-input-container-label: {
+                    font-size: 15px;
+                    color: #fff;
+                };
+
+                --paper-input-error: {
+                    font-weight: 300;
+                };
+            }
+
+            .container {
+                height: 100vh;
+                background-color: var(--app-login-background);
+                background-image: url(../../../images/backgrounds/background-6.jpg);
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-position: 0 0;
+                background-attachment: scroll;
+
+                @apply --layout-horizontal;
+            }
+
+            .story {
+                position: relative;
+                padding: 30px;
+                max-width: 60%;
+                color: #fff;
+                
+            }
+            .story h3 {
+                font-size: 36px;
+                font-weight: 600;
+            }
+            .story p {
+                font-size: 18px;
+                font-weight: 300;
+                line-height: 1.2;
+            }
             
+            .column-left.sm { display: none; }
+            .column-left.md { @apply --layout-flex; }
+            .column-left.lg { @apply --layout-flex-2; }
+            .column-left.xl { @apply --layout-flex-3; }
+
+            .column-right.sm { @apply --layout-flex; }
+            .column-right.md { @apply --layout-flex; }
+            .column-right.lg { @apply --layout-flex; }
+            .column-right.xl {
+                width: 460px;
+            }
+            .column-right { 
+                padding: 20px;
+                background-color: rgba(0,0,0,.5); 
+            }
+
+            .cover {
+                height: 100%;
+            }
+            
+            .login {
+                
+                overflow: hidden;
+                background-color: var(--app-login-background);
+                padding: 1rem;
+                color: #fff;
+                /*background-color: #ffffff;*/
+                /*box-shadow: 0 3px 10px rgba(0, 0, 0, 0.23), 0 3px 10px rgba(0, 0, 0, 0.16);*/
+
+                /*@apply --layout-vertical;*/
+            }
+            .login-logo {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .powered {
+                text-decoration: none;
+                font-size: 10px;
+                color: var(--paper-grey-500);
+            }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-600);
+            }
+
+            /** forgot */
+            .forgot {
+                color: #fff;
+            }
+            .forgot h3,
+            .forgot h4 {
+                font-weight: 300;
+                color: var(--paper-yellow-300);
+            }
+            .forgot h3 {
+                font-size: 20px;
+            }
+            .forgot p {
+                font-weight: 300;
+                font-size: 15px;
+            }
+            .forgot paper-button {
+                background-color: var(--paper-blue-700);
+                color: #fff;
+                padding-left: 15px;
+                padding-right: 15px;
+                margin: 0;
+                font-weight: 500;
+            }
+            .forgot paper-button[disabled] {
+                background-color: var(--paper-grey-600);
+            }
+            .notes {
+                border-top: 1px solid #464454;
+                padding: 10px 0 0 0;
+                margin-top: 30px;
+                
+            }
+            .notes p {
+                font-size: 13px;
+            }
         </style>
+
+        <kct-auth id="auth" config="[[ config ]]" on-load="__onAuthLoaded"></kct-auth>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        
+        <div class="container">
+
+            <div class$="column-left [[ screen ]]">
+                <div class="cover">
+                    <div class="story">
+                        <h3>[[ config.app_title ]]</h3>
+                        <p>[[ config.app_description ]]</p>
+                    </div>
+                </div>    
+            </div>
+
+            <div class$="column-right [[ screen ]]">
+                <div name="forgot" class="forgot">
+                    <h3>Belum punya akun?</h3>
+                    <p>Masukan informasi Anda dengan benar ke dalam form berikut untuk melakukan registrasi user.</p>
+                    <div class="m-t">
+                        <paper-input label="Alamat Email*" value="{{ record.su_email }}" type="email" required auto-validate error-message="Email tidak valid"></paper-input>
+                        <kct-column columns="2">
+                            <div>
+                                <paper-input id="p1" label="Password*" value="{{ password1 }}" type="password" error-message="Password tidak sama"></paper-input>
+                            </div>
+                            <div>
+                                <paper-input id="p2" label="Konfirmasi Password*" value="{{ password2 }}" type="password" error-message="Password tidak sama"></paper-input>
+                            </div>
+                        </kct-column>
+
+                        <paper-input label="Nama Lengkap*" value="{{ record.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                        <vaadin-combo-box 
+                            label="Tipe Lembaga" 
+                            value="{{ record.su_org_type }}" 
+                            items="[[ organizations ]]" 
+                            item-label-path="label" 
+                            item-value-path="value"></vaadin-combo-box>  
+                        <paper-input label="Nama Lembaga" value="{{ record.su_org_name }}"></paper-input>
+                        <paper-input label="Telepon" value="{{ record.su_phone }}"></paper-input>
+                        
+                    </div>
+                    <div class="m-t">
+                        <paper-button on-tap="__onRegisterTap" disabled$="[[ invalid ]]">Daftar User Baru</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">kembali ke halaman login</a>
+                    </div>
+                </div>
+
+                <div class="text-center m-t">
+                    <a class="powered" href="javascript:;" target="_blank">
+                        <img src$="[[ resolveUrl('../../../images/logos/logo-48x48.png') ]]">
+                        <div style="text-align: center; text-transform: uppercase; width: 200px; margin: auto;">
+                            <div>POWERED BY</div>
+                            <div>[[ config.app_author ]]</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <kct-alert id="info" button="Lanjutkan" accent="info" title="Terima Kasih" icon="info-outline">
+            <p>Pendaftaran berhasil, data Anda akan segera kami verifikasi.</p>
+        </kct-alert>
+
+        <kct-alert id="warn" title="Oh Snap!">
+            <p>
+                Terjadi kegagalan dalam proses pendaftaran<br>
+                <b class="f-600">[[ message ]]</b>
+            </p>
+        </kct-alert>
+
     </template>
+
     <script>
-        class RegisterPage extends KctView {
+
+        class RegisterPage extends Mixins(KctView).use(Mixins.Location) {
             static get is() {
                 return 'register-page';
             }
 
             static get properties() {
-                return {}
+                return {
+                    title: { type: 'String', notify: true, value: 'Registrasi User' },
+                    record: { type: Object },
+                    invalid: { type: Boolean, value: false },
+                    organizations: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Sarana Ibadah', value: 'Sarana Ibadah' },
+                            { label: 'Pendidikan', value: 'Pendidikan' }
+                        ])
+                    },
+                    password1: { type: String },
+                    password2: { type: String },
+                    message: { type: String }
+                };
             }
 
             static get observers() {
-                return [];
+                return [
+                    '__validationChanged(record.*)',
+                    '__passwordChanged(password1, password2)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+                console.log(this._siteurl('/recover'));
+            }
+
+            handleRouteParams() {
+                this.set('record', {});
+            }
+
+            __validationChanged() {
+                let record = this.record || {};
+                let valid = true;
+
+                valid = valid && !!record.su_fullname;
+                valid = valid && !!record.su_email;
+                valid = valid && this.password1;
+                valid = valid && (this.password1 == this.password2);
+
+                this.set('invalid', !valid);
+            }
+
+            __passwordChanged(a, b) {
+                this.$.p2.invalid = false;
+                if (b) {
+                    if (b != a) {
+                        this.$.p2.invalid = true;
+                    }
+                }
+            }
+
+            __onBackTap(e) {
+                this.set('route.path', '/login');
+            }
+
+            __onRegisterTap() {
+                let payload = this.record;
+                payload.su_passwd = this.password1;
+
+                this.mask('Registrasi...');
+
+                this.$.ajax.POST('/auth/register', payload).then((res) => {
+                    this.unmask();
+                    if (res.success) {
+                        this.$.info.open().then(() => {
+                            this.set('route.path', '/login');
+                        });    
+                    } else {
+                        this.set('message', res.message);
+                        this.$.warn.open();
+                    }
+                });
             }
         }
 

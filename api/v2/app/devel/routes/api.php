@@ -36,6 +36,7 @@ Router::post('/auth/access', 'App\Auth\Controllers\AuthController@access');
 Router::post('/auth/recover', 'App\Auth\Controllers\AuthController@recover');
 Router::post('/auth/validate-reset', 'App\Auth\Controllers\AuthController@validateReset');
 Router::post('/auth/reset', 'App\Auth\Controllers\AuthController@reset');
+Router::post('/auth/register', 'App\Auth\Controllers\AuthController@register');
 
 /**
  * assets
@@ -61,6 +62,7 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/{id}/upload', 'upload')
+->post('/{id}/enable', 'enable')
 ->post('/invite', 'invite')
 ->post('/reinvite', 'reinvite');
 

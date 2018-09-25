@@ -1,8 +1,36 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../blocks/module-header-block.html">
+<link rel="import" href="style/masjid-style.html">
+<link rel="import" href="pages/masjid-editor.html">
 
 <dom-module id="masjid-page">
     <template>
-        
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
+            <masjid-list id="list" state="[[ state ]]" route="{{ route }}" import="pages/masjid-list.html"></masjid-list>
+            <masjid-home id="home" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/masjid-home.html"></masjid-home>
+            <masjid-create id="create" state="[[ state ]]" route="{{ route }}" import="pages/masjid-create.html"></masjid-create>
+            <masjid-update id="update" state="[[ state ]]" route="{{ route }}" record="{{ record }}" import="pages/masjid-update.html"></masjid-update>
+            <masjid-author id="author" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/masjid-author.html"></masjid-author>
+        </kct-pages>
     </template>
     <script>
         class MasjidPage extends KctView {
@@ -11,8 +39,47 @@
             }
             static get properties() {
                 return {
-                    title: { type: String, value: 'Masjid', notify: true }
+                    title: { type: String, value: 'Rumah Ibadah', notify: true },
+                    page: { type: String },
+                    record: { type: Object }
                 };
+            }
+            handleRouteParams(menu, action) {
+                if (action && +menu) {
+                    this.$.ajax.GET('/masjid/' + menu).then(res => {
+                        if (res.success) {
+                            this.set('record', res.data);
+                            this.set('page', action);
+                        } else {
+                            if (res.status == 403) {
+                                this.set('page', 'error');
+                            }
+                        }
+                    })
+                } else {
+                    if ( ! menu) {
+                        this.set('route.path', '/masjid/list');
+                    } else {
+                        let page;
+
+                        switch(menu) {
+                            case 'list':
+                                this.set('page', 'list');
+                                break;
+                            case 'create':
+                                this.set('page', 'create');
+                                break;
+                            default:
+                                if (action) {
+                                    this.set('page', action);
+                                } else {
+                                    this.set('route.path', '/masjid/list');
+                                }
+                                break;
+                        }
+                    }
+                }
+                
             }
         }
         customElements.define(MasjidPage.is, MasjidPage);

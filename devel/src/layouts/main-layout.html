@@ -292,7 +292,7 @@
 
         </app-drawer-layout>
 
-        <kct-confirm id="confirm-logout">
+        <kct-confirm id="confirm-logout" title="Konfirmasi">
             <p>Anda yakin akan keluar dari aplikasi?</p>
         </kct-confirm>
 
@@ -403,6 +403,7 @@
 
                             this.set('page', name);
                             this.set('pages.' + index + '.state', pageState);
+                            this.set('route.addr', pageState.path);
                         }
                     });
                 }

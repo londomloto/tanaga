@@ -1,10 +1,35 @@
 <link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../../../cores/vendors/swiper/swiper.html">
+<link rel="import" href="../../../../cores/vendors/swiper/swiper-style.html">
 
 <dom-module id="home-page">
     <template>
+        <style include="swiper-style">
+            #slider {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                right: 0;
+            }
+            #slider > .wrapper {
+                height: 100%;
+                width: 100%;
+            }
+            #slider-page {
+                display: none;
+            }
+            .swiper-slide {
+                width: 100%;
+                height: 100%;
+                background-repeat: no-repeat;
+                background-size: cover;
+            }
+        </style>
         <style include="theme-helper">
             :host {
                 background-color: var(--paper-blue-grey-500);
@@ -21,6 +46,7 @@
                 left: 0;
                 text-align: right;
                 padding: 8px;
+                z-index: 999;
                 
                 background: -moz-linear-gradient(-45deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 100%);
                 background: -webkit-linear-gradient(-45deg, rgba(0,0,0,0) 0%,rgba(0,0,0,0.3) 100%);
@@ -39,7 +65,6 @@
             }*/
             .welcome-title {
                 font-size: 16px;
-                font-weight: 600;
             }
             .welcome-desc {
                 font-size: 13px;
@@ -47,20 +72,28 @@
             page-header-block {
                 border-bottom: none;
             }
+
         </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
             <div class="overlay"></div>
             <!-- <page-header-block icon="home" description="Application Homepage" accent="var(--paper-green-500)"></page-header-block> -->
             
             <div class="flex" style="position: relative; z-index: 2">
-                <div class="p-a-lg">
-                    <div class="border"></div>
-                    <div class="welcome">
-                        <h2 class="welcome-title f-300">[[ config.app_title ]]</h2>
-                        <p class="welcome-desc f-300">[[ config.app_description ]]</p>    
+                <div id="slider" class="swiper-container">
+                    <div class="swiper-wrapper">
+                        <template is="dom-repeat" items="[[ slides ]]" on-dom-change="__onSlideRender">
+                            <div class="swiper-slide" style$="background-image: url([[ item.image ]])"></div>
+                        </template>        
                     </div>
-                    
+                    <div id="slider-page" class="swiper-pagination"></div>
+                </div>
+
+                <div class="welcome">
+                    <h2 class="welcome-title f-300">[[ config.app_title ]]</h2>
+                    <p class="welcome-desc f-300">[[ config.app_description ]]</p>    
                 </div>
             </div>
         </kct-vbox>
@@ -76,12 +109,48 @@
             static get properties() {
                 return {
                     title: { type: String, notify: true, value: 'Homepage' },
-                    inputs: { type: Array, value: [{ name: 'A' }, {name: 'B'}] }
+                    slides: { type: Array, value: () => ([]) }
                 }
+            }
+
+            ready() {
+                super.ready();
+                this.loadSlides();
+            }
+
+            loadSlides() {
+                this.$.ajax.GET('/home/backgrounds').then(res => {
+                    if (res.success) {
+                        this.set('slides', res.data);
+                    }
+                });
             }
 
             download() {
                 this.$.ajax.DOWNLOAD('/home/download', {user: 1, type: 'jpeg', items: ['A', 'B']});
+            }
+
+            __onSlideRender() {
+                if ( ! this.slides.length) return;
+                
+                if (this.swiper) {
+                    this.swiper.destroy(true);
+                }
+
+                this.swiper = new Swiper(this.$.slider, {
+                    speed: 3000,
+                    autoplay: {
+                        delay: 10000,
+                    },
+                    loop: true,
+                    grabCursor: false,
+                    simulateTouch: false,
+                    pagination: {
+                        el: this.$['slider-page'],
+                        dynamicBullets: false
+                    },
+                    effect: 'fade'
+                });
             }
         }
 

@@ -1,0 +1,919 @@
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+
+<script>
+    Mixins.MapsLayerService = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    mapLayersGroups: { type: Array, value: () => ([]), notify: true },
+                    mapLayerCollapsed: { type: Boolean, value: false },
+                    loadingLayer: { type: Boolean, value: false },
+                    ponpesLayerGroupName: { type: String, value: 'Pesantren' },
+                    masjidLayerGroupName: { type: String, value: 'Rumah Ibadah' }
+                };
+            }
+
+            loadLayers(fetch = false) {
+
+                this.set('message', 'Memuat layer...');
+                this.set('loadingLayer', true);
+
+                this.$.ajax.GET('/maps/layers').then(res => {
+                    if (res.success) {
+                        let items = res.data.filter(item => !!item.tml_url);
+                        
+                        if (items.length) {
+                            // grouping
+                            let groups = {};
+                            
+                            items.forEach((data, idx) => {
+                                let groupName = data.tml_group || 'Layer Default';
+                                let groupCluster = this.__createClusterer();
+                                let layerName = data.tml_name;
+                                let layerOrder = (100 + idx);
+
+                                if (groups[groupName] === undefined) {
+                                    groups[groupName] = {
+                                        name: groupName,
+                                        busy: false,
+                                        layers: [],
+                                        loaded: false,
+                                        cluster: groupCluster,
+                                        visible: '0',
+                                        indexes: {}
+                                    };
+                                }
+
+                                let layer = {
+                                    data: data,
+                                    name: layerName,
+                                    group: groupName,
+                                    order: layerOrder 
+                                };
+
+                                groups[groupName].layers.push(layer);
+                            });
+
+                            groups = Object.values(groups).map(g => {
+                                let geoms = g.layers.map(l => l.data.tml_name).join(', ');
+                                g.info = geoms;
+
+                                return g;
+                            });
+
+                            this.set('mapLayersGroups', groups);
+
+                            this.set('message', '');
+                            this.set('loadingLayer', false);
+
+                            if (fetch) {
+                                this.__queueGroups(0);
+                            }
+                        }
+                    } else {
+                        this.set('message', '');
+                        this.set('loadingLayer', false);
+                    }
+                });
+            }
+
+            __queueGroups(index = 0) {
+                if ( ! this.apiLoaded) return;
+
+                let layerGroup = this.mapLayersGroups[index];
+                
+                if (layerGroup) {
+                    this.loadLayerGroup(layerGroup).then(() => {
+                        index++;
+                        this.__queueGroups(index);
+                    });  
+                }
+            }
+
+            loadLayerGroup(layerGroup) {
+                if (layerGroup.loaded) {
+                    return Promise.resolve(true);
+                }
+
+                if (layerGroup.busy) {
+                    return Promise.resolve(false);
+                }
+
+                let groupIndex = this.mapLayersGroups.findIndex(g => g.name == layerGroup.name);
+                let queue = {};
+
+                queue.promise = new Promise(res => { queue.resolve = res; });
+
+                this.set('loadingLayer', true);
+                this.set('mapLayersGroups.' + groupIndex + '.busy', true);
+                
+                queue.promise.then(() => {
+                    this.set('loadingLayer', false);
+                    this.set('mapLayersGroups.' + groupIndex + '.busy', false);
+                    this.set('mapLayersGroups.' + groupIndex + '.loaded', true);
+
+                    if (layerGroup.visible == '0') {
+                        this.set('mapLayersGroups.' + groupIndex + '.visible', '1');
+                    }
+
+                    return true;
+                });
+
+                this.__queueLayers(queue, layerGroup, layerGroup.layers, 0);
+
+                return queue.promise;
+            }
+
+            showLayerGroup(layerGroup) {
+                if ( ! this.apiLoaded) return;
+
+                if ( ! layerGroup.loaded) {
+                    this.loadLayerGroup(layerGroup);
+                } else {
+                    if (layerGroup.cluster) {
+                        layerGroup.cluster.clearMarkers();
+                    }
+
+                    layerGroup.cluster = this.__createClusterer();
+                    
+                    layerGroup.layers.forEach(layer => {
+                        if (layer.parser) {
+                            layer.parser.showDocument();
+                        }
+                        this.__handleMarker(layerGroup, layer);
+                    });
+                }
+            }
+
+            hideLayerGroup(layerGroup) {
+                if ( ! this.apiLoaded) return;
+
+                if (layerGroup.loaded) {
+                    
+                    if (layerGroup.cluster) {
+                        layerGroup.cluster.clearMarkers();
+                    }
+
+                    layerGroup.layers.forEach(l => {
+                        if (l.parser) {
+                            l.parser.hideDocument();
+                        }
+                    });
+                }
+            }
+
+            addDataLayer(layerGroup, layer) {
+                let q = {};
+
+                q.promise = new Promise(res => {
+                    q.resolve = res;
+                });
+
+                layer.options = {};
+
+                layer.options.marker = {
+                    zIndex: layer.order,
+                    icon: {
+                        url: this.resolveUrl('../markers/' + layer.data.tml_marker),
+                        scaledSize: new google.maps.Size(24, 24),
+                        anchor: new google.maps.Point(12, 12),
+                        draggable: false
+                    }
+                };
+
+                layer.options.polygon = Object.assign({
+                    fillOpacity: 0.35,
+                    fillColor: '#2196F3',
+                    strokeColor: '#2196F3',
+                    strokeWeight: 3
+                }, layer.data.tml_polygon_options || {});
+                
+                layer.options.polyline = Object.assign({
+                    strokeColor: '#EA4335',
+                    strokeWeight: 3
+                }, layer.data.tml_polyline_options || {});
+
+                let ajax = this.$.ajax;
+
+                ajax.__resolveUrl(layer.data.tml_url).then(url => {
+                    ajax.GET(url).then(res => {
+                        if (res.success) {
+                            this.__parseDataLayer(layerGroup, layer, res.data);
+                            this.__handleMarker(layerGroup, layer);
+                            q.resolve(true);
+                        }
+                    });
+                });
+
+                return q.promise;
+            }
+
+            __parseDataLayer(layerGroup, layer, data) {
+
+                let popup = this.popup;
+
+                let parser = {
+                    docs: [],
+                    hideDocument: () => {},
+                    showDocument: () => {}
+                };
+
+                let doc = {
+                    markers: [],
+                    placemarks: [],
+                    gpolygons: [],
+                    gpolylines: [],
+                    networkLinks: [],
+                    ggroundoverlays: [],
+                    groundoverlays: []
+                };
+
+                let points = data.features.filter(e => e.geometry.type == 'Point');
+                let polygons = data.features.filter(e => e.geometry.type == 'Polygon');
+                let polyline = data.features.filter(e => e.geometry.type == 'Polyline');
+
+                if (points.length) {
+                    points.forEach(point => {
+                        
+                        let placemark = point.properties;
+                        let position = new google.maps.LatLng(placemark.latitude, placemark.longitude);
+                        let index = layerGroup.name + ':' + placemark.latitude + ':' + placemark.longitude;
+                        
+                        placemark.latlng = position;
+
+                        let options = Object.assign({
+                            position: position
+                        }, layer.options.marker);
+
+                        let marker = new google.maps.Marker(options);
+                        layerGroup.indexes[index] = marker;
+
+                        google.maps.event.addListener(marker, 'click', () => {
+                            
+                            let content = this.__createPopupContent(placemark);
+
+                            popup.setOptions({
+                                position: position,
+                                content: content
+                            });
+                            
+                            popup.open(this.map);
+                        });
+
+                        doc.markers.push(marker);
+                        doc.placemarks.push(placemark);
+                    });
+                }
+
+                if (polygons.length) {
+
+                }
+
+                if (polyline.length) {
+
+                }
+
+                layer.parser = parser;
+                layer.parser.docs.push(doc);
+            }
+
+            addKmlLayer(layerGroup, layer) {
+                let q = {};
+
+                q.promise = new Promise(res => {
+                    q.resolve = res;
+                });
+
+                let markerOptions = {
+                    map: null,
+                    zIndex: layer.order,
+                    icon: {
+                        url: this.resolveUrl('../markers/' + layer.data.tml_marker),
+                        anchor: new google.maps.Point(12, 12),
+                        draggable: false  
+                    }
+                };
+
+                let polygonOptions = Object.assign({
+                    fillOpacity: 0.35,
+                    fillColor: '#2196F3',
+                    strokeColor: '#2196F3',
+                    strokeWeight: 3
+                }, layer.data.tml_polygon_options || {});
+                
+                let polylineOptions = Object.assign({
+                    strokeColor: '#EA4335',
+                    strokeWeight: 3
+                }, layer.data.tml_polyline_options || {});
+                
+                let infoWindowOptions = {
+                    content: '',
+                    markerOpen: (placemark, popup, options) => {
+                        this.__createMarkerContent(layer, placemark, popup, options);
+                    },
+                    polylineOpen: (placemark, popup, options) => {
+                        this.__createPolylineContent(layer, placemark, popup, options);
+                    },
+                    polygonOpen: (placemark, popup, options) => {
+                        this.__createPolygonContent(layer, placemark, popup, options);
+                    }
+                };
+
+                let options = {
+                    map: this.map,
+                    zoom: false,
+                    processStyles: false,
+                    suppressInfoWindows: false,
+                    infoWindow: this.popup,
+                    infoWindowOptions: infoWindowOptions,
+                    markerOptions: markerOptions,
+                    polylineOptions: polylineOptions,
+                    polygonOptions: polygonOptions,
+                    afterCreateMarker: (placemark, marker) => {
+                        if (layerGroup.name == this.ponpesLayerGroupName) {
+                            let key = placemark.Point.coordinates[0].lat + ':' + placemark.Point.coordinates[0].lng;
+                            layerGroup.indexes[key] = marker;
+                        }
+                    },
+                    afterFetch: (xml) => {
+                        if ( ! xml || xml == 'failed parse') {
+                            q.resolve(false);
+                        } else {
+                            q.resolve(true);
+                        }
+                    },
+                    afterParse: () => {
+                        //q.resolve(true);
+
+                        let timer = setTimeout(() => {
+                            clearTimeout(timer);
+                            timer = null;
+
+                            this.__handleMarker(layerGroup, layer);
+                        }, 100);
+                    }
+                };
+
+                layer.parser = new geoXML3.parser(options);
+                layer.parser.parse(layer.data.tml_kml_url);
+
+                return q.promise;
+            }
+
+            reloadLayers() {
+                this.clearMarkers();
+                this.clearRoutepath && this.clearRoutepath();
+
+                this.mapLayersGroups.forEach(g => {
+                    if (g.cluster) {
+                        g.cluster.clearMarkers();
+                    }
+                    g.layers.forEach(layer => {
+                        if (layer.parser) {
+                            layer.parser.hideDocument();
+
+                            // clear memories;
+                            [
+                                'ggroundoverlays', 
+                                'gpolygons', 
+                                'gpolylines', 
+                                'groundoverlays', 
+                                'markers', 
+                                'networkLinks', 
+                                'placemarks'
+                            ].forEach(key => {
+                                layer.parser.docs[0][key] = [];
+                            });
+
+                            layer.parser = null;
+                        }
+                        
+                    });
+                });
+
+                this.set('mapLayersGroups', []);
+
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+                    this.loadLayers();
+                }, 100);
+            }
+
+            getLayerGroup(name) {
+                return this.mapLayersGroups.find(g => g.name == name);
+            }
+
+            __queueLayers(queue, layerGroup, layers, index = 0) {
+                let layer = layers[index];
+                let total = layers.length;
+                let groupIndex = this.mapLayersGroups.findIndex(g => g.name == layerGroup.name);
+                
+                if (layer) {
+                    let progress = 0;
+
+                    if (total - 1 > 0) {
+                        progress = Math.round(index / (total - 1) * 100);
+                    }
+                    
+                    this.set('mapLayersGroups.' + groupIndex + '.progress', progress);
+                    this.set('message', 'Parsing Layer ' + layerGroup.name + '... (' + progress + '%)');
+
+                    this.addDataLayer(layerGroup, layer).then(() => {
+                        index++;
+                        this.__queueLayers(queue, layerGroup, layers, index);
+                    });
+
+                    // this.addKmlLayer(layerGroup, layer).then(() => {
+                    //     index++;
+                    //     this.__queueLayers(queue, layerGroup, layers, index);
+                    // });
+                } else {
+                    this.set('message', 'Parsing Layer' + layerGroup.name + '... (100%)');
+
+                    let timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        timer = null;
+                        this.set('message', '');
+                    }, 300);
+                    
+                    queue.resolve();
+                }
+            }
+
+            __createClusterer() {
+                if ( ! this.apiLoaded) return null;
+
+                let icon = this.resolveUrl('../markers/cluster.svg'),
+                    styles = [40, 50, 60, 70, 80].map(z => {
+                        return {
+                            width: z,
+                            height: z,
+                            url: icon,
+                            textColor: 'white',
+                            textSize: 10
+                        }
+                    });
+
+                let cluster = new MarkerClusterer(this.map, [], {
+                    styles: styles
+                    // zoomOnClick: false
+                    ,maxZoom: 15
+                });
+
+                return cluster;
+            }
+
+            __snakeToTitle(str) {
+                return str.split('_').map(elem => {
+                    return elem.charAt(0).toUpperCase() + elem.substring(1);
+                }).join(' ');
+            }
+
+            __createPopupContent(placemark) {
+                let content = document.createElement('div');
+                let image = '';
+
+                if (placemark.image) {
+                    image = `<img class="icon" alt="." src="${placemark.image}&w=68&h=68">`;
+                }
+
+                content.classList.add('popup-content');
+                content.innerHTML = `
+                    <div class="hbox">
+                        <div>${image}</div>
+                        <div class="flex">
+                            <h3 class="title">${placemark.title}</h3>
+                            <div class="description">${placemark.description}</div>
+                            <div class="link">
+                                <a class="link-detail" href="javascript:;" data-link="${placemark.link}">Lihat detail informasi</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="coordinates">
+                        <iron-icon icon="maps:place"></iron-icon>&nbsp;${placemark.latitude}, ${placemark.longitude}
+                    </div>
+                `;
+
+                content.querySelector('.link-detail').addEventListener('click', e => {
+                    this.popup.close();
+
+                    let link = e.target.dataset.link;
+
+                    if (link) {
+                        let ce = new CustomEvent('link-tap', {
+                            detail: {
+                                link: link
+                            }
+                        });
+
+                        this.dispatchEvent(ce);
+                    }
+                });
+
+                return content;
+            }
+
+            __createMarkerContent(layer, placemark, popup, options) {
+                let content = document.createElement('div');
+                content.classList.add('popup-content');
+                
+                let prop, html;
+
+                try {
+                    prop = JSON.parse(placemark.description);
+                } catch(ex) {}
+
+                if (layer.data.tml_group == this.ponpesLayerGroupName) {
+                    if (prop) {
+
+                        content.innerHTML = '<div class="popup-mask"><paper-spinner-lite active></paper-spinner-lite></div>';
+
+                        this.$.ajax.GET('/sites', {
+                            display: 'sorted',
+                            params: {
+                                site_id_col: prop.site_id
+                            }
+                        }).then(res => {
+                            if (res.success) {
+                                let info = placemark.marker.infoWindow || this.popup;
+
+                                // content = document.createElement('info-tower');
+                                // content.sites = res.data;
+                                // content.route = this.routepathSite;
+                                // content.style['min-width'] = '300px';
+                                
+                                // content.addEventListener('action-toggle-routepath', e => {
+                                //     info.close();
+                                //     if (e.detail.mode == 'show') {
+                                //         this.showRoutepath(e.detail.site.site_id);    
+                                //     } else {
+                                //         this.hideRoutepath(e.detail.site.site_id);
+                                //     }
+                                // });
+
+                                // info.setContent(content);
+
+                                let colo = (res.data || [])[0] || {};
+
+                                Object.keys(colo).forEach(k => {
+                                    if (colo[k] === null) {
+                                        colo[k] = '-';
+                                    }
+                                });
+
+                                let html = '';
+                                let actionRouteHut = '';
+
+                                if (this.routepathSite == colo.site_id_col) {
+                                    actionRouteHut = `<paper-button class="action-hide-route-hut" data-site="${colo.site_id_col}" style="margin: 0; font-size: 11px; padding: 3px 5px; border: 1px solid #dfdfdf;">Hide Route HUT</paper-button>`;
+                                } else {
+                                    actionRouteHut = `<paper-button class="action-show-route-hut" data-site="${colo.site_id_col}" style="margin: 0; font-size: 11px; padding: 3px 5px; border: 1px solid #dfdfdf;">Show Route HUT</paper-button>`;
+                                }
+ 
+                                html += `
+                                    <div class="popup-header">
+                                        <h3>${prop.tower_id}</h3>
+                                        <div>${colo.address}</div>
+                                        <div style="margin-top: 5px;">
+                                            <paper-button class="action-show-tower" data-tower="${colo.tower_index}" style="margin: 0; font-size: 11px; padding: 3px 5px; border: 1px solid #dfdfdf;">Show Tower Detail</paper-button>
+                                            ${actionRouteHut}
+                                        </div>
+                                    </div>
+                                `;
+
+                                html += `
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Site ID</th>
+                                                <th>Site Name</th>
+                                                <th>Site Type</th>
+                                                <th>Routepath</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                `;
+
+                                if (res.data.length) {
+
+                                    res.data.forEach(row => {
+
+                                        let action = '';
+
+                                        if (this.routepathSite == row.site_id) {
+                                            action = `<a data-site="${row.site_id}" class="action-hide-route" href="javascript:;" title="Hide routepath"><iron-icon icon="visibility-off"></iron-icon></a>`;
+                                        } else {
+                                            action = `<a data-site="${row.site_id}" class="action-show-route" href="javascript:;" title="Show routepath"><iron-icon icon="visibility"></iron-icon></a>`;
+                                        }
+
+                                        html += `
+                                            <tr>
+                                                <td>${row.site_id}</td>
+                                                <td>${row.site_name}</td>
+                                                <td style="text-align: center">${row.bts_type}</td>
+                                                <td style="text-align: center">${action}</td>
+                                            </tr>
+                                        `;
+                                    });
+
+                                } else {
+                                    html += `
+                                        <tr>
+                                            <td colspan="4">No sites found!</td>
+                                        </tr>
+                                    `;
+                                }
+
+                                html += `
+                                        </tbody>
+                                    </table>
+                                `;
+
+                                html += `
+                                    <div class="popup-footer">
+                                        <div><iron-icon icon="maps:place"></iron-icon> ${colo.latitude}, ${colo.longitude}</div>
+                                    </div>
+                                `;
+
+
+
+                                content = document.createElement('div');
+                                content.classList.add('popup-content');
+                                content.innerHTML = html; 
+
+                                info.setContent(content);
+
+                                content.querySelectorAll('.action-show-route').forEach(node => {
+                                    node.addEventListener('click', e => {
+                                        e.stopPropagation();
+                                        info.close();
+                                        this.showRoutepath(node.dataset.site, 'L');
+                                    });
+                                });
+
+                                content.querySelectorAll('.action-show-route-hut').forEach(node => {
+                                    node.addEventListener('click', e => {
+                                        e.stopPropagation();
+                                        info.close();
+                                        this.showRoutepath(node.dataset.site, 'H');
+                                    });
+                                });
+
+                                content.querySelectorAll('.action-hide-route').forEach(node => {
+                                    node.addEventListener('click', e => {
+                                        e.stopPropagation();
+                                        info.close();
+                                        this.hideRoutepath(node.dataset.site);
+                                    });
+                                });
+
+                                content.querySelectorAll('.action-hide-route-hut').forEach(node => {
+                                    node.addEventListener('click', e => {
+                                        e.stopPropagation();
+                                        info.close();
+                                        this.hideRoutepath(node.dataset.site, 'H');
+                                    });
+                                });
+
+                                content.querySelectorAll('.action-show-tower').forEach(node => {
+                                    node.addEventListener('tap', e => {
+                                        e.stopPropagation();
+                                        info.close();
+                                        this.showTowerDetail(node.dataset.tower);
+                                    });
+                                });
+                            }
+                        });
+                    } else {
+                        
+                        let lat = placemark.latlng.lat();
+                        let lon = placemark.latlng.lng();
+
+                        html += `
+                            <div class="popup-header">
+                                <h3>${placemark.name}</h3>
+                            </div>
+                        `;
+                        
+                        html += `
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Site ID</th>
+                                        <th>Site Name</th>
+                                        <th>Site Type</th>
+                                        <th>&nbsp;</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4">No sites found!</td>
+                                    </tr>
+                                <tbody>
+                            </table>
+                        `;
+
+                        html += `
+                            <div class="popup-footer">
+                                <div><iron-icon icon="maps:place"></iron-icon> ${lat}, ${lon}</div>
+                            </div>
+                        `;
+
+                        content.innerHTML = html;
+                    }
+                } else {
+                    html  = '<table>';
+                    html += '<tbody>';
+                    html += `<tr class="row-header"><td colspan="2">${placemark.name}</td></tr>`;
+                    
+                    if (prop) {
+                        Object.keys(prop).forEach(k => {
+                            let v = prop[k];
+                            let f = this.__snakeToTitle(k);
+                            html += `<tr><td style="width: 80px;">${f}</td><td>${v}</td></tr>`;
+                        });
+                    } else {
+                        html += '<tr><td colspan="2" style="padding: 15px 5px;">No description found</td></tr>';
+                    }
+
+                    html += '</tbody>';
+                    html += '</table>';
+
+                    content.innerHTML = html;
+                }
+
+                options.content = content;
+            }
+
+            __createPolylineContent(layer, placemark, popup, options) {
+                let content = document.createElement('div');
+                content.classList.add('popup-content');
+
+                let prop, html;
+                html  = '<table>';
+                html += '<tbody>';
+                html += `<tr class="row-header"><td colspan="2">${placemark.name}</td></tr>`;
+
+                try {
+                    prop = JSON.parse(placemark.description);
+
+                    Object.keys(prop).forEach(k => {
+                        let v = prop[k];
+                        let f = this.__snakeToTitle(k);
+                        html += `<tr><td style="width: 80px;">${f}</td><td>${v}</td></tr>`;
+                    });
+                } catch(ex){
+                    html += '<tr><td colspan="2" style="padding: 15px 5px;">No description found</td></tr>';
+                }
+
+                html += '</tbody>';
+                html += '</table>';
+                
+                content.innerHTML = html;
+                options.content = content;
+            }
+
+            __createPolygonContent(layer, placemark, popup, options) {
+                let content = document.createElement('div');
+                content.classList.add('popup-content');
+                options.content = content;
+            }
+            
+            __handleMarker(layerGroup, layer) {
+                if (layer.parser.docs[0]) {
+                    let markers = layer.parser.docs[0].markers;
+                    if ( ! markers) return;
+
+                    layerGroup.cluster.addMarkers(markers);
+                }
+            }
+
+            __computeLayersGroups(layers) {
+                layers = layers || [];
+
+                if (layers.length == 0) {
+                    return 'Tidak ada layer';
+                } else if (layers.length == 1) {
+                    return '1 layer';
+                } else {
+                    return layers.length + ' layer';
+                }
+            }
+
+            __computeMapLayerToggle(collapsed) {
+                return collapsed ? 'arrow-drop-down' : 'arrow-drop-up';
+            }
+
+            __onReloadLayersTap() {
+                this.reloadLayers();
+            }
+
+            __onLayerGroupToggle(e) {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+
+                    let item = e.model.item;
+                
+                    if (item.visible == '1') {
+                        this.showLayerGroup(item);
+                    } else {
+                        this.hideLayerGroup(item);
+                    }
+                }, 100);
+            }
+
+            __onMapLayerToggleTap() {
+                let collapsed = !this.mapLayerCollapsed;
+                this.set('mapLayerCollapsed', collapsed);
+            }
+
+            __onSearchPonpes(e) {
+                let ponpes = e.detail.ponpes;
+                let ponpesLayerGroup = this.getLayerGroup(this.ponpesLayerGroupName);
+
+                this.clearTooltips();
+                this.clearRoutepath && this.clearRoutepath();
+
+                if (ponpesLayerGroup) {
+                    
+                    if ( ! ponpesLayerGroup.loaded) {
+                        this.toast('Oops!', 'Layer pesantren belum diaktifkan', 'warn');
+                        return;
+                    }
+
+                    let index =  this.ponpesLayerGroupName + ':' + ponpes.latitude + ':' + ponpes.longitude;
+                    let Tip = this.declareTooltip();
+                    let marker = null;
+
+                    for (let i = 0, j = this.mapLayersGroups.length; i < j; i++) {
+                        let g = this.mapLayersGroups[i];
+                        if (g.indexes[index]) {
+                            marker = g.indexes[index];
+                            break;
+                        }
+                    }
+
+                    if (marker) {
+                        let pos = marker.getPosition();
+                        this.map.panTo(pos);
+                        this.map.setZoom(11);
+
+                        let tip = new Tip(pos);
+                        tip.setContent(ponpes.nama_ponpes);
+                        tip.setMap(this.map);
+
+                        this.tooltips.push(tip);
+                    } else {
+                        this.toast('Oops!', 'Lokasi ' + ponpes.nama_ponpes + ' tidak ditemukan', 'warn');
+                    }
+                }
+            }
+
+            __onSearchMasjid(e) {
+                let masjid = e.detail.masjid;
+                let masjidLayerGroup = this.getLayerGroup(this.masjidLayerGroupName);
+
+                this.clearTooltips();
+                this.clearRoutepath && this.clearRoutepath();
+
+                if (masjidLayerGroup) {
+                    
+                    if ( ! masjidLayerGroup.loaded) {
+                        this.toast('Oops!', 'Layer rumah ibadah belum diaktifkan', 'warn');
+                        return;
+                    }
+
+                    let index =  this.masjidLayerGroupName + ':' + masjid.latitude + ':' + masjid.longitude;
+                    let Tip = this.declareTooltip();
+                    let marker = null;
+
+                    for (let i = 0, j = this.mapLayersGroups.length; i < j; i++) {
+                        let g = this.mapLayersGroups[i];
+                        if (g.indexes[index]) {
+                            marker = g.indexes[index];
+                            break;
+                        }
+                    }
+
+                    if (marker) {
+                        let pos = marker.getPosition();
+                        this.map.panTo(pos);
+                        this.map.setZoom(11);
+
+                        let tip = new Tip(pos);
+                        tip.setContent(masjid.nama_rumah_ibadah);
+                        tip.setMap(this.map);
+
+                        this.tooltips.push(tip);
+                    } else {
+                        this.toast('Oops!', 'Lokasi ' + masjid.nama_rumah_ibadah + ' tidak ditemukan', 'warn');
+                    }
+                }
+            }
+        };
+    });
+</script>

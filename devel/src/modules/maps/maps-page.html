@@ -1,0 +1,76 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../blocks/module-header-block.html">
+<link rel="import" href="pages/maps-component.html">
+
+<dom-module id="maps-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .page-header {
+                position: relative;
+                z-index: 2;
+                border-bottom: none;
+                box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+            }
+            .page-header paper-icon-button {
+                margin-left: 5px;
+                margin-right: 5px;
+            }
+        </style>
+
+        <kct-vbox class="page-layout">
+            <!-- <module-header-block class="page-header" icon="maps:map" text="Monitoring" desc="Peta Lokasi" accent="[[ accent ]]" color="[[ color ]]" hide-nav></module-header-block> -->
+            <div class="flex">
+                <maps-component id="map" on-link-tap="__onMapLinkTap" title=""></maps-component>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        {
+            
+            class CoverageAreaPage extends KctView {
+                static get is() {
+                    return 'maps-page';
+                }
+
+                static get properties() {
+                    return {
+                        accent: { type: String, value: '#FFFFFF', notify: true },
+                        title: { type: String, value: 'Peta Lokasi', notify: true  }
+                    };
+                }
+
+                handleRouteParams() {
+                    let markers = this.get('route.data.markers');
+                    if (markers) {
+                        this.set('route.data.markers', undefined);
+                        if (markers.length) {
+                            this.$.map.load().then(loaded => {
+                                if (loaded) {
+                                    this.$.map.renderMarkers(markers);        
+                                }
+                            });
+                        }
+                    }
+                }
+
+                __onMapLinkTap(e) {
+                    let link = e.detail.link;
+                    this.set('route.path', link);
+                }
+            }
+
+            customElements.define(CoverageAreaPage.is, CoverageAreaPage);
+
+        }
+        
+    </script>
+</dom-module>

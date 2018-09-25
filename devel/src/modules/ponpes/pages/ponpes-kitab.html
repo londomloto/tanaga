@@ -1,0 +1,157 @@
+<link rel="import" href="../../master-mixins/master-table.html">
+<link rel="import" href="../../master-mixins/master-style.html">
+
+<dom-module id="ponpes-kitab">
+    <template>
+        <style include="master-style">
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="Instrumen Kitab" on-back-tap="__onBackTap">
+                <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <!-- <div>&nbsp;</div>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <div slot="right-toolbar">
+                    <div class="grid-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div> -->
+            </module-header-block>
+            <div class="flex">
+                <kct-grid 
+                    id="grid" 
+                    url="[[ api ]]" 
+                    columns="[[ columns ]]" 
+                    selection-model="row"
+                    hide-header></kct-grid>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Editor Kitab" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        url="/master-ponpes/kelompok-kitab" 
+                        label="Kelompok" 
+                        value="{{ editingRecord.id_kel_kitab }}" 
+                        item-label-path="nama_kel_kitab" 
+                        item-value-path="id_kel_kitab" 
+                        page-size="10"></kct-combobox>
+                    <paper-input label="Judul Kitab" value="{{ editingRecord.judul_kitab }}"></paper-input>
+                    <paper-input label="Pengarang" value="{{ editingRecord.pengarang }}"></paper-input>
+                    <paper-input label="Jam Pelajaran" value="{{ editingRecord.jp }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+        
+    </template>
+    <script>
+        class PonpesKitab extends Mixins(KctView).use(Mixins.MasterTable) {
+            static get is() {
+                return 'ponpes-kitab';
+            }
+            static get properties() {
+                return {
+                    api: { type: String, value: '/ponpes/kitab' },
+                    record: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            { text: 'Kelompok', dataIndex: 'nama_kel_kitab' },
+                            { text: 'JP', dataIndex: 'jp', align: 'center', width: 80 },
+                            { text: 'Judul Kitab', dataIndex: 'judul_kitab' },
+                            { text: 'Pengarang', dataIndex: 'pengarang' }
+                        ])
+                    },
+                    editingRecord: { type: Object, value: () => ({}) },
+                    ketersediaan: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Ada', value: 'Ada' },
+                            { label: 'Tidak', value: 'Tidak' }
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(id, action) {
+                if (action != 'kitab') return;
+                this.set('identity', id);
+                this.loadGrid();
+            }
+            loadGrid() {
+                let payload = {
+                    params: {
+                        id_ponpes: this.identity
+                    }
+                };
+
+                this.$.grid.params = payload;
+                this.$.grid.load();
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onRemoveTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus record tepilih?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/ponpes/kitab/' + this.$.grid.selected.id_kitab).then(() => {
+                            this.loadGrid();
+                        });
+                    }
+                }); 
+            } 
+            __onReloadTap() {
+                this.loadGrid();
+            }
+            __onEditorSaveTap() {
+                let payload = this.editingRecord || {};
+                payload.id_ponpes = this.identity;
+                payload.jp = +payload.jp;
+
+                if (payload.id_sdm) {
+                    this.$.ajax.PUT('/ponpes/kitab/' + payload.id_kitab, payload).then(done.bind(this));
+                } else { 
+                    this.$.ajax.POST('/ponpes/kitab', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.$.editor.close();
+                    this.loadGrid();
+                }
+            }
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+            __onBackTap() {
+                this.set('route.path', '/ponpes/' + this.identity + '/home');
+            }
+        }
+        customElements.define(PonpesKitab.is, PonpesKitab);
+    </script>
+</dom-module>

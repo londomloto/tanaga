@@ -18,6 +18,12 @@ return array(
             'page' => 'forgot-page',
             'authentication' => false
         ),
+        '/register' => array(
+            'layout' => 'auth',
+            'module' => 'auth',
+            'page' => 'register-page',
+            'authentication' => false
+        ),
         '/recover' => array(
             'layout' => 'auth',
             'module' => 'auth',
@@ -61,6 +67,14 @@ return array(
         '/ponpes/:menu' => array(
             'module' => 'ponpes',
             'page' => 'ponpes-page'
+        ),
+        '/masjid/:menu/:params' => array(
+            'module' => 'masjid',
+            'page' => 'masjid-page'
+        ),
+        '/masjid/:menu' => array(
+            'module' => 'masjid',
+            'page' => 'masjid-page'
         ),
     )
 );

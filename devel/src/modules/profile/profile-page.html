@@ -12,6 +12,7 @@
 <link rel="import" href="../../../../cores/elements/kct-file/kct-file.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
 <!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
@@ -68,36 +69,40 @@
                     <div class="flex">
                         <paper-card class="block">
                             <div class="card-content">
-                                <h3 class="block-title">Info Pribadi</h3>
-                                <paper-input label="Nama Lengkap" value="{{ user.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
-                                <paper-input label="Jenis Kelamin" value="{{ user.su_sex }}"></paper-input>
-                                <!-- <vaadin-date-picker label="Birthday" value="{{ user.su_dob }}"></vaadin-date-picker> -->
-                                <paper-input label="Pekerjaan (Jabatan)" value="{{ user.su_job_title }}"></paper-input>
-                                <vaadin-combo-box 
-                                    label="Tipe Lembaga" 
-                                    value="{{ user.su_org_type }}" 
-                                    items="[[ orgTypes ]]" 
-                                    item-label-path="label" 
-                                    item-value-path="value"></vaadin-combo-box>
-                                <paper-input label="Nama Lembaga" value="{{ user.su_org_name }}"></paper-input>
-                                <div class="m-t">
-                                    <paper-button disabled$="[[ __profileInvalid ]]" class="btn-primary" on-tap="__onSaveBasicTap">Update Profil</paper-button> 
-                                </div>
+                                <kct-column columns="2" gutter="30px">
+                                    <div>
+                                        <h3 class="block-title">Info Pribadi</h3>
+                                        <paper-input label="Nama Lengkap" value="{{ user.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                                        <paper-input label="Jenis Kelamin" value="{{ user.su_sex }}"></paper-input>
+                                        <!-- <vaadin-date-picker label="Birthday" value="{{ user.su_dob }}"></vaadin-date-picker> -->
+                                        <paper-input label="Pekerjaan (Jabatan)" value="{{ user.su_job_title }}"></paper-input>
+                                        <vaadin-combo-box 
+                                            label="Tipe Lembaga" 
+                                            value="{{ user.su_org_type }}" 
+                                            items="[[ orgTypes ]]" 
+                                            item-label-path="label" 
+                                            item-value-path="value"></vaadin-combo-box>
+                                        <paper-input label="Nama Lembaga" value="{{ user.su_org_name }}"></paper-input>
+                                        <paper-input label="No. Telepon" value="{{ user.su_phone }}"></paper-input>
+                                        <div class="m-t">
+                                            <paper-button disabled$="[[ __profileInvalid ]]" class="btn-primary" on-tap="__onSaveBasicTap">Update Profil</paper-button> 
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="block-title">Info Akun</h3>
+                                        <paper-input label="Alamat Email" value="{{ user.su_email }}" readonly></paper-input>
+                                        <paper-input label="Role" value="{{ user.sr_name }}" readonly></paper-input>
+                                        <paper-input label="Password" type="password" value="{{ __account.password1 }}" id="password1" error-message="Password doesn't match"></paper-input>
+                                        <paper-input label="Konfirmasi Password" type="password" value="{{ __account.password2 }}" id="password2" error-message="Password doesn't match"></paper-input>
+                                        <div class="m-t">
+                                            <paper-button disabled$="[[ __accountInvalid ]]" class="btn-primary" on-tap="__onSaveAccountTap">Update Akun</paper-button>
+                                        </div>
+                                    </div>
+                                </kct-column>
                             </div>
+                            
                         </paper-card>
-
-                        <paper-card class="block">
-                            <div class="card-content">
-                                <h3 class="block-title">Info Akun</h3>
-                                <paper-input label="Alamat Email" value="{{ user.su_email }}" readonly></paper-input>
-                                <paper-input label="Role" value="{{ user.sr_name }}" readonly></paper-input>
-                                <paper-input label="Password" type="password" value="{{ __account.password1 }}" id="password1" error-message="Password doesn't match"></paper-input>
-                                <paper-input label="Password confirm" type="password" value="{{ __account.password2 }}" id="password2" error-message="Password doesn't match"></paper-input>
-                                <div class="m-t">
-                                    <paper-button disabled$="[[ __accountInvalid ]]" class="btn-primary" on-tap="__onSaveAccountTap">Update Akun</paper-button>
-                                </div>
-                            </div>
-                        </paper-card>
+                        
                         
                     </div>
                 </kct-hbox>
@@ -173,7 +178,7 @@
 
                 this.$.ajax.PUT('/profile/' + data.su_id, data).then(() => {
                     this.__reset = Object.assign({}, this.user);
-                    this.toast('Save changed', 'Your basic information has been saved');
+                    this.toast('Informasi', 'Info pribadi berhasil disimpan');
                 });
             }
 
@@ -181,7 +186,7 @@
                 if (this.__account.password1 && (this.__account.password1 == this.__account.password2)) {
                     let data = { su_passwd: this.__account.password1 };
                     this.$.ajax.PUT('/profile/' + this.user.su_id, data).then(() => {
-                        this.toast('Save changed', 'Your account information has been saved');     
+                        this.toast('Informasi', 'Info akun berhasil disimpan');     
                     });
                 }
             }

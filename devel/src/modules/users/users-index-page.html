@@ -9,6 +9,7 @@
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../cores/elements/kct-search/kct-search.html">
 <link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/mixins/location.html">
 <!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
@@ -87,21 +88,23 @@
             
             <div class="flex scroll-y page-content">
                 <div class="padding">
-                    <kct-column columns="5">
+                    <kct-column columns="6">
                         <template is="dom-repeat" items="[[ users ]]">
 
-                            <paper-card on-tap="__onEditTap">
+                            <paper-card>
                                 <div class="card-header">
                                     <div class="card-avatar" style$="background-image: url([[ item.su_avatar_thumb ]]&w=80&h=80)"></div>
                                     <h3>[[ item.su_fullname ]]</h3>
                                 </div>
                                 
-                                <div class="card-content">
+                                <div class="card-content" style="min-height: 150px; box-sizing: border-box;">
                                     <div class="card-info">
                                         <div class="label">Email</div>
                                         <div class="value">[[ item.su_email ]]</div>
                                         <div class="label">Access Role</div>
                                         <div class="value">[[ item.sr_name ]]</div>
+                                        <div class="label">Lembaga</div>
+                                        <div class="value">[[ __computeLabel(item.su_org_name) ]]</div>
                                         <!-- <div class="label">Phone</div>
                                         <div class="value">[[ item.su_phone ]]</div> -->
                                     </div>
@@ -110,6 +113,7 @@
                                     <div class="text-center">
                                         <paper-button class="btn-sm" on-tap="__onEditTap">Detail</paper-button>
                                         <paper-button class="btn-sm" on-tap="__onReinviteTap" hidden$="[[ !item.su_need_reinvite ]]">Re-Invite</paper-button>
+                                        <paper-button class="btn-sm" on-tap="__onActivateTap" hidden$="[[ !item.su_need_activate ]]">Aktivasi</paper-button>
                                         <!-- <paper-button class="btn-sm" on-tap="__onKanbanTap">Worksheet</paper-button> -->
                                     </div>
                                 </div>
@@ -180,7 +184,7 @@
 
     </template>
     <script>
-        class UsersIndexPage extends KctView {
+        class UsersIndexPage extends Mixins(KctView).use(Mixins.Location) {
             static get is() {
                 return 'users-index-page';
             }
@@ -210,6 +214,10 @@
                     this.__loadUsers();
                     this.$.role.validate();
                 }
+            }
+
+            __computeLabel(label) {
+                return label || '(kosong)';
             }
 
             __computeDescription(desc) {
@@ -335,6 +343,24 @@
                 this.$.ajax.POST('/users/reinvite', payload).then(res => {
                     this.unmask();
                     this.toast('Success', 'User has been re-invited', 'info');
+                });
+            }
+
+            __onActivateTap(e) {
+                e.stopPropagation();
+                let payload = e.model.item;
+                payload.link = this._siteurl('/login');
+                
+                this.mask('Aktivasi...');
+
+                this.$.ajax.POST('/users/' + payload.su_id + '/enable', payload).then(res => {
+                    this.unmask();
+
+                    if (res.success) {
+                        this.set('users.' + e.model.index + '.su_active', res.data.su_active);
+                        this.set('users.' + e.model.index + '.su_need_activate', res.data.su_need_activate);
+                        this.toast('Berhasil', 'Aktivasi user berhasil');
+                    }
                 });
             }
 

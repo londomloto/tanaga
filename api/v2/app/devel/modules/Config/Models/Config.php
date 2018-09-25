@@ -9,6 +9,21 @@ class Config extends \Micro\Model {
         return 'sys_config';
     }
 
+    public static function value($name) {
+        $item = self::findFirst(array(
+            'sc_name = :name:',
+            'bind' => array(
+                'name' => $name
+            )
+        ));
+
+        if ($item) {
+            return $item->sc_value;
+        }
+
+        return NULL;
+    }
+
     public static function data() {
         $rows = self::get()->execute();
         $data = array();

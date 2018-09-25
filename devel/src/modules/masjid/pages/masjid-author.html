@@ -1,0 +1,169 @@
+<link rel="import" href="../../master-mixins/master-table.html">
+<link rel="import" href="../../master-mixins/master-style.html">
+
+<dom-module id="masjid-author">
+    <template>
+        <style include="master-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="[[ record.nama_rumah_ibadah ]]" desc="User Pengolah" on-back-tap="__onBackTap">
+                <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>    
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <!-- <div>&nbsp;</div>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <div slot="right-toolbar">
+                    <div class="grid-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div> -->
+            </module-header-block>
+            <div class="flex">
+                <kct-grid 
+                    id="grid" 
+                    url="[[ api ]]" 
+                    columns="[[ columns ]]" 
+                    selection-model="row"
+                    hide-header></kct-grid>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Editor Pengolah" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        url="/users" 
+                        label="Email Pengguna (User)" 
+                        value="{{ editingRecord.su_id }}" 
+                        item-label-path="su_email" 
+                        item-value-path="su_id" 
+                        page-size="10"></kct-combobox>
+                    <vaadin-combo-box 
+                        label="Posisi" 
+                        value="{{ editingRecord.posisi }}" 
+                        items="[[ positionsItems ]]" 
+                        item-label-path="label" 
+                        item-value-path="value"></vaadin-combo-box>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+        
+    </template>
+    <script>
+        class MasjidAuthor extends Mixins(KctView).use(Mixins.MasterTable) {
+            static get is() {
+                return 'masjid-author';
+            }
+            static get properties() {
+                return {
+                    api: { type: String, value: '/masjid/author' },
+                    record: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            { text: 'Nama User', dataIndex: 'su_fullname' },
+                            { text: 'Posisi', dataIndex: 'posisi' },
+                            { text: 'Tipe Lembaga', dataIndex: 'su_org_type' },
+                            { text: 'Nama Lembaga', dataIndex: 'su_org_name' }
+                        ])
+                    },
+                    editingRecord: { type: Object, value: () => ({}) },
+                    positionsItems: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Operator', value: 'Operator' },
+                            { label: 'Surveyor', value: 'Surveyor' },
+                            { label: 'Pemeriksa', value: 'Pemeriksa' }
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(id, action) {
+                if (action != 'author') return;
+                this.set('identity', id);
+                this.loadGrid();
+            }
+            loadGrid() {
+                let payload = {
+                    params: {
+                        id_rumah_ibadah: this.identity
+                    }
+                };
+
+                this.$.grid.params = payload;
+                this.$.grid.load();
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onEditTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.$.grid.selected));
+                this.$.editor.open();
+            }
+            __onRemoveTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus record tepilih?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/masjid/author/' + this.$.grid.selected.id_author).then(() => {
+                            this.loadGrid();
+                        });
+                    }
+                }); 
+            } 
+            __onReloadTap() {
+                this.loadGrid();
+            }
+            __onEditorSaveTap() {
+                let payload = this.editingRecord || {};
+                payload.id_rumah_ibadah = this.identity;
+
+                if (payload.id_author) {
+                    this.$.ajax.PUT('/masjid/author/' + payload.id_author, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/masjid/author', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.loadGrid();
+                        this.$.editor.close();
+                    }
+                }
+            }
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+            __onBackTap() {
+                this.set('route.path', '/masjid/' + this.identity + '/home');
+            }
+        }
+        customElements.define(MasjidAuthor.is, MasjidAuthor);
+    </script>
+</dom-module>

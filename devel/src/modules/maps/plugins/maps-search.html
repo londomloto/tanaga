@@ -1,0 +1,360 @@
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="maps-search">
+    <template>
+        
+        <style>
+            :host {
+                display: block;
+                @apply --shadow-elevation-2dp;
+                
+            }
+            .container {
+                box-sizing: border-box;
+                background-color: #fff;
+                padding: 0;
+                border-radius: 2px;
+                border: 1px solid transparent;
+                @apply --layout-horizontal;
+            }
+            .container .flex {
+                @apply --layout-flex;
+            }
+            .container[focused] {
+                border-color: #2196F3;
+            }
+            .menu {
+                color: #fff;
+                background-color: #2196F3;
+                margin: -1px 1px -1px -1px;
+                border-radius: 2px 0 0 2px;
+                padding-right: 5px;
+            }
+            .menu paper-menu-button {
+                padding: 5px;
+            }
+            .menu-trigger > span {
+                position: relative;
+                top: 2px;
+            }
+            .menu-content paper-item {
+                cursor: pointer;
+                font-weight: normal;
+                --paper-item-min-height: 36px;
+            }
+            .input-content {
+                
+            }
+            .input {
+                display: none;
+            }
+            .input.iron-selected {
+                display: block;
+            }
+            .input-text {
+                --paper-input-container: {
+                    padding: 3px 10px 0 10px;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .input-text [slot=suffix] {
+                position: relative;
+                width: 24px;
+                height: 24px;
+            }
+            .input-text .clear-button {
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                position: absolute;
+                left: 0;
+                top: 2px;
+                box-sizing: border-box;
+                padding: 2px;
+                cursor: pointer;
+            }
+            .input-text .clear-button iron-icon {
+                --iron-icon-width: 100%;
+                --iron-icon-height: 100%;
+                color: #999;
+                position: relative;
+                top: -1px;
+            }
+            .input-combo {
+                padding: 4px 0 0 0;
+                --kct-combobox-container: {
+                    padding: 0 10px;
+                };
+                --kct-combobox-clear-button: {
+                    position: relative;
+                    top: -2px;
+                }
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+
+            }
+
+            /*[hidden] { display: none; }*/
+        </style>
+
+        <div class="container" focused$="[[ focused ]]">
+            <div class="menu">
+                <paper-menu-button vertical-offset="5" no-overlap no-animations>
+                    <div class="menu-trigger" slot="dropdown-trigger">
+                        <iron-icon icon="arrow-drop-down"></iron-icon><span>[[ selectedType.label ]]</span>
+                    </div>
+                    <paper-listbox class="menu-content" slot="dropdown-content">
+                        <template is="dom-repeat" items="[[ types ]]">
+                            <paper-item on-tap="__onSearchTypeTap">[[ item.hint ]]</paper-item>    
+                        </template>
+                    </paper-listbox>
+                </paper-menu-button>
+            </div>
+            <div class="input-content flex">
+                <iron-selector selected="[[ selectedType.value ]]" attr-for-selected="id">
+                    <paper-input 
+                        id="input-place" 
+                        class="input input-text" 
+                        value="{{ place }}" 
+                        placeholder="Pencarian alamat..." 
+                        focused="{{ focused }}" 
+                        no-label-float>
+                        <div slot="suffix">
+                            <div class="clear-button" on-click="__onClearPlaceTap" hidden$="[[ __hideClearButton(place) ]]">
+                                <iron-icon icon="close"></iron-icon>
+                                <paper-ripple></paper-ripple>    
+                            </div>
+                        </div>        
+                    </paper-input>
+                    <kct-combobox 
+                        id="input-ponpes"
+                        url="/ponpes" 
+                        value="{{ ponpes }}" 
+                        class="input input-combo"  
+                        item-label-path="nama_ponpes" 
+                        item-value-path="id_ponpes" 
+                        page-size="10" 
+                        placeholder="Pencarian pesantren..." 
+                        overlay-vertical-offset="6" 
+                        focused="{{ focused }}" 
+                        on-change="__onInputPonpesChange" 
+                        hide-arrow 
+                        no-label-float>
+                        <template>
+                            <style>
+                                :host {
+                                    --kct-combobox-item-padding: 5px 15px;
+                                    --kct-combobox-item-sibling-border: 1px solid #eee;
+                                }
+                                .value { font-size: 12px; font-weight: 600; }
+                                .label { font-size: 11px; color: #666; }
+                            </style>
+                            <div class="item">
+                                <div class="value">[[ item.nama_ponpes ]]</div>
+                                <div class="label">[[ item.text_alamat ]]</div>
+                            </div>
+                        </template>        
+                    </kct-combobox>
+                    <kct-combobox 
+                        id="input-masjid"
+                        url="/masjid" 
+                        value="{{ masjid }}" 
+                        class="input input-combo"  
+                        item-label-path="nama_rumah_ibadah" 
+                        item-value-path="id_rumah_ibadah" 
+                        page-size="10" 
+                        placeholder="Pencarian rumah ibadah..." 
+                        overlay-vertical-offset="6" 
+                        focused="{{ focused }}" 
+                        on-change="__onInputMasjidChange" 
+                        hide-arrow 
+                        no-label-float>
+                        <template>
+                            <style>
+                                :host {
+                                    --kct-combobox-item-padding: 5px 15px;
+                                    --kct-combobox-item-sibling-border: 1px solid #eee;
+                                }
+                                .value { font-size: 12px; font-weight: 600; }
+                                .label { font-size: 11px; color: #666; }
+                            </style>
+                            <div class="item">
+                                <div class="value">[[ item.nama_rumah_ibadah ]]</div>
+                                <div class="label">[[ item.text_alamat ]]</div>
+                            </div>
+                        </template>        
+                    </kct-combobox>
+                </iron-selector>
+                
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class MapsSearch extends Polymer.Element {
+            static get is() {
+                return 'maps-search';
+            }
+
+            static get properties() {
+                return {
+                    types: {
+                        type: Array,
+                        value: () => [
+                            { value: 'input-ponpes', label: 'Pesantren', hint: 'Pencarian pesantren...' },
+                            { value: 'input-masjid', label: 'Rumah Ibadah', hint: 'Pencarian rumah ibadah...' },
+                            { value: 'input-place', label: 'Alamat', hint: 'Pencarian alamat...' }
+                        ]
+                    },
+                    selectedType: { type: Object },
+                    ponpes: { type: String },
+                    masjid: { type: String },
+                    place: { type: String, value: '' },
+                    focused: { type: Boolean }
+                };
+            }
+            
+            constructor() {
+                super();
+                this.map = null;
+                this.placeMarkers = [];
+            }
+
+            ready() {
+                super.ready();
+                this.set('selectedType', this.get('types.0'));
+            }
+
+            setup(map) {
+
+                this.map = map;
+                this.placesFinder = new google.maps.places.SearchBox(this.$['input-place']);
+                this.placesFinder.addListener('places_changed', this.__onFindPlaces.bind(this));
+
+                this.map.addListener('bounds_changed', e => {
+                    let bounds = this.map.getBounds();
+                    this.placesFinder.setBounds(bounds);
+                });
+            }
+
+            clearMarkers() {
+                this.placeMarkers.forEach(m => {
+                    m.setMap(null);
+                });
+                this.placeMarkers = [];
+            }
+
+            locatePlaces() {
+                this.clearMarkers();
+                let places = this.placesFinder.getPlaces();
+
+                if (places.length == 0) {
+                    return;
+                }
+
+                let bounds = new google.maps.LatLngBounds();
+                let markerIcon = this.resolveUrl('../markers/place.svg');
+
+                this.dispatchEvent(new CustomEvent('search-place', {
+                    detail: {
+                        places: places.slice()
+                    }
+                }));
+
+                places.forEach(place =>  {
+                    if ( ! place.geometry) {
+                        console.log("Returned place contains no geometry");
+                        return;
+                    }
+
+                    let m = new google.maps.Marker({
+                        map: this.map,
+                        position: place.geometry.location,
+                        title: place.name,
+                        icon: {
+                            url: markerIcon,
+                            anchor: new google.maps.Point(16, 16)
+                        },
+                        draggable: false
+                    });
+
+                    this.placeMarkers.push(m);
+
+                    if (place.geometry.viewport) {
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+
+                this.map.fitBounds(bounds);
+            }
+
+            __hideClearButton(value) {
+                return !(!!value);
+            }
+
+            __onFindPlaces() {
+                this.locatePlaces();
+            }
+
+            __onSearchTypeTap(e) {
+                let item = e.model.item;
+                this.set('selectedType', item);
+
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+
+                    let input = this.shadowRoot.querySelector('#' + item.value);
+                    if (input) {
+                        input.focus();
+                    }
+                }, 10);
+            }
+
+            __onClearPlaceTap() {
+                this.set('place', '');
+            }
+
+            __onInputPonpesChange(e) {
+                let item = e.target.getModelForValue(e.target.value);
+                if (item) {
+                    this.dispatchEvent(new CustomEvent('search-ponpes', {
+                        detail: {
+                            ponpes: item
+                        }
+                    }));    
+                }
+            }
+
+            __onInputMasjidChange(e) {
+                let item = e.target.getModelForValue(e.target.value);
+                if (item) {
+                    this.dispatchEvent(new CustomEvent('search-masjid', {
+                        detail: {
+                            masjid: item
+                        }
+                    }));    
+                }
+            }
+        }
+        customElements.define(MapsSearch.is, MapsSearch);
+    </script>
+</dom-module>

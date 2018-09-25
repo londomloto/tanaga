@@ -56,8 +56,8 @@
                                 item-value-path="sr_id" 
                                 required auto-validate error-message="Role wajib diisi"></vaadin-combo-box>
                             <paper-input label="Password" type="password" value="{{ password1 }}" hidden$="[[ !record.su_id ]]"></paper-input>
-                            <paper-input label="Password confirm" type="password" value="{{ password2 }}" hidden$="[[ !record.su_id ]]"></paper-input>
-                            <kct-checkbox value="{{ record.su_active }}" hidden$="[[ !record.su_id ]]">Cek untuk mengaktifkan</kct-checkbox>
+                            <paper-input label="Konfirmasi Password" type="password" value="{{ password2 }}" hidden$="[[ !record.su_id ]]"></paper-input>
+                            <kct-checkbox value="{{ record.su_active }}">Cek untuk mengaktifkan</kct-checkbox>
                         </div>
                         <div class="p-r">
                             <h3>Info Pribadi</h3>
@@ -72,6 +72,7 @@
                                 item-label-path="label" 
                                 item-value-path="value"></vaadin-combo-box>
                             <paper-input label="Nama Lembaga" value="{{ record.su_org_name }}"></paper-input>
+                            <paper-input label="No. Telepon" value="{{ record.su_phone }}"></paper-input>
                         </div>
                         <div class="p-r" hidden$="[[ !record.su_id ]]" data-perm="manage@users" >
                             <h3>Hapus Akun</h3>
@@ -164,18 +165,14 @@
                 data.su_kanban = this.kanban;
 
                 if (phantom) {
-                    this.mask('Creating user...');
                     this.$.ajax.POST('/users', data).then(done.bind(this));
                 } else {
-                    this.mask('Updating user...');
                     this.$.ajax.PUT('/users/' + data.su_id, data).then(done.bind(this));
                 }
 
                 function done(res) {
-                    this.unmask();
-
                     if (res.success) {
-                        this.toast('Success', 'User has been saved');
+                        this.toast('Berhasil', 'Data user berhasil disimpan');
                         this.__back();
                     }else{
                         if(res.message) this.alert('Error', res.message );
@@ -184,7 +181,7 @@
             }
 
             __onRemoveAccountTap() {
-                this.confirm('Account Removal', 'Are you sure want to delete this user?').then((y) => {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus user tersebut?').then((y) => {
                     if (y) {
                         this.$.ajax.DELETE('/users/' + this.record.su_id).then((res) => {
                             if (res.success) {

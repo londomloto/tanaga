@@ -32,9 +32,9 @@
             .container {
                 height: 100vh;
                 background-color: var(--app-login-background);
-                background-image: var(--login-background-image, url(images/cover-2.jpg));
+                background-image: url(../../../images/backgrounds/background-6.jpg);
                 background-repeat: no-repeat;
-                background-size: contain;
+                background-size: cover;
                 background-position: 0 0;
                 background-attachment: scroll;
 
@@ -44,18 +44,18 @@
             .story {
                 position: relative;
                 padding: 30px;
-                max-width: 40%;
-                color: #333;
+                max-width: 60%;
+                color: #fff;
                 
             }
             .story h3 {
-                font-size: 50px;
-                font-weight: 400;
+                font-size: 36px;
+                font-weight: 600;
             }
             .story p {
-                font-size: 30px;
+                font-size: 18px;
                 font-weight: 300;
-                line-height: 1;
+                line-height: 1.2;
             }
             
             .column-left.sm { display: none; }
@@ -69,7 +69,10 @@
             .column-right.xl {
                 width: 460px;
             }
-            .column-right { padding: 20px; }
+            .column-right { 
+                padding: 20px;
+                background-color: rgba(0,0,0,.3); 
+            }
 
             .cover {
                 height: 100%;
@@ -148,26 +151,26 @@
             </div>
 
             <div class$="column-right [[ screen ]]"  hidden$="[[ !__valid ]]">
-                <div class="login-logo">
-                    <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-1.png') ]]" alt="" class="logo">
-                </div>
-
+                
                 <div class="recover">
-                    <h3>Reset your password</h3>
-                    <p style="margin-top: 10px;">You have requested to reset the password for <b>[[ email ]]</b></p>
+                    <h3>Perubahan Password</h3>
+                    <p style="margin-top: 10px;">Anda telah meminta perubahan password untuk akun <b>[[ email ]]</b></p>
                     <div class="m-t">
-                        <paper-input value="{{ password1 }}" type="password" label="Type new password" required auto-validate error-message="Password is required"></paper-input>
-                        <paper-input id="password2" value="{{ password2 }}" type="password" label="Confirm your password"></paper-input>
+                        <paper-input value="{{ password1 }}" type="password" label="Password baru" required auto-validate error-message="Password wajib diisi"></paper-input>
+                        <paper-input id="password2" value="{{ password2 }}" type="password" label="Konfirmasi password baru"></paper-input>
                     </div>
                     <div class="m-t">
-                        <paper-button on-tap="__onResetPasswordTap" disabled$="[[ __recoverInvalid ]]">Reset Password</paper-button>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">back to login page</a>
+                        <paper-button on-tap="__onResetPasswordTap" disabled$="[[ __recoverInvalid ]]">Ubah Password</paper-button>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">kembali ke halaman login</a>
                     </div>
                 </div>
 
-                <div class="text-center" style="margin-top: 60px;">
-                    <a class="powered" href="https://www.worksaurus.com" target="_blank">
-                        <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-0.png') ]]">
-                        <span class="block">POWERED BY <b>WORKSAURUS</b></span>
+                <div class="text-center m-t">
+                    <a class="powered" href="javascript:;" target="_blank">
+                        <img src$="[[ resolveUrl('../../../images/logos/logo-48x48.png') ]]">
+                        <div style="text-align: center; text-transform: uppercase; width: 200px; margin: auto;">
+                            <div>POWERED BY</div>
+                            <div>[[ config.app_author ]]</div>
+                        </div>
                     </a>
                 </div>
                 
@@ -176,17 +179,17 @@
         </div>
 
         <kct-alert id="message-error" title="Oh Snap!">
-            <p>Unable to reset password</p>
+            <p>Gagal merubah password</p>
         </kct-alert>
 
         <kct-alert id="message-invalid" title="Oh Snap!">
-            <p>Invalid password reset request</p>
+            <p>Request perubahan password tidak valid</p>
         </kct-alert>
 
-        <kct-alert id="message-success" button="Continue" title="Success!" accent="info" icon="info-outline">
+        <kct-alert id="message-success" button="Lanjutkan" title="Berhasil!" accent="info" icon="info-outline">
             <p>
-                Password has been resetted.<br>
-                Press <b>Continue</b> to go to login page.
+                Password berhasil diubah.<br>
+                Tekan <b>Lanjutkan</b> untuk melakukan login.
             </p>
         </kct-alert>
 
@@ -268,7 +271,7 @@
                 if (this.password1) {
                     if (this.password1 != password2) {
                         this.$.password2.invalid = true;
-                        this.$.password2.errorMessage = `Password doesn't match`;
+                        this.$.password2.errorMessage = `Password tidak sama`;
                     }
                 }
             }
@@ -294,7 +297,7 @@
                     password: this.password1
                 };
 
-                this.mask('Submitting...');
+                this.mask('Mengirim...');
 
                 this.$.ajax.POST('/auth/reset', payload).then(res => {
                     this.unmask();

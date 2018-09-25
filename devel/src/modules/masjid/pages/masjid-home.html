@@ -1,0 +1,101 @@
+<dom-module id="masjid-home">
+    <template>
+        <style include="masjid-style">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .menu {
+                text-align: center;
+                border-radius: 3px;
+            }
+            .menu .icon {
+                background-color: var(--google-red-300);
+                color: #fff;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                margin: 0 auto;
+                margin-bottom: 10px;
+            }
+            .menu .icon paper-icon-button {
+                width: 56px;
+                height: 56px;
+                padding: 16px;
+            }
+            .menu .text {
+                font-size: 14px;
+            }
+            .menu .icon.trash {
+                background-color: var(--paper-blue-grey-500);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="Rumah Ibadah" desc="[[ record.nama_rumah_ibadah ]]" on-back-tap="__onBackTap"></module-header-block>
+            <div class="flex scroll-y padding">
+                <kct-column columns="6">
+                    <template is="dom-repeat" items="[[ menus ]]">
+                        <div class="menu box box-shadow">
+                            <div class="box-body" on-tap="__onMenuTap">
+                                <div class$="icon [[ item.name ]]">
+                                    <paper-icon-button icon="[[ item.icon ]]"></paper-icon-button>
+                                </div>
+                                <div class="text">
+                                    <a href="javascript:;" on-click="__onMenuTap">[[ item.text ]]</a>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </kct-column>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class MasjidHome extends KctView {
+            static get is() {
+                return 'masjid-home';
+            }
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { name: 'update', text: 'Identitas', icon: 'dashboard' },
+                            { name: 'author', text: 'Pengolah', icon: 'dashboard' },
+                            { name: 'trash', text: 'Hapus', icon: 'delete-forever' }
+                        ])
+                    },
+                    identity: { type: String },
+                    record: { type: Object }
+                };
+            }
+            handleRouteParams(id, action) {
+                if ( ! +id) return;
+                this.set('identity', id);
+            }
+            __onMenuTap(e) {
+                let item = e.model.item;
+                if (item.name == 'trash') {
+                    this.confirm('Konfirmasi', 'Anda yakin akan menghapus dokumen rumah ibadah ini?').then(y => {
+                        if (y) {
+                            this.$.ajax.DELETE('/masjid/' + this.identity).then(res => {
+                                if (res.success) {
+                                    this.set('route.path', '/masjid');
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    this.set('route.path', '/masjid/' + this.identity + '/' + item.name);    
+                }
+            }
+            __onBackTap() {
+                this.set('route.path', '/masjid');
+            }
+        }
+        customElements.define(MasjidHome.is, MasjidHome);
+    </script>
+</dom-module>

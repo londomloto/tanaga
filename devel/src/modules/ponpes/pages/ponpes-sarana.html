@@ -1,0 +1,229 @@
+<link rel="import" href="../../master-mixins/master-table.html">
+
+<dom-module id="ponpes-sarana">
+    <template>
+        <style include="ponpes-table-style">
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="Sarana Pesantren" on-back-tap="__onBackTap">
+                <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <!-- <div>&nbsp;</div>
+                <div class="button-group">
+                    <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+                    <paper-button on-tap="__onRemoveTap"><iron-icon icon="done"></iron-icon>&nbsp;Hapus</paper-button>    
+                </div>
+                <div slot="right-toolbar">
+                    <div class="grid-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div> -->
+            </module-header-block>
+            <div class="flex">
+                <kct-hbox fit>
+                    <div class="side">
+                        <h3>PARAMETER</h3>
+                        <div>
+                            <paper-input label="Tahun Anggaran" value="{{ params.tahun }}"></paper-input>
+                            <div class="m-t">
+                                <paper-button on-tap="__onSubmitFilterTap" class="button-filter">Tampilkan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a on-click="__onResetFilterTap" href="javascript:;">reset parameter</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="main flex">
+                        <kct-grid 
+                            id="grid" 
+                            url="[[ api ]]" 
+                            columns="[[ columns ]]" 
+                            selection-model="row"
+                            hide-header></kct-grid>
+                    </div>
+                </kct-hbox>
+                
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Editor Sarana" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        url="/master-ponpes/jenis-sarana" 
+                        label="Jenis Sarana" 
+                        value="{{ editingRecord.id_jenis_sarana }}" 
+                        item-label-path="jenis_sarana" 
+                        item-value-path="id_jenis_sarana" 
+                        on-change="__onComboJenisChange"
+                        page-size="10"></kct-combobox>
+                    <kct-combobox 
+                        id="combo-sarana" 
+                        url="/master-ponpes/sarana" 
+                        label="Nama Sarana" 
+                        value="{{ editingRecord.nama_sarana }}" 
+                        item-label-path="nama_sarana" 
+                        item-value-path="nama_sarana" 
+                        page-size="10"></kct-combobox>
+                    <paper-input label="Tahun Anggaran" value="{{ editingRecord.tahun }}"></paper-input>
+                    <paper-input label="Jumlah Baik" value="{{ editingRecord.jml_kond_baik }}"></paper-input>
+                    <paper-input label="Jumlah Rusak" value="{{ editingRecord.jml_kond_rusak }}"></paper-input>
+                    <paper-input label="Jumlah Rusak Berat" value="{{ editingRecord.jml_kond_rusak_brt }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+        
+    </template>
+    <script>
+        class PonpesSarana extends Mixins(KctView).use(Mixins.MasterTable) {
+            static get is() {
+                return 'ponpes-sarana';
+            }
+            static get properties() {
+                return {
+                    api: { type: String, value: '/ponpes/sarana' },
+                    record: { type: Object },
+                    params: { type: Object, value: () => ({}) },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            { text: 'Tahun', dataIndex: 'tahun', width: 80, align: 'center' },
+                            { text: 'Jenis', dataIndex: 'jenis_sarana' },
+                            { text: 'Nama Sarana', dataIndex: 'nama_sarana' },
+                            { text: 'Baik', dataIndex: 'jml_kond_baik', width: 120 },
+                            { text: 'Rusak', dataIndex: 'jml_kond_rusak', width: 120 },
+                            { text: 'Rusak Berat', dataIndex: 'jml_kond_rusak_brt', width: 120 }
+                        ])
+                    },
+                    editingRecord: { type: Object, value: () => ({}) },
+                    ketersediaan: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Ada', value: 'Ada' },
+                            { label: 'Tidak', value: 'Tidak' }
+                        ])
+                    },
+                    yearsItems: { type: Array, value: () => ([]) }
+                };
+            }
+            ready() {
+                super.ready();
+                this.resetParams();
+            }
+            resolveYear() {
+                let year = +this.params.tahun;
+                if ( ! year) {
+                    year = (new Date).getFullYear();
+                }
+                return year + '';
+            }
+            resetParams() {
+                this.set('params', {
+                    tahun: (new Date()).getFullYear()
+                });
+            }
+            handleRouteParams(id, action) {
+                if (action != 'sarana') return;
+                this.set('identity', id);
+                this.loadGrid();
+            }
+            loadGrid() {
+                let payload = {
+                    params: {
+                        id_ponpes: this.identity
+                    }
+                };
+
+                if (this.params.tahun) {
+                    payload.params.tahun = this.params.tahun;
+                }
+
+                this.$.grid.params = payload;
+                this.$.grid.load();
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onRemoveTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang dipilih', 'warn');
+                    return;
+                }
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus record tepilih?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/ponpes/sarana/' + this.$.grid.selected.id_item).then(() => {
+                            this.loadGrid();
+                        });
+                    }
+                }); 
+            } 
+            __onReloadTap() {
+                this.loadGrid();
+            }
+            __onEditorSaveTap() {
+                let payload = this.editingRecord || {};
+
+                payload.id_ponpes = this.identity;
+                payload.jml_kond_baik = +payload.jml_kond_baik;
+                payload.jml_kond_rusak = +payload.jml_kond_rusak;
+                payload.jml_kond_rusak_brt = +payload.jml_kond_rusak_brt;
+                payload.tahun = this.resolveYear();
+
+                if (payload.id_sdm) {
+                    this.$.ajax.PUT('/ponpes/sarana/' + payload.id_item, payload).then(done.bind(this));
+                } else { 
+                    this.$.ajax.POST('/ponpes/sarana', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.$.editor.close();
+                    this.loadGrid();
+                }
+            }
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+            __onBackTap() {
+                this.set('route.path', '/ponpes/' + this.identity + '/home');
+            }
+            __onComboJenisChange(e) {
+                let c = e.target;
+                let v = c.value;
+
+                if (v) {
+                    this.$['combo-sarana'].load({
+                        params: {
+                            id_jenis_sarana: v
+                        }
+                    });
+                } else {
+                    this.$['combo-sarana'].value = '';
+                }
+            }
+            __onSubmitFilterTap() {
+                this.loadGrid();
+            }
+            __onResetFilterTap() {
+                this.resetParams();
+                this.loadGrid();
+            }
+        }
+        customElements.define(PonpesSarana.is, PonpesSarana);
+    </script>
+</dom-module>

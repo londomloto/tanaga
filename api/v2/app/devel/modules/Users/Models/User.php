@@ -129,7 +129,7 @@ class User extends \Micro\Model {
             "su_email",
             new Uniqueness(
                 [
-                    "message" => "Email name already registered",
+                    "message" => "Alamat email sudah terdaftar",
                 ]
             )
         );
@@ -154,9 +154,14 @@ class User extends \Micro\Model {
 
         // need to reinvite
         $array['su_need_reinvite'] = FALSE;
+        $array['su_need_activate'] = FALSE;
 
         if ( ! empty($array['su_invite_token'])) {
             $array['su_need_reinvite'] = TRUE;
+        }
+
+        if ($array['su_active'] == 0) {
+            $array['su_need_activate'] = TRUE;
         }
 
         return $array;

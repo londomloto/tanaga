@@ -33,7 +33,13 @@ class InstrumenController extends \Micro\Controller {
             }
         }
 
-        $query->join('App\Ponpes\Models\Instrumen', 'a.id_instrumen = b.id_instrumen AND b.id_ponpes = '.$ponpes, 'b', 'LEFT');
+        
+
+        if (isset($payload['tahun'])) {
+            $query->join('App\Ponpes\Models\Instrumen', 'a.id_instrumen = b.id_instrumen AND b.id_ponpes = '.$ponpes.' AND b.tahun = '.$payload['tahun'], 'b', 'LEFT');
+        } else {
+            $query->join('App\Ponpes\Models\Instrumen', 'a.id_instrumen = b.id_instrumen AND b.id_ponpes = '.$ponpes, 'b', 'LEFT');
+        }
         
         $result = $query->execute()->filter(function($row){
             $arr = array(

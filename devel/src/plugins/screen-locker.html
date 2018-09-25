@@ -14,7 +14,7 @@
                 width: 100%;
                 height: 100%;
                 background-color: #555;
-                background-image: url(../images/blury-background.jpg);
+                background-image: url(../../images/backgrounds/background-1.jpg);
                 background-size: cover;
                 background-repeat: no-repeat;
                 z-index: 9999999;
@@ -234,7 +234,7 @@
             </div> 
 
             <div class="notes">
-                Your screen has been locked due to session expired. Enter your password to unlock your screen.
+                Layar Anda saat ini terkunci karena sesi login sudah habis. Masukan password Anda untuk membuka kembali.
             </div>
 
             <div class="form-body">
@@ -242,9 +242,9 @@
             </div>
 
             <div class="form-foot">
-                <paper-button disabled$="[[ busy ]]" on-tap="__onAuthenticateTap">UNLOCK SCREEN</paper-button>
+                <paper-button disabled$="[[ busy ]]" on-tap="__onAuthenticateTap">BUKA LAYAR</paper-button>
                 <div class="text-center">
-                    or <a on-tap="__onCloseTap" href="javascript:;">click here</a>  to login
+                    atau <a on-tap="__onCloseTap" href="javascript:;">klik di sini</a>  untuk login
                 </div>
             </div>
             
@@ -330,7 +330,7 @@
             login() {
 
                 this.set('busy', true);
-                this.__showInfo('Authenticating...');
+                this.__showInfo('Otentikasi...');
 
                 let username = this.user.su_email,
                     password = this.password,
@@ -342,7 +342,7 @@
 
                     this.$.auth.login(username, password, captcha).then(user => {
                         if ( ! user) {
-                            this.__showInfo("User doesn't not authenticated");
+                            this.__showInfo("User tidak terotentikasi");
                         }
 
                         this.__hideInfo().then(() => {

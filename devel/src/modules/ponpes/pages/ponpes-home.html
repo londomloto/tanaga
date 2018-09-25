@@ -74,30 +74,20 @@
                             { name: 'keuangan-bulanan', text: 'Keuangan Bulanan', icon: 'dashboard' },
                             { name: 'keuangan-tahunan', text: 'Keuangan Tahunan', icon: 'dashboard' },
                             { name: 'kebutuhan-tambahan', text: 'Kebutuhan Tambahan', icon: 'dashboard' },
+                            { name: 'sarana', text: 'Sarana Pesantren', icon: 'dashboard' },
                             { name: 'asset-potensi', text: 'Asset Potensi', icon: 'dashboard' },
+                            { name: 'kitab', text: 'Instrumen Kitab', icon: 'dashboard' },
                             { name: 'author', text: 'Pengolah', icon: 'dashboard' },
                             { name: 'trash', text: 'Hapus', icon: 'delete-forever' }
                         ])
                     },
                     identity: { type: String },
-                    record: { 
-                        type: Object,
-                        value: () => ({
-                            nama_ponpes: 'Loading...'
-                        }) 
-                    }
+                    record: { type: Object }
                 };
             }
             handleRouteParams(id, action) {
                 if ( ! +id) return;
-
                 this.set('identity', id);
-                this.loadRecord();
-            }
-            loadRecord() {
-                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
-                    this.set('record', res.data);
-                }); 
             }
             __onMenuTap(e) {
                 let item = e.model.item;

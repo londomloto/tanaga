@@ -21,17 +21,11 @@ class UsersController extends \Micro\Controller {
     
     public function createAction() {
         $post = $this->request->getJson();
-        $userLeft = Config::userLimit();
-
-        if($userLeft <= 0) return ["success"=>FALSE, "data"=> NULL, "message"=> "User limit exceeded."];
-
         $user = new User();
 
         if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
             $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
         }
-
-        $post['su_invite_token'] = $this->__createInvitationToken($post['su_email']);
 
         // define fullname
         if ( ! isset($post['su_fullname']) || empty($post['su_fullname'])) {
@@ -44,8 +38,6 @@ class UsersController extends \Micro\Controller {
             if (isset($post['su_kanban'])) {
                 $user->saveKanban($post['su_kanban']);
             }
-
-            $this->__sendInvitationEmail($post);
 
             return User::get($user->su_id);
         }else{
@@ -277,6 +269,39 @@ class UsersController extends \Micro\Controller {
         );
     }
 
+    public function enableAction($id) {
+        $user = User::findFirst($id);
+        $done = FALSE;
+        $data = NULL;
+        
+        $post = $this->request->getJson();
+        $post['su_active'] = 1;
+        $post['su_invite_token'] = NULL;
+
+        if ($user) {
+            $done = $user->save($post);
+            $user = $user->refresh();
+            $data = $this->auth->sanitize($user->toArray());
+
+            if ($done) {
+                $this->mailer->send(array(
+                    'from' => array(Config::value('app_support_email') => Config::value('app_support')),
+                    'to' => $user->su_email,
+                    'subject' => 'Aktivasi user',
+                    'body' => $this->view->render('activation', array(
+                        'name' => $user->su_fullname,
+                        'link' => $post['link']
+                    ))
+                ));
+            }
+        }
+
+        return array(
+            'success' => $done,
+            'data' => $data
+        );
+    }
+
     private function __createInvitationToken($email) {
         return $this->security->encrypt(array(
             'su_email' => $email
@@ -297,10 +322,10 @@ class UsersController extends \Micro\Controller {
         ));
 
         $options = array(
-            'from' => array('support@worksaurus.com' => 'Worksaurus Team'),
+            'from' => array('tanagadevel@gmail.com' => 'Administrator'),
             'to' => $data['su_email'],
-            'bcc' => 'roso@kct.co.id',
-            'subject' => 'Invitation from Worksaurus Team application',
+            'bcc' => 'roso.sasongko@gmail.com',
+            'subject' => 'Undangan bergabung dengan aplikasi',
             'body' => $body
         );
 

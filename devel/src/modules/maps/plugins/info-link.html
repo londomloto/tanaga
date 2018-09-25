@@ -1,0 +1,105 @@
+<dom-module id="info-link">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 850px;
+            }
+            .title {
+                margin: 0 0 5px 0;
+                font-size: 12px;
+            }
+            .table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .table th {
+                background-color: #f4f4f4;
+            }
+            .table th,
+            .table td {
+                font-size: 11px;
+                border: 1px solid #dfdfdf;
+                padding: 2px 5px;
+            }
+            .center {
+                text-align: center;
+            }
+        </style>
+        <div class="popup-content">
+            <h3 class="title">[[ link.text ]]</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="vertical-align: middle;">PEER</th>
+                        <th colspan="4">SITE NEAR END ([[ link.near ]])</th>
+                        <th colspan="4">SITE FAR END ([[ link.far ]])</th>
+                    </tr>
+                    <tr style="font-size: 11px;">
+                        <th>NE</th>
+                        <th>PORT</th>
+                        <th>MAX (KB/S)</th>
+                        <th>AVG (KB/S)</th>
+                        <th>NE</th>
+                        <th>PORT</th>
+                        <th>MAX (KB/S)</th>
+                        <th>AVG (KB/S)</th>
+                    </tr>
+                </thead>
+                <template is="dom-if" if="[[ nodata ]]">
+                    <tbody>
+                        <tr>
+                            <td colspan="10">
+                                <div style="padding: 10px;">No peers informations found</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </template>
+                <template is="dom-if" if="[[ !nodata ]]">
+                    <tbody>
+                        <template is="dom-repeat" items="[[ link.data.peers ]]">
+                            <tr>
+                                <td class="center">[[ __computeSequence(index) ]]</td>
+                                <td class="center">[[ item.ps_tower_a ]]</td>
+                                <td class="center">[[ item.ps_port_a ]]</td>
+                                <td class="center">[[ item.ps_max_a ]]</td>
+                                <td class="center">[[ item.ps_avg_a ]]</td>
+                                <td class="center">[[ item.ps_tower_b ]]</td>
+                                <td class="center">[[ item.ps_port_b ]]</td>
+                                <td class="center">[[ item.ps_max_b ]]</td>
+                                <td class="center">[[ item.ps_avg_b ]]</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </template>
+            </table>
+        </div>
+    </template>
+    <script>
+        class InfoLink extends Polymer.Element {
+            static get is() {
+                return 'info-link';
+            }
+            static get properties() {
+                return {
+                    link: { type: Object, value: () => ({}) },
+                    nodata: { type: Boolean, value: false }
+                }
+            }
+            static get observers() {
+                return [
+                    '__peersChanged(link.data.peers)'
+                ];
+            }
+            __computeSequence(index) {
+                return index + 1;
+            }
+            __peersChanged(peers) {
+                peers = peers || [];
+                this.set('nodata', peers.length === 0);
+            }
+        }
+        customElements.define(InfoLink.is, InfoLink);
+    </script>
+</dom-module>

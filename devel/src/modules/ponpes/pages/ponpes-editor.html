@@ -13,7 +13,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <module-header-block text="[[ headerText ]]" desc="[[ headerDesc ]]" on-back-tap="__onBackTap">
+            <module-header-block text="[[ __computeHeaderText(record.nama_ponpes) ]]" desc="[[ headerDesc ]]" on-back-tap="__onBackTap">
                 <paper-button disabled$="[[ invalid ]]" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
             </module-header-block>
             <div class="flex scroll-y padding">
@@ -83,6 +83,8 @@
                                 item-value-path="id_orgz" 
                                 page-size="10"></kct-combobox>
 
+                            <paper-input value="{{ record.yayasan }}" label="Nama Yayasan"></paper-input>
+
                             <div style="padding: 8px 0">
                                 <kct-file-button id="cover" file="{{ cover }}" value="[[ record.img_gedung ]]" label="Cover/Gambar Pesantren"></kct-file-button>    
                             </div>
@@ -137,6 +139,15 @@
                             </kct-column>
                             
                             <paper-input value="{{ record.no_telepon }}" label="Nomor Telepon"></paper-input>
+
+                            <kct-column columns="2" spacer="0">
+                                <div>
+                                    <paper-input value="{{ record.latitude }}" label="Latitude"></paper-input>
+                                </div>
+                                <div>
+                                    <paper-input value="{{ record.longitude }}" label="Longitude"></paper-input>
+                                </div>
+                            </kct-column>
                         </div>
                     </div>
                 </kct-column>
@@ -151,10 +162,9 @@
             }
             static get properties() {
                 return {
-                    headerText: { type: String, value: 'Pesantren' },
                     headerDesc: { type: String, value: 'Editor Pesantren' },
                     identity: { type: String },
-                    record: { type: Object },
+                    record: { type: Object, notify: true },
                     invalid: { type: Boolean, value: false },
                     statusBadanHukum: {
                         type: Array,
@@ -211,6 +221,9 @@
             }
             back() {
                 this.set('route.path', '/ponpes');
+            }
+            __computeHeaderText(name) {
+                return name || 'Nama Pesantren';
             }
             __onComboPropinsiChange(e) {
                 let c = e.target;

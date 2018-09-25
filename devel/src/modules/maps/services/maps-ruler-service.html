@@ -1,0 +1,389 @@
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../../../../../cores/vendors/d3/d3.html">
+
+<script>
+    Mixins.MapsRulerService = Polymer.dedupingMixin(superclass => {
+
+        class RulerHelper {
+            static findTouchPoint(segment, point) {
+                const k = ((segment[1][1] - segment[0][1]) * (point[0] - segment[0][0]) - (segment[1][0] - segment[0][0]) * (point[1] - segment[0][1])) /
+                          (Math.pow(segment[1][1] - segment[0][1], 2) + Math.pow(segment[1][0] - segment[0][0], 2));
+                
+                return [
+                    point[0] - k * (segment[1][1] - segment[0][1]),
+                    point[1] + k * (segment[1][0] - segment[0][0])
+                ];
+            }
+            static findMidPoint(segment) {
+                return [
+                    (segment[0][0] + segment[1][0]) / 2,
+                    (segment[0][1] + segment[1][1]) / 2
+                ];
+            }
+            static __interpolate(p1, p2, fraction) {
+                let point = google.maps.geometry.spherical.interpolate(
+                    new google.maps.LatLng(p1[1], p1[0]),
+                    new google.maps.LatLng(p2[1], p2[0]),
+                    fraction
+                );
+                return [point.lng(), point.lat()];
+            }
+            static transformText(p1, p2) {
+                let mid = Helper.findMidPoint([p1, p2]);
+                let angle;
+                if (p1[0] === p2[0]) {
+                    if (p2[1] > p1[1]) angle = 90;
+                    else if (p2[1] < p1[1]) angle = 270;
+                    else angle = 0;
+                } else {
+                    angle = Math.atan((p2[1] - p1[1]) / (p2[0] - p1[0])) * 180 / Math.PI;
+                }
+                return `translate(${mid[0]}, ${mid[1]}) rotate(${angle})`;
+            }
+            static guid(n) {
+                return (Math.random().toString(36)+'00000000000000000').slice(2, n + 2);
+            }
+            constructor(options) {
+                this.__options = {};
+                Object.assign(this.__options, options || {});
+                this.init();
+            }
+            init() {
+                this.__lengthMultiplier = 1;
+                this.__areaMultiplier = 1;
+                this.lengthFormatter = this.__formatLength;
+                this.AreaFormatter = this.__formatArea;
+            }
+            setOption(option, value) {
+                if ( ! this.__options[option]) {
+                  throw new Error(`${option} is not a valid option`);
+                }
+
+                // TODO: figure out some option validation
+                this.__options[option] = value;
+                this.init();
+            }
+            computeLengthBetween(p1, p2) {
+                return google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(p1[1], p1[0]),
+                    new google.maps.LatLng(p2[1], p2[0])
+                ) * this.__lengthMultiplier;
+            }
+            computePathLength(points) {
+                let sum = 0;
+                let len = points.length;
+                for (let i = 1; i < len; i++) {
+                    sum += google.maps.geometry.spherical.computeDistanceBetween(
+                                new google.maps.LatLng(points[i - 1][1], points[i - 1][0]),
+                                new google.maps.LatLng(points[i][1], points[i][0])
+                           );
+                }
+                return sum * this.__lengthMultiplier;
+            }
+            computeArea(points) {
+                return google.maps.geometry.spherical.computeArea(
+                    points.map(p => new google.maps.LatLng(p[1], p[0]))
+                ) * this.__areaMultiplier;
+            }
+            __formatLength(value) {
+                let unit;
+                if (value / 1000 >= 1) {
+                    unit = 'km';
+                    value /= 1000;
+                } else {
+                    unit = 'm';
+                }
+
+                return this.__numberToLocale(this.__roundUp(value, 2)) + ' ' + unit;
+            }
+            __formatArea(value) {
+                let unit;
+                if (value / 1000000 >= 1) {
+                    unit = 'km²';
+                    value /= 1000000;
+                } else {
+                    unit = 'm²';
+                }
+                return this.__numberToLocale(this.__roundUp(value, 2)) + ' ' + unit;
+            }
+            __roundUp(value, decimals) {
+                return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals).toFixed(decimals);
+            }
+            __numberToLocale(number) {
+                return new Intl.NumberFormat().format(number);
+            }
+        }
+
+        class RulerGeometry {
+            get nodes() { return this.__nodes; }
+            get lines() {
+                let nodes = this.__nodes;
+                let total = nodes.length;
+                let segments = [];
+                if (total > 1) {
+                    for (let i = 1; i < total; i++) {
+                        segments.push([nodes[i - 1], nodes[i]]);
+                    }
+                }
+                return segments;
+            }
+            constructor() {
+                this.__nodes = [];
+            }
+            addNode(point) {
+                this.__nodes.push(point);
+            }
+            updateNode(index, point) {
+                this.__nodes[index] = point;
+            }
+            removeNode(index) {
+                this.__nodes.splice(index, 1);
+            }
+            insertNode(index, point) {
+                this.__nodes.splice(index, 0, point);
+            }
+        }
+
+        class RulerProjectionUtil {
+            constructor(container, projection, options) {
+                this.__defaultOptions = {
+                    offsetRate: 8000
+                };
+                this.__options = Object.assign({}, this.__defaultOptions, options || {});
+                this.__container = container;
+                this.__projection = projection;
+            }
+            latLngToPoint(coord) {
+                let rate = this.__options.offsetRate / 2;
+                let latLng = new google.maps.LatLng(coord[1], coord[0]);
+                let point = this.__projection.fromLatLngToDivPixel(latLng);
+                return [point.x + rate, point.y + rate];
+            }
+            pointToLatLng(point) {
+                let rate = this.__options.offsetRate / 2 ;
+                let coord = this.__projection.fromDivPixelToLatLng(
+                    new google.maps.Point(point[0] - rate, point[1] - rate)
+                );
+
+                return [coord.lng(), coord.lat()];
+            }
+            computeRelativePoint(point) {
+                let coord = this.pointToLatLng(point);
+                return this.__projection.fromLatLngToContainerPixel(
+                    new google.maps.LatLng(coord[1], coord[0])
+                );
+            }
+            computeRelativeCoord(coord) {
+                return this.__projection.fromLatLngToContainerPixel(
+                    new google.maps.LatLng(coord[1], coord[0])
+                );
+            }
+        }
+
+        return class extends superclass {
+            constructor() {
+                super();
+                this.__rulerId = RulerHelper.guid(4);
+                console.log(this.__rulerId);
+                this.__rulerContainer = null;
+                this.__rulerOverlay = null;
+                this.__rulerGeometry = null;
+                this.__rulerProjectionUtil = null;
+            }
+            setupRuler() {
+                this.__rulerContainer = this.map.getDiv().querySelector('div:first-child');
+                this.__rulerHelper = new RulerHelper();
+                this.__initRulerOverlay();
+            }
+            startMeasurement() {
+                if (this.__rulerStarted) return;
+
+                this.__rulerOverlay.setMap(this.map);
+                this.__rulerGeometry = new RulerGeometry();
+                this.__rulerSegments = [];
+                this.__rulerListeners = {};
+
+                this.__rulerListeners.mapClick = this.map.addListener('click', e => this.__checkRulerClick(e));
+                this.__rulerListeners.mapZoom = this.map.addListener('zoom_changed', () => this.__redrawRulerOverlay());
+                this.__rulerStarted = true;
+
+                this.map.setOptions({ draggableCursor: 'default' });
+            }
+            endMeasurement() {
+                if ( ! this.__rulerStarted) return;
+
+                this.__rulerListeners.mapClick.remove();
+                this.__rulerListeners.mapZoom.remove();
+                this.__rulerListeners = {};
+
+                this.__rulerGeometry = new RulerGeometry();
+                this.__onRulerOverlayRemove();
+                this.__setRulerOverlay();
+                this.__rulerOverlay.setMap(null);
+                this.__rulerStarted = false;
+
+                this.map.setOptions({draggableCursor: null});
+            }
+            __initRulerOverlay() {
+                this.__setRulerOverlay();
+                this.__rulerInitialized = false;
+            }
+            __setRulerOverlay() {
+                this.__rulerOverlay = new google.maps.OverlayView();
+                this.__rulerOverlay.onAdd = this.__onRulerOverlayAdd.bind(this);
+                this.__rulerOverlay.draw = this.__onRulerOverlayDraw.bind(this);
+                this.__rulerOverlay.onRemove = this.__onRulerOverlayRemove.bind(this);
+                this.__rulerOverlay.setMap(this.map);
+            }
+            __checkRulerClick(e) {
+                if (
+                    ! this.__rulerDragged && this.__rulerNodes.selectAll('circle[r="6"]').size() == 0 && 
+                    ! this.__rulerPointer.select('circle').attr('cx')
+                ) {
+                    let latLng = [e.latLng.lng(), e.latLng.lat()];
+                    this.__rulerGeometry.addNode(latLng);
+                    this.__rulerOverlay.draw();
+                }
+                this.__rulerDragged = false;
+            }
+            __redrawRulerOverlay() {
+                this.__onRulerOverlayRemove();
+                this.__setRulerOverlay();
+                this.__rulerOverlay.draw();
+            }
+            __updateRulerNodes() {
+                let nodes = this.__rulerNodes.selectAll('circle')
+                    .data(this.__rulerGeometry ? this.__rulerGeometry.nodes : [])
+                    .attr('class', (d, i) => i === 0 ? 'ruler-cover-node ruler-head-node' : 'ruler-cover-node')
+                    .attr('r', 5)
+                    .attr('cx', d => this.__rulerProjectionUtil.latLngToPoint(d)[0])
+                    .attr('cy', d => this.__rulerProjectionUtil.latLngToPoint(d)[1])
+                    .on('mouseover', (d, i, nodes) => { this.__onOverRulerNode(d, i, nodes[i]); })
+                    .on('mouseout', (d, i, nodes) => { this.__onOutRulerNode(d, nodes[i]); })
+                    .on('touchstart', (d, i, nodes) => { this.__onOverRulerNode(d, i, nodes[i]); })
+                    .on('touchleave', (d, i, nodes) => { this.__onOutRulerNode(d, nodes[i]); })
+                    .call(this.__onDragRulerNode());
+
+                // enter and seat the new data with same style.
+                nodes
+                    .enter()
+                    .append('circle')
+                    .attr('class', 'ruler-cover-node')
+                    .attr('r', 5)
+                    .attr('cx', d => this.__rulerProjectionUtil.latLngToPoint(d)[0])
+                    .attr('cy', d => this.__rulerProjectionUtil.latLngToPoint(d)[1])
+                    .on('mouseover', (d, i, nodes) => { this.__onOverRulerNode(d, i, nodes[i]); })
+                    .on('mouseout', (d, i, nodes) => { this.__onOutRulerNode(d, nodes[i]); })
+                    .on('touchstart', (d, i, nodes) => { this.__onOverRulerNode(d, i, nodes[i]); })
+                    .on('touchleave', (d, i, nodes) => { this.__onOutRulerNode(d, nodes[i]); })
+                    .call(this.__onDragRulerNode());
+
+                this.__rulerNodes.selectAll('.removed-ruler-nodes').remove();
+            }
+            __updateRulerLines() {
+                this.__rulerSegments = [];
+                let linesBase = this.__rulerLinesBase
+                    .selectAll('line')
+                    .data(this.__rulerGeometry ? this.__rulerGeometry.lines : [])
+                    .attr('class', 'ruler-base-line')
+                    .attr('x1', d => this.__rulerProjectionUtil.latLngToPoint(d[0])[0])
+                    .attr('y1', d => this.__rulerProjectionUtil.latLngToPoint(d[0])[1])
+                    .attr('x2', d => this.__rulerProjectionUtil.latLngToPoint(d[1])[0])
+                    .attr('y2', d => this.__rulerProjectionUtil.latLngToPoint(d[1])[1])
+                    .each(d => this.__updateRulerSegment(d));
+
+                linesBase
+                  .enter()
+                  .append('line')
+                    .attr('class', 'ruler-base-line')
+                    .attr('x1', d => this.__rulerProjectionUtil.latLngToPoint(d[0])[0])
+                    .attr('y1', d => this.__rulerProjectionUtil.latLngToPoint(d[0])[1])
+                    .attr('x2', d => this.__rulerProjectionUtil.latLngToPoint(d[1])[0])
+                    .attr('y2', d => this.__rulerProjectionUtil.latLngToPoint(d[1])[1])
+                    .each(d => this.__updateRulerSegment(d));
+
+                linesBase.exit().remove();
+            }
+            __updateRulerSegment() {
+
+            }
+            __updateRulerSegmentText() {
+
+            }
+            __updateRulerNodeText() {
+
+            }
+            __updateRulerArea() {
+
+            }
+            __onRulerOverlayAdd() {
+                if ( ! this.__rulerInitialized) {
+                    this.__rulerInitialized = true;
+                }
+
+                this.__rulerProjection = this.__rulerOverlay.getProjection();
+                this.__rulerProjectionUtil = new RulerProjectionUtil(this.__rulerContainer, this.__rulerProjection);
+
+                this.__rulerPaper = d3.select(this.__rulerOverlay.getPanes().overlayMouseTarget)
+                    .append('div')
+                    .attr('class', `ruler-${this.__rulerId}`)
+                    .append('svg')
+                    .attr('class', 'ruler-svg');
+
+                this.__rulerLinesBase = this.__rulerPaper.append('g').attr('class', 'ruler-lines-base');
+                this.__rulerLinesBase.selectAll('line').data(this.__rulerGeometry ? this.__rulerGeometry.lines : []);
+
+                this.__rulerLinesAux = this.__rulerPaper.append('g').attr('class', 'ruler-lines-aux');
+                this.__rulerLinesAux.selectAll('line').data(this.__rulerGeometry ? this.__rulerGeometry.lines : []);
+
+                this.__rulerNodes =  this.__rulerPaper.append('g').attr('class', 'ruler-nodes');
+                this.__rulerNodes.selectAll('circle').data(this.__rulerGeometry ? this.__rulerGeometry.nodes : []);
+
+                // show segment text
+                this.__rulerSegmentText = this.__rulerPaper.append('g').attr('class', 'ruler-segment-text');
+                this.__rulerSegmentText.selectAll('text').data(this.__rulerGeometry ? this.__rulerGeometry.lines : []);
+
+                // show node text
+                this.__rulerNodeText = this.__rulerPaper.append('g').attr('class', 'ruler-node-text');
+                this.__rulerNodeText.selectAll('text').data(this.__rulerGeometry ? this.__rulerGeometry.nodes : []);
+
+                this.__rulerPointer = this.__rulerPaper.append('g').attr('class', 'ruler-pointer');
+                this.__rulerPointer.append('circle').attr('class', 'ruler-pointer').attr('r', 5);
+
+                if (this.__rulerInitialized && !this.__rulerStarted) {
+                    this.__rulerOverlay.setMap(null);
+                }
+            }
+            __onRulerOverlayDraw() {
+                this.__updateRulerNodes();
+                this.__updateRulerLines();
+                this.__updateRulerSegmentText();
+                this.__updateRulerNodeText();
+
+                if (this.__rulerGeometry) {
+                    this.__updateRulerArea(
+                        this.__rulerGeometry.nodes.length - 1,
+                        this.__rulerGeometry.nodes[this.__rulerGeometry.nodes.length - 1]
+                    );
+                }
+            }
+            __onRulerOverlayRemove() {
+                let ruler = this.shadowRoot.querySelector(`.ruler-${this.__rulerId}`);
+                if (ruler) {
+                    d3.select(ruler).remove();
+                }
+            }
+            __onOverRulerNode() {
+
+            }
+            __onOutRulerNode() {
+
+            }
+            __onDragRulerNode() {
+                let isDragged = false;
+                let nodeDrag = d3.drag();
+                return nodeDrag;
+            }
+        };
+    });
+</script>

@@ -48,3 +48,17 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/masjid',
+    'handler' => 'App\Masjid\Controllers\MasjidController',
+    'middleware' => 'auth'
+))
+->post('/{id}/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/home',
+    'handler' => 'App\Home\Controllers\HomeController',
+    'middleware' => 'auth'
+))
+->get('/backgrounds', 'backgrounds');

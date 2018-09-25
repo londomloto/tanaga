@@ -8,6 +8,7 @@
 <link rel="import" href="../../../../cores/elements/kct-message/kct-alert.html">
 <link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/mixins/location.html">
 
 <dom-module id="forgot-page">
     <template>
@@ -32,9 +33,9 @@
             .container {
                 height: 100vh;
                 background-color: var(--app-login-background);
-                background-image: var(--login-background-image, url(images/cover-2.jpg));
+                background-image: url(../../../images/backgrounds/background-6.jpg);
                 background-repeat: no-repeat;
-                background-size: contain;
+                background-size: cover;
                 background-position: 0 0;
                 background-attachment: scroll;
 
@@ -44,16 +45,16 @@
             .story {
                 position: relative;
                 padding: 30px;
-                max-width: 40%;
-                color: #333;
+                max-width: 60%;
+                color: #fff;
                 
             }
             .story h3 {
-                font-size: 50px;
-                font-weight: 400;
+                font-size: 36px;
+                font-weight: 600;
             }
             .story p {
-                font-size: 26px;
+                font-size: 18px;
                 font-weight: 300;
                 line-height: 1.2;
             }
@@ -69,7 +70,10 @@
             .column-right.xl {
                 width: 460px;
             }
-            .column-right { padding: 20px; }
+            .column-right { 
+                padding: 20px;
+                background-color: rgba(0,0,0,.3); 
+            }
 
             .cover {
                 height: 100%;
@@ -154,42 +158,42 @@
             </div>
 
             <div class$="column-right [[ screen ]]">
-                <div class="login-logo">
-                    <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-1.png') ]]" alt="" class="logo">
-                </div>
                 <div name="forgot" class="forgot">
-                    <h3>Can't sign in? Forget your password?</h3>
-                    <p>Enter your email address below and we'll send you password reset instruction.</p>
+                    <h3>Tidak bisa login? Lupa password Anda?</h3>
+                    <p>Masukan alamat email Anda di bawah ini, kami akan mengirimkan instruksi perubahan password.</p>
                     <div class="m-t">
-                        <paper-input id="email" value="{{ email }}" type="email" label="Enter your email address" required auto-validate error-message="Valid email address is required"></paper-input>
+                        <paper-input id="email" value="{{ email }}" type="email" label="Masukan alamat email" required auto-validate error-message="Alamat email tidak valid"></paper-input>
                     </div>
                     <div class="m-t">
-                        <paper-button on-tap="__onRequestPasswordTap" disabled$="[[ __forgotInvalid ]]">Send me reset instruction</paper-button>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">back to login page</a>
+                        <paper-button on-tap="__onRequestPasswordTap" disabled$="[[ __forgotInvalid ]]">Permintahan Ubah Password</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">kembali ke halaman login</a>
                     </div>
                     <div class="notes">
-                        <h4>A note about spam filters</h4>
-                        <p>If you don't get an email from us within a few minutes please be sure to check your spam filter.</p>
+                        <h4>Catatan untuk pengecekan spam</h4>
+                        <p>Jika Anda tidak menerima email dari kami dalam beberapa menit, periksa pada bagian spam.</p>
                     </div>
                 </div>
 
-                <div class="text-center" style="margin-top: 60px;">
-                    <a class="powered" href="https://www.worksaurus.com" target="_blank">
-                        <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-0.png') ]]">
-                        <span class="block">POWERED BY <b>WORKSAURUS</b></span>
+                <div class="text-center m-t">
+                    <a class="powered" href="javascript:;" target="_blank">
+                        <img src$="[[ resolveUrl('../../../images/logos/logo-48x48.png') ]]">
+                        <div style="text-align: center; text-transform: uppercase; width: 200px; margin: auto;">
+                            <div>POWERED BY</div>
+                            <div>[[ config.app_author ]]</div>
+                        </div>
                     </a>
                 </div>
             </div>
         </div>
 
-        <kct-alert id="message" button="Continue" accent="info" title="Thank you" icon="info-outline">
-            <p>Please check your inbox to reset your password</p>
+        <kct-alert id="message" button="Lanjutkan" accent="info" title="Terima Kasih" icon="info-outline">
+            <p>Silahkan periksa inbox Anda untuk melihat instruksi perubahan password</p>
         </kct-alert>
 
     </template>
 
     <script>
 
-        class ForgotPage extends KctView {
+        class ForgotPage extends Mixins(KctView).use(Mixins.Location) {
             static get is() {
                 return 'forgot-page';
             }
@@ -216,6 +220,7 @@
 
             ready() {
                 super.ready();
+                console.log(this._siteurl('/recover'));
             }
 
             handleRouteParams() {
@@ -249,10 +254,11 @@
 
             __onRequestPasswordTap() {
                 let payload = {
+                    link: this._siteurl('/recover'),
                     email: this.email
                 };
 
-                this.mask('Submitting...');
+                this.mask('Sedang mengirim...');
 
                 this.$.ajax.POST('/auth/recover', payload).then(() => {
                     this.unmask();

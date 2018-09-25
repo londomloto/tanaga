@@ -1,0 +1,216 @@
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+
+<script>
+    Mixins.MapsDrawingService = Polymer.dedupingMixin(superclass => {
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    history: { type: Array, value: () => ([]) },
+                    historyIndex: { type: Number, value: 0 },
+                    drawing: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__drawingChanged(drawing)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.drawingManager = null;
+                this.drawingFeatures = [];
+            }
+
+            clearHistory() {
+                this.set('history', []);
+                this.set('historyIndex', 0);
+            }
+
+            clearDrawing() {
+                this.clearHistory();
+                this.drawingFeatures.forEach(f => {
+                    f.setMap(null);
+                });
+                this.drawingFeatures = [];
+            }
+
+            addHistory(action, data) {
+                this.push('history', {
+                    action: action,
+                    data: data
+                });
+
+                this.set('historyIndex', this.history.length - 1);
+            }
+
+            startDrawPoint() {
+                this.clearHistory();
+
+                this.set('drawing', 'draw-point');
+                this.activateTool('draw-point', 'draw');
+
+                this.drawingManager = new google.maps.drawing.DrawingManager({
+                    drawingMode: google.maps.drawing.OverlayType.MARKER,
+                    drawingControl: false,
+                    markerOptions: {
+                        icon: {
+                            url: this.resolveUrl('../markers/pin-red.png'),
+                            scaledSize: new google.maps.Size(32, 32),
+                            anchor: new google.maps.Point(16, 32)
+                        }
+                    }
+                });
+
+                this.drawingManager.setMap(this.map); 
+
+                google.maps.event.addListener(this.drawingManager, 'markercomplete', m => {
+                     this.addHistory('draw-point', m);
+                     this.drawingFeatures.push(m);
+                });
+            }
+
+            endDrawPoint() {
+                this.set('drawing', '');
+                this.deactivateTool('draw-point');
+                this.drawingManager.setMap(null);
+                this.drawingManager = null;
+            }
+
+            startDrawLine() {
+                this.clearHistory();
+
+                this.set('drawing', 'draw-line');
+                this.activateTool('draw-line', 'draw');
+
+                this.drawingManager = new google.maps.drawing.DrawingManager({
+                    drawingMode: google.maps.drawing.OverlayType.POLYLINE,
+                    drawingControl: false,
+                    polylineOptions: {
+                        strokeColor: '#2196F3',
+                        strokeOpacity: 1.0,
+                        strokeWeight: 2
+                    }
+                });
+
+                this.drawingManager.setMap(this.map);
+
+                google.maps.event.addListener(this.drawingManager, 'polylinecomplete', p => {
+                    this.addHistory('draw-line', p);
+                    this.drawingFeatures.push(p);
+                });
+            }
+
+            endDrawLine() {
+                this.set('drawing', '');
+                this.deactivateTool('draw-line');
+                this.drawingManager.setMap(null);
+                this.drawingManager = null;
+            }
+
+            startDrawArea() {
+                this.clearHistory();
+
+                this.set('drawing', 'draw-area');
+                this.activateTool('draw-area', 'draw');
+
+                this.drawingManager = new google.maps.drawing.DrawingManager({
+                    drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                    drawingControl: false,
+                    polygonOptions: {
+                        strokeColor: '#2196F3',
+                        strokeOpacity: 1.0,
+                        strokeWeight: 2,
+                        fillColor: '#2196F3',
+                        fillOpacity: 0.5
+                    }
+                });
+
+                this.drawingManager.setMap(this.map);
+
+                google.maps.event.addListener(this.drawingManager, 'polygoncomplete', p => {
+                    this.addHistory('draw-area', p);
+                    this.drawingFeatures.push(p);
+                });
+            }
+
+            endDrawArea() {
+                this.set('drawing', '');
+                this.deactivateTool('draw-area');
+                this.drawingManager.setMap(null);
+                this.drawingManager = null;
+            }
+
+            __drawingChanged(drawing) {
+                if ( ! this.map) return;
+                let cursor = drawing ? 'default' : '';
+                this.map.setOptions({ draggableCursor: cursor });
+            }
+
+            __onUndoTap() {
+                let index = this.historyIndex;
+                let item = this.history[index];
+
+                if (item) {
+                    item.data.setMap(null);
+                }
+
+                index--;
+                
+                if (index < 0) {
+                    index = 0;
+                }
+
+                this.set('historyIndex', index);
+
+            }
+
+            __onRedoTap() {
+                let index = this.historyIndex;
+                let item = this.history[index];
+
+                if (item) {
+                    item.data.setMap(this.map);
+                }
+
+                index++;
+
+                if (index >= this.history.length) {
+                    index = this.history.length - 1;
+                }
+
+                this.set('historyIndex', index);
+            }
+
+            __onDrawPointToggleTap() {
+                if (this.drawing == 'draw-point') {
+                    this.endDrawPoint();
+                } else {
+                    this.startDrawPoint();
+                }
+            }
+
+            __onDrawLineToggleTap() {
+                if (this.drawing == 'draw-line') {
+                    this.endDrawLine();
+                } else {
+                    this.startDrawLine();
+                }
+            }
+
+            __onDrawAreaToggleTap() {
+                if (this.drawing == 'draw-area') {
+                    this.endDrawArea();
+                } else {
+                    this.startDrawArea();
+                }
+            }
+
+            __onTrashToggleTap() {
+                this.clearDrawing();
+            }
+        };
+    });
+</script>

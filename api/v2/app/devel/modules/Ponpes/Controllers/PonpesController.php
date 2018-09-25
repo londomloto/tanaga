@@ -24,7 +24,28 @@ class PonpesController extends \Micro\Controller {
     }
 
     public function findByIdAction($id) {
-        return Ponpes::get($id);
+        $result = Ponpes::get($id);
+
+        if ($result->data && ! $this->role->can('manage_app@application')) {
+
+            $authors = $result->data->getAuthors()->filter(function($item){
+                return $item->toArray();
+            });
+
+            $authors = array_map(function($item){ return $item['su_id']; }, $authors);
+            $user = $this->auth->user();
+
+            if ( ! in_array($user['su_id'], $authors)) {
+                return array(
+                    'success' => FALSE,
+                    'status' => 403,
+                    'message' => 'Anda tidak memiliki hak untuk mengakses data bersangkutan'
+                );
+            }
+            
+        }
+
+        return $result;
     }
 
     public function createAction() {
@@ -36,6 +57,7 @@ class PonpesController extends \Micro\Controller {
             $auth = new Author();
             $auth->id_ponpes = $data->id_ponpes;
             $auth->su_id = $user['su_id'];
+            $auth->posisi = 'Operator';
             $auth->save();
 
             return Ponpes::get($data->id_ponpes);

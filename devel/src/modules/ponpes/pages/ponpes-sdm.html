@@ -10,7 +10,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <module-header-block text="[[ headerText ]]" desc="Ketenagaan" on-back-tap="__onBackTap">
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="Ketenagaan" on-back-tap="__onBackTap">
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
                 <div class="button-group">
                     <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
@@ -42,7 +42,7 @@
             </div>
         </kct-vbox>
 
-        <kct-dialog id="editor" title="Tambah Tenaga" width="400" height="100%">
+        <kct-dialog id="editor" title="Editor Tenaga" width="400" height="100%">
             <template preserve-content>
                 <style include="theme-helper"></style>
                 <div slot="dialog-body">
@@ -82,23 +82,13 @@
                             { text: 'Jumlah Wanita', dataIndex: 'jml_wanita', align: 'right' }
                         ])
                     },
-                    headerText: { type: String, value: 'Pesantren' },
                     editingRecord: { type: Object, value: () => ({}) }
                 };
             }
             handleRouteParams(id, action) {
                 if (action != 'sdm') return;
                 this.set('identity', id);
-                this.loadRecord();
-            }
-            loadRecord() {
-                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
-                    if (res.success) {
-                        this.set('headerText', res.data.nama_ponpes);
-                        this.set('record', res.data);
-                        this.loadGrid();
-                    }
-                }); 
+                this.loadGrid();
             }
             loadGrid() {
                 let payload = {
@@ -106,7 +96,7 @@
                         id_ponpes: this.identity
                     }
                 };
-
+                
                 this.$.grid.params = payload;
                 this.$.grid.load();
             }

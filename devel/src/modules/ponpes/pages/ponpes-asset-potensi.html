@@ -88,7 +88,7 @@
         <kct-file id="file" on-change="__onFileBrowserChange"></kct-file>
 
         <kct-vbox>
-            <module-header-block text="[[ headerText ]]" desc="Asset Potensi" on-back-tap="__onBackTap">
+            <module-header-block text="[[ record.nama_ponpes ]]" desc="Asset Potensi" on-back-tap="__onBackTap">
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
                 <div class="button-group">
                     <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
@@ -100,7 +100,7 @@
             <div class="flex">
                 <kct-hbox fit>
                     <div class="side">
-                        <h3>FILTER DATA</h3>
+                        <h3>PARAMETER</h3>
                         <div>
                             <paper-input label="Tahun Laporan" value="{{ params.tahun }}"></paper-input>
                             <kct-combobox 
@@ -113,7 +113,7 @@
                                 page-size="10"></kct-combobox>
                             <paper-input label="Nama Asset" value="{{ params.nama_asset }}"></paper-input>
                             <div class="m-t">
-                                <paper-button on-tap="__onSubmitFilterTap" class="button-filter">Tampilkan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a on-click="__onResetFilterTap" href="javascript:;">reset filter</a>
+                                <paper-button on-tap="__onSubmitFilterTap" class="button-filter">Tampilkan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a on-click="__onResetFilterTap" href="javascript:;">reset parameter</a>
                             </div>
                         </div>
                     </div>
@@ -326,26 +326,32 @@
                             { text: 'Nilai', dataIndex: 'label_dimensi' }
                         ])
                     },
-                    headerText: { type: String, value: 'Pesantren' },
                     editingRecord: { type: Object },
                     imagesItems: { type: Array, value: () => ([]) },
                     hideSlider: { type: Boolean, value: true },
                     slidesItems: { type: Array, value: () => ([]) }
                 };
             }
+            ready() {
+                super.ready();
+                this.resetParams();
+            }
+            resetParams() {
+                this.set('params', {
+                    tahun: (new Date()).getFullYear()
+                });
+            }
+            resolveYear() {
+                let year = +this.params.tahun;
+                if ( ! year) {
+                    year = (new Date).getFullYear();
+                }
+                return year + '';
+            }
             handleRouteParams(id, action) {
                 if (action != 'asset-potensi') return;
                 this.set('identity', id);
-                this.loadRecord();
-            }
-            loadRecord() {
-                this.$.ajax.GET('/ponpes/' + this.identity).then(res => {
-                    if (res.success) {
-                        this.set('record', res.data);
-                        this.set('headerText', res.data.nama_ponpes);
-                        this.loadGrid();
-                    }
-                });
+                this.loadGrid();
             }
             loadGrid() {
                 let payload = {
@@ -473,7 +479,7 @@
                 this.loadGrid();
             }
             __onResetFilterTap() {
-                this.set('params', {});
+                this.resetParams();
                 let timer = setTimeout(() => {
                     this.loadGrid();
                     clearTimeout(timer);

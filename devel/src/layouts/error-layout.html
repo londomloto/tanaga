@@ -34,7 +34,6 @@
                 color: #f4f4f4;
             }
             a {
-                text-decoration: none;
                 font-weight: 600;
                 color: #fff;
             }
@@ -61,15 +60,18 @@
                         <h3>[[ errors.code ]] [[ errors.name ]]</h3>
                         <p>
                             [[ errors.message ]]<br>
-                            Would you like to go to <a href="javascript:;" on-click="__onHomeClick">homepage</a> instead?
+                            Untuk sementara silahkan kembali ke <a href="javascript:;" on-click="__onHomeClick">homepage</a>.
                         </p>
                     </div>
                 </template>
             </div>
             <div class="south">
                 <div class="powered">
-                    <img src$="[[ resolveUrl('../images/powered.png') ]]">
-                    <p>POWERED BY <strong>WORKSAURUS</strong></p>
+                    <img src$="[[ resolveUrl('../../images/logos/logo-48x48.png') ]]">
+                    <div style="text-transform: uppercase; width: 300px; margin: auto;">
+                        <div>POWERED BY</div>
+                        <div>[[ config.app_author ]]</div>
+                    </div>
                 </div>
             </div>
         </div>
