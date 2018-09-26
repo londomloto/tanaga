@@ -411,3 +411,11 @@ A complete [guide](https://elements.polymer-project.org/guides/flex-layout) to `
     }
   </style>
 </custom-style>
+
+<script>
+  // https://github.com/TakayoshiKochi/deprecate-style-in-html-imports
+  var importDoc = document.currentScript.ownerDocument;
+  var style = importDoc.querySelector('style');
+
+  document.head.appendChild(style);
+</script>
