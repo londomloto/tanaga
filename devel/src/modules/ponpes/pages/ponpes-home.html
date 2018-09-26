@@ -40,7 +40,7 @@
                     <template is="dom-repeat" items="[[ menus ]]">
                         <div class="menu box box-shadow">
                             <div class="box-body" on-tap="__onMenuTap">
-                                <div class$="icon [[ item.name ]]">
+                                <div class$="icon [[ item.name ]]" style$="background-color: [[ __computeAccent(index) ]]">
                                     <paper-icon-button icon="[[ item.icon ]]"></paper-icon-button>
                                 </div>
                                 <div class="text">
@@ -88,6 +88,22 @@
             handleRouteParams(id, action) {
                 if ( ! +id) return;
                 this.set('identity', id);
+            }
+            static get colors() {
+                let colors = [];
+                ['red', 'blue', 'green', 'yellow', 'grey'].forEach(c => {
+                    ['300', '500', '700'].forEach(d => {
+                        colors.push('--google-' + c + '-' + d);
+                    });
+                });
+                return colors;
+            }
+            __computeAccent(index) {
+                let colors = PonpesHome.colors;
+                if (index > colors.length - 1) index = index % colors.length;
+                let accent = colors[index];
+
+                return 'var(' + accent + ')';
             }
             __onMenuTap(e) {
                 let item = e.model.item;
