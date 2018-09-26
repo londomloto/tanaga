@@ -33,7 +33,7 @@ class HomeController extends \Micro\Controller {
         $base = $this->url->getBaseUrl();
 
         foreach($result as $item) {
-            if ( ! empty($item->img_gedung)) {
+            if ( ! empty($item->img_gedung) && $item->img_gedung != Ponpes::IMG_DEFAULT) {
                 $images[] = array(
                     'image' => $base.'public/resources/ponpes/'.$item->img_gedung
                 );

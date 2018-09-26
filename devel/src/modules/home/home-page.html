@@ -32,8 +32,8 @@
         </style>
         <style include="theme-helper">
             :host {
-                background-color: var(--paper-blue-grey-500);
-                background-image: url(../../../images/backgrounds/background-8.jpg);
+                background-color: #F6F6F6;
+                background-image: url(../../../images/backgrounds/background-10.png);
                 background-repeat: no-repeat;
                 background-size: cover;
                 height: 100%;
@@ -72,7 +72,6 @@
             page-header-block {
                 border-bottom: none;
             }
-
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -121,7 +120,8 @@
             loadSlides() {
                 this.$.ajax.GET('/home/backgrounds').then(res => {
                     if (res.success) {
-                        this.set('slides', res.data);
+                        let slides = res.data;
+                        this.set('slides', slides);
                     }
                 });
             }
