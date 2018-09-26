@@ -96,6 +96,12 @@
                 }
                 
             }
+            handleResizing(width, height) {
+                let pageItem = this.$.pages.selectedItem;
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.handleResizing(width, height);
+                }
+            }
         }
         customElements.define(PonpesPage.is, PonpesPage);
     </script>

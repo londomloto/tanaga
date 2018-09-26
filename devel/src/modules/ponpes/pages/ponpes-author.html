@@ -101,6 +101,9 @@
                 this.set('identity', id);
                 this.loadGrid();
             }
+            handleResizing() {
+                this.$.grid.resize();
+            }
             loadGrid() {
                 let payload = {
                     params: {
