@@ -84,7 +84,7 @@
                 <div id="slider" class="swiper-container">
                     <div class="swiper-wrapper">
                         <template is="dom-repeat" items="[[ slides ]]" on-dom-change="__onSlideRender">
-                            <div class="swiper-slide" style$="background-image: url([[ item.image ]])"></div>
+                            <div class="swiper-slide" data-background$="[[ item.image ]]"></div>
                         </template>        
                     </div>
                     <div id="slider-page" class="swiper-pagination"></div>
@@ -131,25 +131,35 @@
             }
 
             __onSlideRender() {
-                let images = this.shadowRoot.querySelectorAll('.swiper-slide');
-                if (images.length) {
-                    let ps = [];
-                    images.forEach(node => {
+                let slides = this.shadowRoot.querySelectorAll('.swiper-slide');
+
+                if (slides.length) {
+                    let queue = [];
+                    slides.forEach(s => {
+                        let src = s.dataset.background;
+                        let img = new Image();
+
                         let q = {};
                         q.promise = new Promise(r => q.resolve = r);
 
-                        node.addEventListener('load', e => {
+                        img.onload = () => {
                             q.resolve();
-                        });
-                        if (node.complete) {
-                            node.dispatchEvent(new Event('load'));
-                        }
+                            img = null;
+                        };
 
-                        ps.push(q);
+                        img.src = src;
+
+                        if (img.complete) img.onload();
+
+                        queue.push(q);
                     });
 
-                    if (ps.length) {
-                        Promise.all(ps).then(() => {
+                    if (queue.length) {
+                        Promise.all(queue).then(() => {
+                            slides.forEach(s => {
+                                let src = s.dataset.background;
+                                s.style.backgroundImage = 'url(' + src + ')';
+                            });
                             this.__startSlides();
                         });
                     }
