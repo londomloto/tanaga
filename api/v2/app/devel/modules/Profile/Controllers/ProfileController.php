@@ -28,13 +28,16 @@ class ProfileController extends \Micro\Controller {
 
         if ($user) {
             if ($this->request->hasFiles()) {
-                foreach($this->request->getFiles() as $file) {
-                    $name = $file->getName();
-                    $path = APPPATH.'public/resources/avatars/'.$name;
-                    if ($file->moveTo($path)) {
-                        $user->save(array('su_avatar' => $name));
-                    }
-                    break;
+                $this->uploader->initialize(array(
+                    'path' => APPPATH.'public/resources/avatars/',
+                    'types' => array('png', 'jpg', 'jpeg', 'gif', 'bmp'),
+                    'encrypt' => TRUE
+                ));
+
+                if ($this->uploader->upload()) {
+                    $info = $this->uploader->getResult();
+                    $user->su_avatar = $info->filename;
+                    $user->save();
                 }
             }
 
