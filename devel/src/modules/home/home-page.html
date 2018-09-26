@@ -131,8 +131,33 @@
             }
 
             __onSlideRender() {
-                if ( ! this.slides.length) return;
-                
+                let images = this.shadowRoot.querySelectorAll('.swiper-slide');
+                if (images.length) {
+                    let ps = [];
+                    images.forEach(node => {
+                        let q = {};
+                        q.promise = new Promise(r => q.resolve = r);
+
+                        node.addEventListener('load', e => {
+                            q.resolve();
+                        });
+                        
+                        if (node.complete) {
+                            node.dispatchEvent(new Event('load'));
+                        }
+
+                        ps.push(q);
+                    });
+
+                    if (ps.length) {
+                        Promise.all(ps).then(() => {
+                            this.__startSlides();
+                        });
+                    }
+                }
+            }
+
+            __startSlides() {
                 if (this.swiper) {
                     this.swiper.destroy(true);
                 }
