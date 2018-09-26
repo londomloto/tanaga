@@ -230,7 +230,11 @@
                 }
             }
             back() {
-                this.set('route.path', '/ponpes');
+                if (this.identity) {
+                    this.set('route.path', '/ponpes/' + this.identity + '/home');
+                } else {
+                    this.set('route.path', '/ponpes');    
+                }
             }
             __computeHeaderText(name) {
                 return name || 'Nama Pesantren';

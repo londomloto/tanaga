@@ -238,7 +238,11 @@
                 }
             }
             back() {
-                this.set('route.path', '/masjid');
+                if (this.identity) {
+                    this.set('route.path', '/masjid/' + this.identity + '/home');
+                } else {
+                    this.set('route.path', '/masjid');    
+                }
             }
             __computeHeaderText(name) {
                 return name || 'Nama Rumah Ibadah';
