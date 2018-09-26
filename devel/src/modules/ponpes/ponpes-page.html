@@ -25,7 +25,7 @@
 
         <kct-ajax id="ajax"></kct-ajax>
 
-        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
+        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" on-itemactivate="__onPageActivate" lazy-load>
             <ponpes-list id="list" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-list.html"></ponpes-list>
             <ponpes-home id="home" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-home.html"></ponpes-home>
             <ponpes-create id="create" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-create.html"></ponpes-create>
@@ -96,12 +96,17 @@
                 }
                 
             }
-            handleResizing(width, height) {
-                let pageItem = this.$.pages.selectedItem;
-                if (pageItem && pageItem.handleResizing) {
-                    pageItem.handleResizing(width, height);
+
+            __onPageActivate(e) {
+                let pageItem = e.detail.activeItem;
+                
+                if (pageItem) {
+                    if (pageItem.$ && pageItem.$.grid && pageItem.$.grid.resize) {
+                        pageItem.$.grid.resize();
+                    }
                 }
             }
+            
         }
         customElements.define(PonpesPage.is, PonpesPage);
     </script>
