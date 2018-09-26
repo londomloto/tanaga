@@ -68,3 +68,26 @@ Router::get('/test/dx', function(){
 
     print_r($prof->result());
 });
+
+Router::get('/test/build', function(){
+
+    $base = APPPATH;
+    $name = basename($base);
+    $path = realpath($base.'/../../../../'.$name.'/src/modules/');
+
+    $list = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path), RecursiveIteratorIterator::SELF_FIRST);
+
+    foreach($list as $item) {
+        if ($item->isFile()) {
+            $name = $item->getFilename();
+            if (substr($name, -5) == '.html') {
+                $href = str_replace($path, 'modules', $item->getPath());
+                $href = str_replace('\\', '/', $href);
+                $href = $href.'/'.$name;
+
+                echo '<link rel="import" href="'.$href.'">'."\n";
+            }    
+        }
+    }
+
+});

@@ -379,25 +379,33 @@
                             pageState = Object.assign(Object.create(null), this.state);
 
                         if ( ! page) {
-                            Polymer.importHref(
-                                spec.file,
-                                () => {
-                                    spec.state = pageState;
-                                    this.push('pages', spec);
+                            let ctor = customElements.get(spec.type);
 
-                                    this._debounce(
-                                        'selectpage',
-                                        () => {
+                            if (ctor) {
+                                spec.state = pageState;
+                                this.push('pages', spec);
+
+                                this._debounce('selectpage', () => {
+                                    this.set('page', name);
+                                    this.__doLayout();
+                                }, 0);
+                            } else {
+                                Polymer.importHref(
+                                    spec.file,
+                                    () => {
+                                        spec.state = pageState;
+                                        this.push('pages', spec);
+
+                                        this._debounce('selectpage', () => {
                                             this.set('page', name);
                                             this.__doLayout();
-                                        },
-                                        0
-                                    );
-                                },
-                                (err) => {
-                                    this.set('route.path', '/not-found');
-                                }
-                            );
+                                        }, 0);
+                                    },
+                                    (err) => {
+                                        this.set('route.path', '/not-found');
+                                    }
+                                );
+                            }
                         } else {
                             let index = this.pages.indexOf(page);
 

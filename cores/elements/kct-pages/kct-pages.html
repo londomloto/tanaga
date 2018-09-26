@@ -53,26 +53,33 @@
                         if ( ! this.__loaded[this.selected]) {
                             this.__loaded[this.selected] = true;
 
-                            let path = item.getAttribute('import') || (item.localName + '.html'),
-                                host = this.__findHost();
-                            
-                            if (path && host) {
-                                path = host.resolveUrl && host.resolveUrl(path) || path;
-                                Polymer.importHref(
-                                    path,
-                                    () => {
-                                        
-                                        this.__activatePage();
-                                        this.__resizing = Polymer.Debouncer.debounce(
-                                            this.__resizing,
-                                            Polymer.Async.timeOut.after(300),
-                                            () => {
-                                                this.notifyResize();
-                                            }
-                                        );
-                                        Polymer.enqueueDebouncer(this.__resizing);
-                                    }
-                                );
+                            let name = item.localName;
+                            let ctor = customElements.get(name);
+
+                            if (ctor) {
+                                this.__activatePage();
+                            } else {
+                                let path = item.getAttribute('import') || (name + '.html'),
+                                    host = this.__findHost();
+                                
+                                if (path && host) {
+                                    path = host.resolveUrl && host.resolveUrl(path) || path;
+                                    Polymer.importHref(
+                                        path,
+                                        () => {
+                                            
+                                            this.__activatePage();
+                                            this.__resizing = Polymer.Debouncer.debounce(
+                                                this.__resizing,
+                                                Polymer.Async.timeOut.after(300),
+                                                () => {
+                                                    this.notifyResize();
+                                                }
+                                            );
+                                            Polymer.enqueueDebouncer(this.__resizing);
+                                        }
+                                    );
+                                }
                             }
                         } else {
                             this.__activatePage();
