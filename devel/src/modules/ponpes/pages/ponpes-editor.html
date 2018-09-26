@@ -196,6 +196,9 @@
 
                 function done(res) {
                     if (res.success) {
+                        
+                        this.set('route.data.reload_ponpes', true);
+
                         let id = res.data.id_ponpes;
                         if (this.cover) {
                             this.$.ajax.UPLOAD('/ponpes/' + id + '/upload', {

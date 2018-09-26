@@ -203,7 +203,11 @@
 
                 function done(res) {
                     if (res.success) {
+                        
+                        this.set('route.data.reload', true);
+
                         let id = res.data.id_rumah_ibadah;
+                        
                         if (this.cover) {
                             this.$.ajax.UPLOAD('/masjid/' + id + '/upload', {
                                 files: [

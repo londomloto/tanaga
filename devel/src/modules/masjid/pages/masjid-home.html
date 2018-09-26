@@ -83,6 +83,7 @@
                         if (y) {
                             this.$.ajax.DELETE('/masjid/' + this.identity).then(res => {
                                 if (res.success) {
+                                    this.set('route.data.reload', true);
                                     this.set('route.path', '/masjid');
                                 }
                             });

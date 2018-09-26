@@ -133,6 +133,7 @@
                     if (y) {
                         this.$.ajax.DELETE('/ponpes/author/' + this.$.grid.selected.id_author).then(() => {
                             this.loadGrid();
+                            this.set('route.data.reload_masjid', true);
                         });
                     }
                 }); 
@@ -152,6 +153,7 @@
 
                 function done(res) {
                     if (res.success) {
+                        this.set('route.data.reload_masjid', true);
                         this.loadGrid();
                         this.$.editor.close();
                     }

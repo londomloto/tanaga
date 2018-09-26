@@ -96,6 +96,7 @@
                         if (y) {
                             this.$.ajax.DELETE('/ponpes/' + this.identity).then(res => {
                                 if (res.success) {
+                                    this.set('route.data.reload_ponpes', true);
                                     this.set('route.path', '/ponpes');
                                 }
                             });

@@ -40,6 +40,18 @@
                 position: relative;
                 top: -1px;
             }
+
+            .pagination {
+                text-align: center;
+                margin-top: 15px;
+            }
+
+            .pagination paper-button {
+                text-transform: none;
+                padding: 5px 15px;
+                border: 1px solid var(--paper-grey-300);
+                color: var(--paper-blue-grey-700);
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -80,6 +92,9 @@
                         
                     </template>
                 </kct-column>
+                <div class="pagination" hidden$="[[ ! paging.visible ]]">
+                    <paper-button on-tap="__onNextPageTap"><iron-icon icon="arrow-drop-down"></iron-icon>&nbsp;Load data berikutnya...</paper-button>
+                </div>
             </div>
         </kct-vbox>
     </template>
@@ -90,18 +105,85 @@
             }
             static get properties() {
                 return {
-                    records: { type: Array, value: () => ([]) }
+                    records: { type: Array, value: () => ([]) },
+                    paging: {
+                        type: Object,
+                        value: () => ({
+                            enabled: false,
+                            visible: false,
+                            pages: 0,
+                            start: 0,
+                            limit: 25
+                        })
+                    }
                 }
             }
             handleRouteParams(page) {
                 if (page != this.id) return;
-                this.loadRecords();
+
+                if ( ! this.paging.enabled) {
+                    this.set('paging.enabled', true);
+                    this.loadStart();
+                } else {
+                    if (this.get('route.data.reload_ponpes')) {
+                        this.set('route.data.reload_ponpes', undefined);
+                        this.loadEnd();
+                    }
+                }
+
             }
             loadRecords(payload = {}) {
-                this.$.ajax.GET('/ponpes', payload).then(res => {
+                payload.start = this.paging.start;
+                payload.limit = this.paging.limit; 
+
+                return this.$.ajax.GET('/ponpes', payload).then(res => {
                     if (res.success) {
-                        this.set('records', res.data);
+                        let params = res.data;
+                        let offset = this.records.length;
+
+                        params.unshift('records', offset, 0);
+                        this.splice.apply(this, params);
+
+                        let total = +res.total;
+                        let count = this.records.length;
+                        let pages = this.paging.start + this.paging.limit; 
+
+                        this.set('paging.pages', pages);
+
+                        if (count < total) {
+                            this.set('paging.visible', true);
+                        } else {
+                            this.set('paging.visible', false);
+                        }
                     }
+                });
+            }
+            loadStart(params = {}) {
+                this.set('paging.start', 0);
+                this.set('records', []);
+                this.loadRecords(params);
+            }
+            loadNext(params = {}) {
+                let start = +this.paging.start;
+                let limit = +this.paging.limit;
+
+                this.set('paging.start', start + limit);
+                this.loadRecords(params);
+            }
+            loadEnd(params = {}) {
+                let pages = this.paging.pages;
+                let limit = this.paging.limit;
+                let start = this.paging.start;
+
+                this.set('paging.start', 0);
+                this.set('paging.limit', pages);
+                this.set('records', []);
+
+                this.loadRecords(params).then(() => {
+                    // reset
+                    this.set('paging.start', start);
+                    this.set('paging.limit', limit);
+                    this.set('paging.pages', pages);
                 });
             }
             __onAddTap() {
@@ -137,28 +219,24 @@
                     this.toast('Oops!', 'Data koordinat tidak valid', 'warn');
                 }
             }
-            __onRemoveTap() {
-                this.confirm('Konfirmasi', 'Menghapus data pesantren akan menghapus semua dokumen yang berkaitan. Lanjutkan?').then(b => {
-                    if (b == 'yes') {
-                        this.loadRecords();
-                    }
-                });
-            }
             __onReloadTap() {
-                this.loadRecords();
+                this.loadEnd();
             }
             __onSearchEnter(e) {
                 if (e.key == 'Enter') {
                     let v = e.target.value;
                     if (v) {
-                        this.loadRecords({
+                        this.loadStart({
                             query: v,
                             fields: ['nama_ponpes']
                         });
                     } else {
-                        this.loadRecords();
+                        this.loadStart();
                     }
                 }
+            }
+            __onNextPageTap() {
+                this.loadNext();
             }
         }
         customElements.define(PonpesList.is, PonpesList);
