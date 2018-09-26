@@ -24,7 +24,7 @@
 
         <kct-ajax id="ajax"></kct-ajax>
 
-        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" lazy-load>
+        <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" on-itemactivate="__onPageActivate" lazy-load>
             <masjid-list id="list" state="[[ state ]]" route="{{ route }}" import="pages/masjid-list.html"></masjid-list>
             <masjid-home id="home" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/masjid-home.html"></masjid-home>
             <masjid-create id="create" state="[[ state ]]" route="{{ route }}" import="pages/masjid-create.html"></masjid-create>
@@ -80,6 +80,16 @@
                     }
                 }
                 
+            }
+
+            __onPageActivate(e) {
+                let pageItem = e.detail.activeItem;
+                
+                if (pageItem) {
+                    if (pageItem.$ && pageItem.$.grid && pageItem.$.grid.resize) {
+                        pageItem.$.grid.resize();
+                    }
+                }
             }
         }
         customElements.define(MasjidPage.is, MasjidPage);
