@@ -84,7 +84,7 @@
                 <div id="slider" class="swiper-container">
                     <div class="swiper-wrapper">
                         <template is="dom-repeat" items="[[ slides ]]" on-dom-change="__onSlideRender">
-                            <div class="swiper-slide" data-background$="[[ item.image ]]"></div>
+                            <div class="swiper-slide" data-src$="[[ item.image ]]"></div>
                         </template>        
                     </div>
                     <div id="slider-page" class="swiper-pagination"></div>
@@ -136,7 +136,7 @@
                 if (slides.length) {
                     let queue = [];
                     slides.forEach(s => {
-                        let src = s.dataset.background;
+                        let src = s.dataset.src;
                         let img = new Image();
 
                         let q = {};
@@ -145,6 +145,7 @@
                         img.onload = () => {
                             q.resolve();
                             img = null;
+                            s.style.backgroundImage = 'url(' + src + ')';
                         };
 
                         img.src = src;
@@ -156,10 +157,6 @@
 
                     if (queue.length) {
                         Promise.all(queue).then(() => {
-                            slides.forEach(s => {
-                                let src = s.dataset.background;
-                                s.style.backgroundImage = 'url(' + src + ')';
-                            });
                             this.__startSlides();
                         });
                     }
