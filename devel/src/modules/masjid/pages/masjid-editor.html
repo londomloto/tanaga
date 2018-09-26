@@ -118,9 +118,10 @@
                                         id="combo-kota" 
                                         url="/master-wilayah/kota" 
                                         label="Kabupaten/Kota" 
-                                        value="{{ record.kode_kota }}" 
-                                        item-label-path="nama_kota" 
-                                        item-value-path="kode_kota" 
+                                        value="{{ record.id_kota }}" 
+                                        item-label-path="text_kota" 
+                                        item-query-path="nama_kota"  
+                                        item-value-path="id_kota" 
                                         page-size="10" 
                                         on-beforeload="__onComboKotaBeforeLoad"  
                                         on-change="__onComboKotaChange"></kct-combobox>
@@ -132,9 +133,9 @@
                                         id="combo-kecamatan" 
                                         url="/master-wilayah/kecamatan" 
                                         label="Kecamatan" 
-                                        value="{{ record.kode_kecamatan }}" 
+                                        value="{{ record.id_kecamatan }}" 
                                         item-label-path="nama_kecamatan" 
-                                        item-value-path="kode_kecamatan" 
+                                        item-value-path="id_kecamatan" 
                                         page-size="10" 
                                         on-beforeload="__onComboKecamatanBeforeLoad"></kct-combobox>
                                 </div>
@@ -254,7 +255,7 @@
                 let v = c.value;
 
                 if (v) {
-                    this.$['combo-kecamatan'].load({ params: { kode_kota: v } });
+                    this.$['combo-kecamatan'].load({ params: { id_kota: v } });
                 } else {
                     this.$['combo-kecamatan'].value = '';
                 }
@@ -276,7 +277,7 @@
                 if (v) {
                     c.silent = true;
                     c.params = {
-                        kode_kota: v
+                        id_kota: v
                     };
                 }
             }

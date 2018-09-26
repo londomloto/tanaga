@@ -43,19 +43,18 @@
             <template preserve-content>
                 <style include="theme-helper"></style>
                 <div slot="dialog-body">
-                    <paper-input label="Kode Kecamatan" value="{{ editingRecord.kode_kecamatan }}" required auto-validate error-message="Kode kecamatan wajib diisi"></paper-input>
+                    <paper-input label="Nama Kecamatan" value="{{ editingRecord.nama_kecamatan }}"></paper-input>
                     <kct-combobox 
                         url="/master-wilayah/kota" 
-                        label="Kode Kota" 
-                        value="{{ editingRecord.kode_kota }}" 
-                        item-label-path="label_kota" 
-                        item-value-path="kode_kota" 
+                        label="Kota" 
+                        value="{{ editingRecord.id_kota }}" 
+                        item-label-path="text_kota" 
+                        item-query-path="nama_kota"  
+                        item-value-path="id_kota" 
                         page-size="10"></kct-combobox>
-                    <paper-input label="Nama Kecamatan" value="{{ editingRecord.nama_kecamatan }}"></paper-input>
-
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ invalid ]]">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
                     <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
                 </div>
             </template>
@@ -77,22 +76,11 @@
                         type: Array,
                         value: () => ([
                             { type: 'rownumber' }, 
-                            { text: 'Kode Kecamatan', dataIndex: 'kode_kecamatan', width: 120, align: 'center' },
-                            { text: 'Kota', dataIndex: 'nama_kota'},
-                            { text: 'Nama Kecamatan', dataIndex: 'nama_kecamatan' }
+                            { text: 'Nama Kecamatan', dataIndex: 'nama_kecamatan' },
+                            { text: 'Kota', dataIndex: 'text_kota'}
                         ])
                     }
                 };
-            }
-            static get observers() {
-                return [
-                    '__validationChanged(editingRecord.kode_kecamatan)'
-                ];
-            }
-            __validationChanged(kode) {
-                let valid = true;
-                valid = valid && kode;
-                this.set('invalid', !valid);
             }
         }
         customElements.define(MasterWilayahKecamatan.is, MasterWilayahKecamatan);

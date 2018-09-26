@@ -43,18 +43,20 @@
             <template preserve-content>
                 <style include="theme-helper"></style>
                 <div slot="dialog-body">
-                    <paper-input label="Kode Kota" value="{{ editingRecord.kode_kota }}" required auto-validate error-message="Kode kota wajib diisi"></paper-input>
+                    <paper-input label="Nama Kota" value="{{ editingRecord.nama_kota }}"></paper-input>
+
                     <kct-combobox 
                         url="/master-wilayah/propinsi" 
                         label="Kode Propinsi" 
                         value="{{ editingRecord.kode_propinsi }}" 
                         item-label-path="kode_propinsi" 
                         item-value-path="kode_propinsi" 
+                        item-query-path="nama_propinsi" 
                         page-size="10"></kct-combobox>
-                    <paper-input label="Nama Kota" value="{{ editingRecord.nama_kota }}"></paper-input>
+                    
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ invalid ]]">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
                     <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
                 </div>
             </template>
@@ -76,22 +78,11 @@
                         type: Array,
                         value: () => ([
                             { type: 'rownumber' }, 
-                            { text: 'Kode Kota', dataIndex: 'kode_kota', width: 120, align: 'center' },
-                            { text: 'Kode Propinsi', dataIndex: 'kode_propinsi', width: 120 },
-                            { text: 'Nama Kota', dataIndex: 'nama_kota' }
+                            { text: 'Nama Kota', dataIndex: 'nama_kota' }, 
+                            { text: 'Kode Propinsi', dataIndex: 'kode_propinsi' }
                         ])
                     }
                 };
-            }
-            static get observers() {
-                return [
-                    '__validationChanged(editingRecord.kode_kota)'
-                ];
-            }
-            __validationChanged(kode) {
-                let valid = true;
-                valid = valid && kode;
-                this.set('invalid', !valid);
             }
         }
         customElements.define(MasterWilayahKota.is, MasterWilayahKota);

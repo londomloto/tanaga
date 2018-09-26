@@ -5,9 +5,9 @@ class Kecamatan extends \Micro\Model {
 
     public function initialize() {
         $this->hasOne(
-            'kode_kota',
+            'id_kota',
             'App\MasterWilayah\Models\Kota',
-            'kode_kota',
+            'id_kota',
             array(
                 'alias' => 'Kota'
             )
@@ -20,10 +20,13 @@ class Kecamatan extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data['label_kecamatan'] = $data['kode_kecamatan'].' - '.$data['nama_kecamatan'];
+        $data['text_kota'] = NULL;
+
         if ($this->kota) {
             $data['nama_kota'] = $this->kota->nama_kota;
+            $data['text_kota'] = $this->kota->nama_kota.', '.$this->kota->kode_propinsi;
         }
+        
         return $data;
     }
 
@@ -43,15 +46,6 @@ class Kecamatan extends \Micro\Model {
     public function beforeUpdate() {
         $this->last_edit_date = date('Y-m-d H:i:s');
         $this->last_edit_user = $this->getEditorName();
-    }
-
-    public static function findFirstByKode($kode) {
-        return self::findFirst(array(
-            'kode_kecamatan = :kode:',
-            'bind' => array(
-                'kode' => $kode
-            )
-        ));
     }
 
 }

@@ -19,18 +19,18 @@ class Masjid extends \Micro\Model {
         );
 
         $this->hasOne(
-            'kode_kecamatan',
+            'id_kecamatan',
             'App\MasterWilayah\Models\Kecamatan',
-            'kode_kecamatan',
+            'id_kecamatan',
             array(
                 'alias' => 'Kecamatan'
             )
         );
 
         $this->hasOne(
-            'kode_kota',
+            'id_kota',
             'App\MasterWilayah\Models\Kota',
-            'kode_kota',
+            'id_kota',
             array(
                 'alias' => 'Kota'
             )
@@ -66,6 +66,19 @@ class Masjid extends \Micro\Model {
     public function beforeUpdate() {
         $this->last_edit_date = date('Y-m-d H:i:s');
         $this->last_edit_user = $this->getEditorName();
+    }
+
+    public function beforeSave() {
+        $nulls = array(
+            'id_kota',
+            'id_kecamatan'
+        );
+
+        foreach($nulls as $k) {
+            if (isset($this->$k) && $this->$k == '') {
+                $this->$k = NULL;
+            }
+        }
     }
 
     public function getComputedAddress() {

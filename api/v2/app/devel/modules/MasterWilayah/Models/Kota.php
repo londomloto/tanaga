@@ -2,14 +2,14 @@
 namespace App\MasterWilayah\Models;
 
 class Kota extends \Micro\Model {
-
+    
     public function getSource() {
         return 'm_tbl_kota';
     }
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data['label_kota'] = $data['kode_kota'].' - '.$data['nama_kota'];
+        $data['text_kota'] = $data['nama_kota'].', '.$data['kode_propinsi'];
         return $data;
     }
 
@@ -29,15 +29,6 @@ class Kota extends \Micro\Model {
     public function beforeUpdate() {
         $this->last_edit_date = date('Y-m-d H:i:s');
         $this->last_edit_user = $this->getEditorName();
-    }
-
-    public static function findFirstByKode($kode) {
-        return self::findFirst(array(
-            'kode_kota = :kode:',
-            'bind' => array(
-                'kode' => $kode
-            )
-        ));
     }
 
 }

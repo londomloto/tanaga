@@ -10,18 +10,6 @@ class KecamatanController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
-        $kode = (int) $post['kode_kecamatan'];
-
-        if ( ! $kode) {
-            throw new \Exception("Kode kecamatan tidak valid, pastikan berupa angka");
-        }
-
-        $data = Kecamatan::findFirstByKode($kode);
-        
-        if ($data) {
-            throw new \Exception("Kode kecamatan sudah digunakan");
-        }
-
         $data = new Kecamatan();
 
         if ($data->save($post)) {
@@ -33,19 +21,6 @@ class KecamatanController extends \Micro\Controller {
 
     public function updateAction($id) {
         $post = $this->request->getJson();
-        $kode = (int)$post['kode_kecamatan'];
-
-        $data = Kecamatan::findFirst($id);
-
-        if ($data) {
-            if ($data->kode_kecamatan != $kode) {
-                $data = Kecamatan::findFirstByKode($kode);
-                if ($data) {
-                    throw new \Exception("Kode kecamatan sudah digunakan");
-                }
-            }
-        }
-
         $item = Kecamatan::get($id);
 
         if ($item->data) {

@@ -10,18 +10,6 @@ class KotaController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
-        $kode = (int) $post['kode_kota'];
-
-        if ( ! $kode) {
-            throw new \Exception("Kode kota tidak valid, pastikan berupa angka");
-        }
-
-        $data = Kota::findFirstByKode($kode);
-        
-        if ($data) {
-            throw new \Exception("Kode kota sudah digunakan");
-        }
-
         $data = new Kota();
         
         if ($data->save($post)) {
@@ -33,19 +21,6 @@ class KotaController extends \Micro\Controller {
 
     public function updateAction($id) {
         $post = $this->request->getJson();
-        $kode = (int)$post['kode_kota'];
-
-        $data = Kota::findFirst($id);
-
-        if ($data) {
-            if ($data->kode_kota != $kode) {
-                $data = Kota::findFirstByKode($kode);
-                if ($data) {
-                    throw new \Exception("Kode kota sudah digunakan");
-                }
-            }
-        }
-
         $item = Kota::get($id);
 
         if ($item->data) {
