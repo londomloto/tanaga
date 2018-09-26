@@ -82,6 +82,9 @@
                 padding: 5px 8px;
                 margin: 0;
             }
+            #workspace {
+                height: calc(100vh - 150px);
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -98,7 +101,7 @@
                 
             </module-header-block>
             <div class="flex">
-                <kct-hbox fit>
+                <kct-hbox id="workspace">
                     <div class="side">
                         <h3>PARAMETER</h3>
                         <div>

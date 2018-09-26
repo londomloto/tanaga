@@ -3,7 +3,9 @@
 <dom-module id="ponpes-sarana">
     <template>
         <style include="ponpes-table-style">
-            
+            #workspace {
+                height: calc(100vh - 150px);
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -32,7 +34,7 @@
                 </div> -->
             </module-header-block>
             <div class="flex">
-                <kct-hbox fit>
+                <kct-hbox id="workspace">
                     <div class="side">
                         <h3>PARAMETER</h3>
                         <div>

@@ -2,7 +2,11 @@
 
 <dom-module id="ponpes-instrumen-keuangan">
     <template>
-        <style include="ponpes-table-style"></style>
+        <style include="ponpes-table-style">
+            #workspace {
+                height: calc(100vh - 150px);
+            }
+        </style>
 
         <kct-ajax id="ajax"></kct-ajax>
 
@@ -11,7 +15,7 @@
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
             </module-header-block>
             <div class="flex">
-                <kct-hbox fit>
+                <kct-hbox id="workspace">
                     <div class="side">
                         <h3>PARAMETER</h3>
                         <div>
