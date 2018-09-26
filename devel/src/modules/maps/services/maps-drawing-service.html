@@ -22,6 +22,7 @@
                 super();
                 this.drawingManager = null;
                 this.drawingFeatures = [];
+                this.drawingTooltips = [];
             }
 
             clearHistory() {
@@ -35,6 +36,10 @@
                     f.setMap(null);
                 });
                 this.drawingFeatures = [];
+                this.drawingTooltips.forEach(t => {
+                    t.setMap(null);
+                });
+                this.drawingTooltips = [];
             }
 
             addHistory(action, data) {
@@ -66,9 +71,19 @@
 
                 this.drawingManager.setMap(this.map); 
 
+                let Tip = this.declareTooltip();
+
                 google.maps.event.addListener(this.drawingManager, 'markercomplete', m => {
                      this.addHistory('draw-point', m);
                      this.drawingFeatures.push(m);
+
+                     // add tooltip
+                     let posistion = m.getPosition();
+                     let tooltip = new Tip(posistion, [0, 30]);
+                     tooltip.setContent(posistion.lat().toFixed(6) + ', ' + posistion.lng().toFixed(6));
+                     tooltip.setMap(this.map);
+
+                     this.drawingTooltips.push(tooltip);
                 });
             }
 

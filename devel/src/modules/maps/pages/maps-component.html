@@ -91,7 +91,7 @@
 
         <div class="map-tools">
             <div class="tool-group">
-                <div class="tool-item" title="Toggle type" on-tap="__onToggleMapTypeTap">
+                <div class="tool-item" title="Klik untuk mengganti tipe peta" on-tap="__onToggleMapTypeTap">
                     <iron-icon icon="social:public"></iron-icon>    
                     <paper-ripple></paper-ripple>
                 </div>
@@ -107,19 +107,19 @@
                 </div>
             </div>
             <div class="tool-group">
-                <div data-tool="panzoom" class="tool-item" title="Toggle gesture" on-tap="__onToggleMapPanzoom">
+                <div data-tool="panzoom" class="tool-item" title="Klik untuk mengganti mode navigasi" on-tap="__onToggleMapPanzoom">
                     <iron-icon icon="open-with"></iron-icon>    
                     <paper-ripple></paper-ripple>
                 </div>
-                <div data-tool="draw-point" data-group="draw" class="tool-item" title="Draw point (site, hole, etc)" on-tap="__onDrawPointToggleTap">
+                <div data-tool="draw-point" data-group="draw" class="tool-item" title="Klik untuk menambahkan lokasi" on-tap="__onDrawPointToggleTap">
                     <iron-icon icon="maps:place"></iron-icon>    
                     <paper-ripple></paper-ripple>
                 </div>
-                <div data-tool="draw-line" data-group="draw" class="tool-item" title="Draw line (route, section, etc)" on-tap="__onDrawLineToggleTap">
+                <!-- <div data-tool="draw-line" data-group="draw" class="tool-item" title="Draw line (route, section, etc)" on-tap="__onDrawLineToggleTap">
                     <iron-icon icon="editor:show-chart"></iron-icon>    
                     <paper-ripple></paper-ripple>
-                </div>
-                <div data-tool="draw-area" data-group="draw" class="tool-item" title="Draw area (coverage)" on-tap="__onDrawAreaToggleTap">
+                </div> -->
+                <div data-tool="draw-area" data-group="draw" class="tool-item" title="Klik untuk menambahkan region" on-tap="__onDrawAreaToggleTap">
                     <iron-icon icon="maps:terrain"></iron-icon>    
                     <paper-ripple></paper-ripple>
                 </div>
@@ -131,7 +131,7 @@
                 </div>
             </div> -->
             <div class="tool-group">
-                <div data-tool="trash" class="tool-item" title="Clear drawing" on-tap="__onTrashToggleTap">
+                <div data-tool="trash" class="tool-item" title="Klik untuk menghapus lokasi/region" on-tap="__onTrashToggleTap">
                     <iron-icon icon="delete-forever"></iron-icon>    
                     <paper-ripple></paper-ripple>
                 </div>
@@ -259,8 +259,9 @@
                         return mapsViewClasses.Tooltip;
                     }
 
-                    function Tooltip(position) {
+                    function Tooltip(position, offset = [0, 12]) {
                         this.position = position;
+                        this.offset = offset;
 
                         this.content = document.createElement('div');
                         this.content.classList.add('marker-bubble-content');
@@ -284,8 +285,8 @@
                         let display = Math.abs(pos.x) < 4000 && Math.abs(pos.y) < 4000 ? 'block' : 'none';
 
                         if (display == 'block') {
-                            this.anchor.style.left = pos.x + 'px';
-                            this.anchor.style.top = (pos.y - 12) + 'px';
+                            this.anchor.style.left = (pos.x - this.offset[0]) + 'px';
+                            this.anchor.style.top = (pos.y - this.offset[1]) + 'px';
                         }
 
                         if (this.anchor.style.display != display) {
