@@ -89,17 +89,16 @@ class UsersController extends \Micro\Controller {
 
         if ($query->data) {
             if ($this->request->hasFiles()) {
-                foreach($this->request->getFiles() as $file) {
-                    $type = $file->getExtension();
-                    
-                    $name = str_replace(array('@', '.'), '_', $query->data->su_email).'.'.$type;
-                    $path = APPPATH.'public/resources/avatars/'.$name;
+                $this->uploader->initialize(array(
+                    'path' => APPPATH.'public/resources/avatars/',
+                    'types' => array('png', 'jpg', 'jpeg', 'gif', 'bmp'),
+                    'encrypt' => TRUE
+                ));
 
-                    if (@$file->moveTo($path)) {
-                        $query->data->save(array(
-                            'su_avatar' => $name
-                        ));
-                    }
+                if ($this->uploader->upload()) {
+                    $info = $this->uploader->getResult();
+                    $query->data->su_avatar = $info->filename;
+                    $query->data->save();
                 }
             }
         }
