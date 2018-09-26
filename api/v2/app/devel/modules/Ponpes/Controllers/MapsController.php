@@ -25,8 +25,8 @@ class MapsController extends \Micro\Controller {
                 'MIN(ponpes.img_gedung) AS img_gedung'
             ))
             ->join('App\MasterWilayah\Models\Propinsi', 'ponpes.kode_propinsi = propinsi.kode_propinsi', 'propinsi', 'left')
-            ->join('App\MasterWilayah\Models\Kota', 'ponpes.kode_kota = kota.kode_kota', 'kota', 'left')
-            ->join('App\MasterWilayah\Models\Kecamatan', 'ponpes.kode_kecamatan = kecamatan.kode_kecamatan', 'kecamatan', 'left')
+            ->join('App\MasterWilayah\Models\Kota', 'ponpes.id_kota = kota.id_kota', 'kota', 'left')
+            ->join('App\MasterWilayah\Models\Kecamatan', 'ponpes.id_kecamatan = kecamatan.id_kecamatan', 'kecamatan', 'left')
             ->groupBy('ponpes.id_ponpes');
 
         if ( ! $this->role->can('manage_app@application')) {

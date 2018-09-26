@@ -141,7 +141,6 @@
                         node.addEventListener('load', e => {
                             q.resolve();
                         });
-                        
                         if (node.complete) {
                             node.dispatchEvent(new Event('load'));
                         }
