@@ -13,7 +13,7 @@ class JenisSaranaController extends \Micro\Controller {
         $data = new JenisSarana();
         
         if ($data->save($post)) {
-            return JenisSarana::get($data->id_kel_kitab);
+            return JenisSarana::get($data->id_jenis_sarana);
         }
 
         return JenisSarana::none();
