@@ -35,6 +35,9 @@
                 color: #ffffff;
                 cursor: pointer;
             }
+            .item paper-button {
+                text-transform: none;
+            }
             .item-initial {
                 font-weight: 400;
                 font-size: 36px;
@@ -85,9 +88,8 @@
                                         <p class="item-path">[[ item.sm_api ]]</p>
                                     </div>
                                     <div class="box-foot text-center">
-                                        <div class="line"></div>
                                         <paper-button>Detail</paper-button>
-                                        <paper-button data-perm="manage@modules" on-tap="__onDeleteTap">DELETE</paper-button>
+                                        <paper-button data-perm="manage@modules" on-tap="__onDeleteTap">Hapus</paper-button>
                                     </div>
                                 </div>
                             </div>

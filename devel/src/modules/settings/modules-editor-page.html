@@ -43,7 +43,7 @@
         </div> -->
 
         <kct-vbox>
-            <setting-header-block icon="code" desc="Module Aplikasi" on-back-tap="__onBackTap">
+            <setting-header-block icon="code" text="Pengaturan" desc="Module Aplikasi" on-back-tap="__onBackTap">
                 <paper-button data-perm="manage@modules" on-tap="__onSubmitTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Simpan Perubahan</paper-button>
             </setting-header-block>
             <!-- <page-header-block icon="code" description="Application Modules">
@@ -96,7 +96,7 @@
                     </kct-form-validator>
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onCapabilityOK" disabled$="[[ __capInvalid ]]">Tambah</paper-button>
+                    <paper-button on-tap="__onCapabilityOK" disabled$="[[ __capInvalid ]]">Submit</paper-button>
                     <paper-button on-tap="__onCapabilityCancel">Batal</paper-button>
                 </div>
             </template>
