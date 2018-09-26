@@ -455,23 +455,23 @@
                         <div class="grid-statusbar">
                             <paper-menu-button horizontal-align="right" vertical-align="bottom">
                                 <paper-button slot="dropdown-trigger">
-                                    <span class$="paging-text-full [[ screen ]]">Display [[ pageSize ]] rows</span>
-                                    <span class$="paging-text-mini [[ screen ]]">[[ pageSize ]] rows</span>
+                                    <span class$="paging-text-full [[ screen ]]">Tampil [[ pageSize ]] baris</span>
+                                    <span class$="paging-text-mini [[ screen ]]">[[ pageSize ]] baris</span>
                                     <iron-icon icon="arrow-drop-up" style="position: relative; top: 1px;"></iron-icon>
                                 </paper-button>
                                 <paper-listbox selected="{{ pageSize }}" attr-for-selected="value" slot="dropdown-content">
                                     <!-- <paper-item value="2">2 ROWS</paper-item>
                                     <paper-item value="5">5 ROWS</paper-item> -->
-                                    <paper-item value="10">10 ROWS</paper-item>
-                                    <paper-item value="25">25 ROWS</paper-item>
-                                    <paper-item value="50">50 ROWS</paper-item>
+                                    <paper-item value="10">10 BARIS</paper-item>
+                                    <paper-item value="25">25 BARIS</paper-item>
+                                    <paper-item value="50">50 BARIS</paper-item>
                                 </paper-listbox>
                             </paper-menu-button>
                         </div>
                     </div>
                     <div class="flex hide-sm">
                         <div class="grid-statusbar text-center">
-                            <span class="grid-pagination-info">Displaying row <b>[[ __page.start ]]</b> - <b>[[ __page.end ]]</b> of <b>[[ __page.total ]]</b> row(s)</span>    
+                            <span class="grid-pagination-info">Baris <b>[[ __page.start ]]</b> - <b>[[ __page.end ]]</b> dari <b>[[ __page.total ]]</b> baris</span>    
                         </div>
                     </div>
                     <div class="flex">

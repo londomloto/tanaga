@@ -91,7 +91,7 @@
                             </kct-column>
 
                             <div style="padding: 8px 0">
-                                <kct-file-button id="cover" file="{{ cover }}" value="[[ record.img_gedung ]]" label="Cover/Gambar Pesantren"></kct-file-button>    
+                                <kct-file-button id="cover" file="{{ cover }}" value="{{ record.img_gedung }}" label="Cover/Gambar Pesantren"></kct-file-button>    
                             </div>
 
                         </div>
@@ -209,17 +209,23 @@
                                 files: [
                                     { name: 'userfile', file: this.cover }
                                 ]
-                            }).then(() => {
-                                this.toast('INFO', 'Data rumah ibadah berhasil disimpan', 'info');        
+                            }).then(res => {
                                 this.$.cover.file = null;
-                                if (phantom) {
-                                    this.set('route.path', '/masjid/' + res.data.id_rumah_ibadah + '/home');
+                                if (res.success) {
+                                    this.set('record.img_gedung', res.data.img_gedung);
+                                    this.toast('INFO', 'Data rumah ibadah berhasil disimpan', 'info'); 
+                                    if (phantom) {
+                                        this.set('route.path', '/masjid/' + id + '/home');
+                                    }
+                                } else {
+                                    this.set('record.img_gedung', '');
+                                    this.toast('ERROR', res.message, 'danger');
                                 }
                             });
                         } else {
                             this.toast('INFO', 'Data rumah ibadah berhasil disimpan', 'info');        
                             if (phantom) {
-                                this.set('route.path', '/masjid/' + res.data.id_rumah_ibadah + '/home');
+                                this.set('route.path', '/masjid/' + id + '/home');
                             }
                         }
                     } else {

@@ -116,9 +116,10 @@ class UploadProvider  {
                         }
                     }
                 }
+                
                 if ( ! $valid) {
-                    $this->_message = 'Not allowed type' . $mime;
-                    $this->_messages[] = 'Not allowed type' . $mime;
+                    $this->_message = 'Tipe dokumen '.$mime.' tidak diperbolehkan';
+                    $this->_messages[] = 'Tipe dokumen '.$mime.' tidak diperbolehkan';
                     $this->_error += 1;
                 }
             } else {
@@ -155,16 +156,12 @@ class UploadProvider  {
                     $this->reset();
                     return TRUE;
                 } else {
-                    $this->_message = 'Upload failed';
-                    $this->_messages[] = 'Upload failed';
+                    $this->_message = 'Unggah dokumen gagal';
+                    $this->_messages[] = 'Unggah dokumen gagal';
                     $this->_error += 1;
-
                 }
             }
         } 
-
-
-
         $this->reset();
         return FALSE;
     }
@@ -187,18 +184,18 @@ class UploadProvider  {
 
             // check file is exists
             $file = $file[0];
-            $this->__doUpload( $file );
+            return $this->__doUpload( $file );
         } else {
-            $this->_message = 'No file to upload';
-            $this->_messages[] = 'No file to upload';
+            $this->_message = 'Tidak ada dokumen yang diunggah';
+            $this->_messages[] = 'Tidak ada dokumen yang diunggah';
             $this->_error += 1;
+
+            return FALSE;
         }
 
 
-        //$this->__virusScanner();
-
-
-        return $this;
+        // $this->__virusScanner();
+        // return $this;
     }
 
     /**

@@ -91,28 +91,34 @@ class MasjidController extends \Micro\Controller {
     public function uploadAction($id) {
         $item = Masjid::get($id);
         $done = FALSE;
+        $data = NULL;
         $message = '';
 
         if ($item->data && $this->request->hasFiles()) {
             $path = APPPATH.'public/resources/masjid/';
+            
             $this->uploader->initialize(array(
                 'path' => $path,
                 'types' => array('jpg', 'jpeg', 'png'),
                 'encrypt' => TRUE
             ));
 
-            if ($this->uploader->upload()) {
+            $done = $this->uploader->upload();
+
+            if ($done) {
                 $info = $this->uploader->getResult();
                 $item->data->img_gedung = $info->filename;
                 $item->data->save();
-                $done = TRUE;
+                
+                $data = $item->data->toArray();
             } else {
                 $message = $this->uploader->getMessage();
             }
         }
 
         return array(
-            'success' => TRUE,
+            'success' => $done,
+            'data' => $data,
             'message' => $message
         );
     }

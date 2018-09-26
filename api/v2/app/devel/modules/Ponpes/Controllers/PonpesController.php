@@ -91,6 +91,7 @@ class PonpesController extends \Micro\Controller {
     public function uploadAction($id) {
         $item = Ponpes::get($id);
         $done = FALSE;
+        $data = NULL;
         $message = '';
 
         if ($item->data && $this->request->hasFiles()) {
@@ -106,13 +107,15 @@ class PonpesController extends \Micro\Controller {
                 $item->data->img_gedung = $info->filename;
                 $item->data->save();
                 $done = TRUE;
+                $data = $item->data->toArray();
             } else {
                 $message = $this->uploader->getMessage();
             }
         }
 
         return array(
-            'success' => TRUE,
+            'success' => $done,
+            'data' => $data,
             'message' => $message
         );
     }
