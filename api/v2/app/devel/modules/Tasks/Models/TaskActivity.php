@@ -199,8 +199,8 @@ class TaskActivity extends \Micro\Model {
                     '**%s** %s %s %s %s',
                     $sender_name,
                     $action,
-                    $labels,
                     $plural,
+                    $labels,
                     $time
                 );
 

@@ -152,8 +152,8 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                     '**%s** %s %s %s untuk aktivitas: "%s"',
                     $sender_name,
                     $action,
-                    $labels,
                     $plural,
+                    $labels,
                     $task->tt_title
                 );
 
