@@ -404,7 +404,7 @@
 
                     this.__trigger('beforesave');
 
-                    this.$.ajax.PUT(this.workspace.kanban.ks_api + '/' + this.record.task.tt_id, payload, options).then(res => {
+                    this.$.ajax.PUT(this.project.sp_api + '/' + this.record.task.tt_id, payload, options).then(res => {
 
                         this.__trigger('aftersave', {
                             response: res,

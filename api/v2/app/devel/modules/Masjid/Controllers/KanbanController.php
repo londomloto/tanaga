@@ -1,5 +1,5 @@
 <?php
-namespace App\Proposal\Controllers;
+namespace App\Masjid\Controllers;
 
 use App\Tasks\Models\Task,
     App\Tasks\Models\TaskStatus,
@@ -8,16 +8,19 @@ use App\Tasks\Models\Task,
     App\Tasks\Models\TaskComment,
     App\Projects\Models\Project,
     App\System\Models\Autonumber,
+    App\Masjid\Models\Masjid,
+    App\Config\Models\Config,
     Micro\Helpers\Theme;
 
 class KanbanController extends \Micro\Controller {
 
     public function findAction() {
-        $params = $this->request->getQuery();
+        $payload = $this->request->getQuery();
 
-        $project = isset($params['project']) ? $params['project'] : FALSE;
-        $statuses = isset($params['statuses']) ? json_decode($params['statuses']) : FALSE;
-        
+        $params = isset($payload['params']) ? json_decode($payload['params'], TRUE) : array();
+        $project = isset($payload['project']) ? $payload['project'] : FALSE;
+        $statuses = isset($payload['statuses']) ? json_decode($payload['statuses']) : FALSE;
+
         $columns = array(
             'task_status.tts_id',
             'task_status.tts_slug',
@@ -52,12 +55,12 @@ class KanbanController extends \Micro\Controller {
 
         $query->andWhere('task_status.tts_deleted = 0');
 
-        $this->applySearch($query, $params);
-        $this->applyFilter($query, $params);
-        $this->applySorter($query, $params, $columns);
+        $this->applySearch($query, $payload);
+        $this->applyFilter($query, $payload);
+        $this->applySorter($query, $payload, $columns);
 
         $result = $query->paginate()
-            ->filter(function($status) {
+            ->filter(function($status) use ($params) {
                 $status = $status->toArray();
                 $task = Task::findFirst($status['tts_tt_id']);
 
@@ -91,6 +94,16 @@ class KanbanController extends \Micro\Controller {
 
                         // return $user->toArray(); 
                     });
+
+                    if (isset($params['tts_id'])) {
+                        // load document to
+                        $document = Masjid::findFirst($task->tt_document);
+
+                        if ($document) {
+                            $item['document'] = $document->toArray();
+                        }
+                        
+                    }
                 }
 
                 return $item;
@@ -320,8 +333,18 @@ class KanbanController extends \Micro\Controller {
 
                 $form['task']['tt_creator_id'] = $auth['su_id'];
                 $form['task']['tt_created_dt'] = date('Y-m-d H:i:s');
-
+                
                 if ($task->save($form['task'])) {
+
+                    if (isset($form['document'])) {
+                        
+                        $document = new Masjid();
+
+                        if ($document->save($form['document'])) {
+                            $task->tt_document = $document->id_rumah_ibadah;
+                            $task->save();
+                        }
+                    }
 
                     if (isset($form['labels'])) {
                         $task->saveLabels($form['labels']);
@@ -395,6 +418,19 @@ class KanbanController extends \Micro\Controller {
             $data = array();
 
             if ($task->save($form['task'])) {
+
+                if (isset($form['document'])) {
+                    $document = Masjid::findFirst($form['task']['tt_document']);
+                    if ($document) {
+                        
+                        $document->save($form['document']);
+
+                        if ($send && $form['task']['tt_flag'] == 'DISETUJUI') {
+                            $document->aktif = 1;
+                            $document->save();
+                        }
+                    }
+                }
 
                 if (isset($form['labels'])) {
                     $task->saveLabels($form['labels']);
@@ -513,14 +549,29 @@ class KanbanController extends \Micro\Controller {
         $done = FALSE;
 
         if ($task) {
-            $data = $task->toArray();
-            $done = $task->delete();
 
-            if ($done) {
-                $this->socket->broadcast('notify', array(
-                    'type' => 'task-delete',
-                    'data' => $data
-                ));
+            $document = Masjid::findFirst($task->tt_document);
+            $remove = FALSE;
+
+            if ($document) {
+                if ($task->tt_flag != 'DISETUJUI') {
+                    $document->delete();
+                    $remove = TRUE;
+                }
+            } else {
+                $remove = TRUE;
+            }
+
+            if ($remove) {
+                $data = $task->toArray();
+                $done = $task->delete();
+
+                if ($done) {
+                    $this->socket->broadcast('notify', array(
+                        'type' => 'task-delete',
+                        'data' => $data
+                    ));
+                }
             }
         }
 

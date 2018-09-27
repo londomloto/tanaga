@@ -369,7 +369,7 @@
 
                 this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', true);
 
-                this.$.ajax.GET(this.worksheetRecord.ks_api, payload).then((res) => {
+                this.$.ajax.GET(this.projectRecord.sp_api, payload).then((res) => {
                     let items;
 
                     if (payload.start == 0) {

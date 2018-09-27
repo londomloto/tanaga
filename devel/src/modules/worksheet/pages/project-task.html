@@ -323,9 +323,7 @@
                         }
                     };
 
-                    let workspace = this.workspaces[0];
-
-                    this.$.ajax.GET(workspace.kanban.ks_api, payload).then(res => {
+                    this.$.ajax.GET(this.project.sp_api, payload).then(res => {
                         let record = res.data.length ? res.data[0] : null;
                         handle.bind(this)(record);
                     });

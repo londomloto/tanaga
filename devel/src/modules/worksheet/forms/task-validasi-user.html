@@ -102,9 +102,9 @@
                 this.trigger('beforesave');
 
                 if (this.action == 'create') {
-                    this.$.ajax.POST(this.workspace.kanban.ks_api, payload, options).then(done.bind(this));
+                    this.$.ajax.POST(this.project.sp_api, payload, options).then(done.bind(this));
                 } else {
-                    this.$.ajax.PUT(this.workspace.kanban.ks_api + '/' + this.record.task.tt_id, payload, options).then(done.bind(this));
+                    this.$.ajax.PUT(this.project.sp_api + '/' + this.record.task.tt_id, payload, options).then(done.bind(this));
                 }
                 
                 function done(res) {
@@ -148,7 +148,7 @@
                             }
                         };
 
-                        this.$.ajax.DELETE(this.workspace.kanban.ks_api + '/' + this.record.task.tt_id, null, options).then(res => {
+                        this.$.ajax.DELETE(this.project.sp_api + '/' + this.record.task.tt_id, null, options).then(res => {
                             if (res.success) {
                                 this.trigger('remove', { back: true });
                             }
