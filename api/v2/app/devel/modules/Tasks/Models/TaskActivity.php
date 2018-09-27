@@ -116,7 +116,7 @@ class TaskActivity extends \Micro\Model {
 
         switch($type) {
             case 'create':
-                $verb = sprintf('**%s** membuat pekerjaan ini %s', $sender_name, $time);
+                $verb = sprintf('**%s** membuat aktivitas ini %s', $sender_name, $time);
                 break;
             case 'update_title':
                 $verb = sprintf('**%s** merubah title %s', $sender_name, $time);

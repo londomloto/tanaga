@@ -69,21 +69,21 @@ class Notification extends \App\Tasks\Models\TaskActivity {
 
         switch($type) {
             case 'comment':
-                $verb = sprintf('**%s** mengomentari pekerjaan: "%s"', $sender_name, $task->tt_title);
+                $verb = sprintf('**%s** mengomentari aktivitas: "%s"', $sender_name, $task->tt_title);
                 break;
             case 'create':
-                $verb = sprintf('**%s** membuat pekerjaan: "%s"', $sender_name, $task->tt_title );
+                $verb = sprintf('**%s** membuat aktivitas: "%s"', $sender_name, $task->tt_title );
                 break;
             case 'update':
             case 'update_title':
-                $verb = sprintf('**%s** merubah judul pekerjaan: "%s"', $sender_name, $task->tt_title );
+                $verb = sprintf('**%s** merubah judul aktivitas: "%s"', $sender_name, $task->tt_title );
                 break;
             case 'update_detail':
-                $verb = sprintf('**%s** merubah detail pekerjaan: "%s"', $sender_name, $task->tt_title );
+                $verb = sprintf('**%s** merubah detail aktivitas: "%s"', $sender_name, $task->tt_title );
                 break;
             case 'update_flag':
                 $verb = sprintf(
-                    '**%s** merubah status menjadi **%s** untuk pekerjaan: "%s"',
+                    '**%s** merubah status menjadi **%s** untuk aktivitas: "%s"',
                     $sender_name,
                     $this->tta_data,
                     $task->tt_title
@@ -91,7 +91,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 break;
             case 'update_due':
                 $verb = sprintf(
-                    '**%s** merubah due date menjadi **%s** untuk pekerjaan: "%s"',
+                    '**%s** merubah due date menjadi **%s** untuk aktivitas: "%s"',
                     $sender_name,
                     self::_formatDate($this->tta_data, 'M d, Y'),
                     $task->tt_title
@@ -119,7 +119,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 $action = $type == 'add_user' ? 'menugaskan' : 'menghapus';
 
                 $verb = sprintf(
-                    '**%s** %s %s untuk pekerjaan: "%s"',
+                    '**%s** %s %s untuk aktivitas: "%s"',
                     $sender_name,
                     $action,
                     $assignee,
@@ -149,7 +149,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 $action = $type == 'add_label' ? 'menambah' : 'menghapus';
 
                 $verb = sprintf(
-                    '**%s** %s %s %s untuk pekerjaan: "%s"',
+                    '**%s** %s %s %s untuk aktivitas: "%s"',
                     $sender_name,
                     $action,
                     $labels,
