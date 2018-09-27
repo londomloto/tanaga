@@ -1,13 +1,15 @@
 <link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../../cores/mixins/location.html">
 
 <dom-module id="form-base">
     <template>
         
     </template>
     <script>
-        class FormBase extends Polymer.Element {
+        class FormBase extends Mixins(Polymer.Element).use(Mixins.Location) {
 
             static get is() {
                 return 'form-base';
@@ -17,8 +19,15 @@
                 return {
                     record: { type: Object, notify: true },
                     action: { type: String, value: 'create'},
-                    invalid: { type: Boolean, notify: true }
+                    invalid: { type: Boolean, notify: true },
+                    phantom: { type: Boolean, value: true }
                 };
+            }
+
+            static get observers() {
+                return [
+                    '__actionChanged(action)'
+                ];
             }
 
             save() {}
@@ -43,6 +52,10 @@
 
                 document.body.appendChild(toast);
                 toast.open();
+            }
+
+            __actionChanged(action) {
+                this.set('phantom', action != 'update');
             }
         }
 

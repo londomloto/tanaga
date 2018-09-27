@@ -14,6 +14,10 @@
                 background-color: var(--paper-grey-100);
             }
 
+            .box h3 {
+                font-size: 14px;
+            }
+
             .box .media {
                 text-align: center;
                 background-color: var(--paper-blue-grey-200);
@@ -36,11 +40,14 @@
             a.link {
                 text-decoration: none;
                 font-weight: 500;
-                font-size: 15px;
+                font-size: 14px;
                 color: #666;
             }
             a.link:hover {
                 text-decoration: underline;
+            }
+            .box-foot paper-button {
+                text-transform: none;
             }
 
         </style>
@@ -54,9 +61,8 @@
         </div> -->
 
         <kct-vbox>
-            <setting-header-block text="Settings" desc="Worksheets" icon="view-carousel" on-back-tap="__onBackTap">
-                <div class="separator"></div>
-                <paper-button on-tap="__onAddTap"  style="margin-left: 5px;"  data-perm="bpm@settings" data-perm-mode="lock"><iron-icon icon="add"></iron-icon>&nbsp;Add Sheet</paper-button>
+            <setting-header-block text="Pengaturan" desc="Template Bisnis Proses" icon="view-carousel" on-back-tap="__onBackTap">
+                <paper-button on-tap="__onAddTap"  style="margin-left: 5px;" data-perm="manage@bpmn"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Template</paper-button>
             </setting-header-block>
             <!-- <page-header-block icon="view-carousel" title="Worksheet" description="Manage Worksheet">
                 <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add Sheet</paper-button>
@@ -74,9 +80,9 @@
                                 </div>
                                 <div class="box-foot text-center">
                                     <div class="line"></div>
-                                    <paper-button on-tap="__onEditTap">DETAIL</paper-button>
+                                    <paper-button on-tap="__onEditTap">Detail</paper-button>
                                     <template is="dom-if" if="[[ __isEditable(item) ]]">                                        
-                                        <paper-button on-tap="__onDeleteTap" class="text-danger">DELETE</paper-button>
+                                        <paper-button on-tap="__onDeleteTap" class="text-danger">Hapus</paper-button>
                                     </template>
                                 </div>
                             </div>
@@ -131,7 +137,7 @@
             __onDeleteTap(e) {
                 let record = e.model.item;
 
-                this.confirm('Confirm', 'Are you sure want to delete this kanban-setting?').then((y) => {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus template ini?').then((y) => {
                     if (y) {
                         this.$.ajax.DELETE('/kanban/kanban-settings/' + record.ks_id).then(() => {
                             this.__load();

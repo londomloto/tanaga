@@ -1,0 +1,162 @@
+<dom-module id="task-validasi-user">
+    <template>
+        <style include="form-style">
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="container">
+            
+            <kct-column columns="2" gutter="30px">
+                <div class="section">
+                    <h3 class="section-title">Informasi User</h3>
+                    <div>
+                        <paper-input value="{{ record.document.su_fullname }}" label="Nama Lengkap*" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                        <paper-input value="{{ record.document.su_sex }}" label="Jenis Kelamin"></paper-input>
+                        <vaadin-combo-box 
+                            label="Tipe Lembaga" 
+                            value="{{ record.document.su_org_type }}"
+                            items="[[ organizationTypes ]]" 
+                            item-label-path="label" 
+                            item-value-path="value"></vaadin-combo-box>
+                        <paper-input value="{{ record.document.su_org_name }}" label="Nama Lembaga"></paper-input>
+                        <paper-input value="{{ record.document.su_phone }}" label="Telepon"></paper-input>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Akun User</h3>
+                    <div>
+                        <paper-input id="input-email" value="{{ record.document.su_email }}" label="Alamat Email*" type="email" required auto-validate error-message="Alamat email tidak valid"></paper-input>
+                        <kct-combobox 
+                            url="/roles" 
+                            label="Akses Role*" 
+                            value="{{ record.document.su_sr_id }}" 
+                            item-label-path="sr_name" 
+                            item-value-path="sr_id" 
+                            page-size="10"></kct-combobox>
+                    </div>
+                </div>
+            </kct-column>
+
+            <div class="m-t" hidden$="[[ !phantom ]]">
+                <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Tambah kedalam pekerjaan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
+            </div>
+
+            <div class="m-t" hidden$="[[ phantom ]]">
+                <paper-button class="primary" on-tap="__onUpdateTap" disabled$="[[ invalid ]]">Simpan perubahan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onRemoveTap">hapus</a>
+            </div>
+
+            <div class="m-t">&nbsp;</div>
+        </div>
+
+        <kct-confirm id="remove-confirm" title="Konfirmasi">
+            <p>Anda yakin akan menghapus pekerjaan ini?</p>
+        </kct-confirm>
+
+    </template>
+    <script>
+        class TaskValidasiUser extends FormBase {
+            static get is() {
+                return 'task-validasi-user';
+            }
+            static get properties() {
+                return {
+                    organizationTypes: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Pendidikan', value: 'Pendidikan' },
+                            { label: 'Sarana Ibadah', value: 'Sarana Ibadah' }
+                        ])
+                    }
+                }
+            }
+            static get observers() {
+                return [
+                    '__validationChanged(record.document.*)'
+                ];
+            }
+            save(send = false, back = false) {
+                if ( ! this.project && ! this.workspace.worker) {
+                    return;
+                }
+
+                this.record.task.tt_sp_id = this.project.sp_id;
+                this.record.task.tt_title = 'Registrasi ' + this.record.document.su_fullname;
+
+                let payload = {
+                    worker: this.workspace.worker,
+                    record: this.record,
+                    send: send,
+                    back: back,
+                    link: this.siteurl('/login')
+                };
+
+                let options = {
+                    headers: {
+                        'X-Socket-Session': this.socketSession
+                    }
+                };
+
+                this.trigger('beforesave');
+
+                if (this.action == 'create') {
+                    this.$.ajax.POST(this.workspace.kanban.ks_api, payload, options).then(done.bind(this));
+                } else {
+                    this.$.ajax.PUT(this.workspace.kanban.ks_api + '/' + this.record.task.tt_id, payload, options).then(done.bind(this));
+                }
+                
+                function done(res) {
+                    
+                    this.trigger('aftersave', {
+                        send: send,
+                        back: back,
+                        response: res
+                    });
+
+                    if ( ! res.success) {
+                        this.toast('Gagal', res.message, 'danger');
+                    }
+
+                }
+            }
+            __validationChanged(changed) {
+                let doc = this.record.document || {};
+                let valid = true;
+                valid = valid && !!doc.su_fullname;
+                valid = valid && !!doc.su_sr_id;
+                valid = valid && !this.$['input-email'].invalid;
+
+                this.set('invalid', !valid);
+            }
+            __onCancelCreateTap() {
+                this.trigger('cancel', { back: true });
+            }
+            __onCreateTap() {
+                this.save(true, true);
+            }
+            __onUpdateTap() {
+                this.save(false, false);
+            }
+            __onRemoveTap() {
+                this.$['remove-confirm'].open().then(btn => {
+                    if (btn == 'yes') {
+                        let options = {
+                            headers: {
+                                'X-Socket-Session': this.socketSession
+                            }
+                        };
+
+                        this.$.ajax.DELETE(this.workspace.kanban.ks_api + '/' + this.record.task.tt_id, null, options).then(res => {
+                            if (res.success) {
+                                this.trigger('remove', { back: true });
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        customElements.define(TaskValidasiUser.is, TaskValidasiUser);
+    </script>
+</dom-module>

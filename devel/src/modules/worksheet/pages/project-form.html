@@ -187,7 +187,7 @@
         <kct-event-publisher id="event-publisher"></kct-event-publisher>
 
         <kct-vbox>
-            <header-block text="Project Wizard" on-back-tap="__onBackTap">
+            <header-block text="Pembuatan Proyek" on-back-tap="__onBackTap">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
             </header-block>
 
@@ -202,25 +202,25 @@
                     on-neon-animation-finish="__onSlideEnd">
 
                     <neon-animatable name="step-1">
-                        <h4>Create Project</h4>
+                        <h4>Proyek Baru</h4>
                         
                         <div id="project-title-container" class="form-control">
                             <paper-input 
                                 id="project-title-field" 
                                 value="{{ projectRecord.sp_title }}" 
-                                label="Project Name" 
+                                label="Nama Proyek" 
                                 required 
                                 auto-validate 
-                                error-message="Project name is required" 
+                                error-message="Nama proyek wajib diisi" 
                                 always-float-label></paper-input>
                         </div>
 
                         <div class="form-control">
-                            <paper-input value="{{ projectRecord.sp_desc }}" label="Description (optional)" always-float-label></paper-input>
+                            <paper-input value="{{ projectRecord.sp_desc }}" label="Deksripsi (opsional)" always-float-label></paper-input>
                         </div>
 
                         <div class="form-control m-t">
-                            <label>Project Members (optional)</label>
+                            <label>User Pengolah</label>
                             <div class="m-t">
                                 <div class="member-list">
                                     <template is="dom-repeat" items="[[ members ]]">
@@ -256,8 +256,8 @@
                                                 hide-clear 
                                                 no-label-float>
 
-                                                <paper-button slot="toolbar" on-tap="__onInviteMemberTap"><iron-icon icon="mail"></iron-icon>&nbsp;Invite</paper-button>
-                                                <paper-button slot="toolbar" on-tap="__onComboUserCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+                                                <!-- <paper-button slot="toolbar" on-tap="__onInviteMemberTap"><iron-icon icon="mail"></iron-icon>&nbsp;Invite</paper-button> -->
+                                                <paper-button slot="toolbar" on-tap="__onComboUserCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Tutup</paper-button>
 
                                                 <template>
                                                     <style>
@@ -304,7 +304,7 @@
                     </neon-animatable>
 
                     <neon-animatable name="step-2">
-                        <h4>Choose Worksheet Template</h4>
+                        <h4>Template Bisnis Proses</h4>
                         <div>
                             <paper-radio-group attr-for-selected="name" selected="{{ projectRecord.sp_worksheet_id }}">
                                 <template is="dom-repeat" items="[[ worksheets ]]">
@@ -337,7 +337,7 @@
                             <kct-hbox>
                                 <div class="flex"></div>
                                 <div class="flex text-right">
-                                    <paper-button id="button-goto-step2" data-step="step-2" on-tap="__onStepTap" disabled$="[[ formInvalid ]]">Choose Worksheet Template&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                                    <paper-button id="button-goto-step2" data-step="step-2" on-tap="__onStepTap" disabled$="[[ formInvalid ]]">Pilih Template&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
                                 </div>
                             </kct-hbox>
                         </div>
@@ -346,10 +346,10 @@
                         <div class="step-actions">
                             <kct-hbox>
                                 <div class="flex">
-                                    <paper-button class="btn-outline" data-step="step-1" on-tap="__onStepTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back</paper-button>
+                                    <paper-button class="btn-outline" data-step="step-1" on-tap="__onStepTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Kembali</paper-button>
                                 </div>
                                 <div class="flex text-right">
-                                    <paper-button id="button-save-project" data-step="step-3" on-tap="__onStepTap" disabled$="[[ formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Create Project</paper-button>
+                                    <paper-button id="button-save-project" data-step="step-3" on-tap="__onStepTap" disabled$="[[ formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Buat Proyek</paper-button>
                                 </div>
                             </kct-hbox>
                         </div>
@@ -392,7 +392,7 @@
 
             constructor() {
                 super();
-                this.__projectTitle = 'Untitled Project';
+                this.__projectTitle = 'Nama Proyek';
                 this.__hideComboUser = true;
             }
 
@@ -430,7 +430,7 @@
             }
 
             __projectTitleChanged(value) {
-                this.set('__projectTitle', value || 'Untitled Project');
+                this.set('__projectTitle', value || 'Nama Proyek');
             }
 
             __validationChanged(title) {

@@ -67,12 +67,12 @@
         <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-vbox class$="container [[ screen ]]">
-            <header-block text="Switch Project" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
+            <header-block text="Proyek Aktif" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
                 <kct-combobox 
                     id="combo-project" 
                     slot="header-value" 
                     url="/projects?display=granted" 
-                    label="Select or search project..." 
+                    label="Pilih atau cari proyek..." 
                     value="[[ project ]]" 
                     page-size="10" 
                     item-label-path="sp_title" 
@@ -83,8 +83,8 @@
                     hide-clear 
                     no-label-float>
 
-                    <paper-button slot="toolbar" on-tap="__onCreateProjectTap"><iron-icon icon="add"></iron-icon>&nbsp;Create Project</paper-button>
-                    <paper-button slot="toolbar" on-tap="__onComboProjectCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+                    <paper-button slot="toolbar" on-tap="__onCreateProjectTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Proyek</paper-button>
+                    <paper-button slot="toolbar" on-tap="__onComboProjectCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Tutup</paper-button>
 
                     <template>
                         <style>
@@ -130,7 +130,7 @@
                 <paper-spinner-lite slot="left-toolbar" active$="[[ busy ]]" hidden$="[[ !busy ]]"></paper-spinner-lite>
                 
                 <paper-button id="button-create-task" on-tap="__onCreateTaskTap" slot="left-toolbar">
-                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon><span class="hidden-sm hidden-md">&nbsp;Create Task</span>
+                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon><span class="hidden-sm hidden-md">&nbsp;Pekerjaan</span>
                 </paper-button>
 
                 <task-search project="[[ project ]]" search="{{ search }}" slot="center-toolbar"></task-search>

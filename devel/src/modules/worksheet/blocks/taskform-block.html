@@ -2,8 +2,10 @@
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../forms/form-style.html">
 <link rel="import" href="../forms/form-base.html">
-<link rel="import" href="../forms/task-editor.html">
 
+<!-- <link rel="import" href="../forms/task-editor.html"> -->
+<link rel="import" href="../forms/task-validasi-user.html">
+<link rel="import" href="../forms/task-proposal.html">
 
 <dom-module id="taskform-block">
     <template>
@@ -47,7 +49,8 @@
                         action: { type: String },
                         busy: { type: Boolean, value: false },
                         invalid: { type: Boolean, notify: true },
-                        loading: { type: Boolean, value: false, reflectToAttribute: true }
+                        loading: { type: Boolean, value: false, reflectToAttribute: true },
+                        socketSession: { type: String }
                     };
                 }
 
@@ -142,7 +145,8 @@
                                 workspace="[[ workspace ]]" 
                                 action="[[ action ]]" 
                                 user="[[ user ]]" 
-                                invalid="{{ invalid }}"></${name}>
+                                invalid="{{ invalid }}" 
+                                socket-session="[[ socketSession ]]"></${name}>
                         `; 
 
                         cachedTemplates[name] = template;

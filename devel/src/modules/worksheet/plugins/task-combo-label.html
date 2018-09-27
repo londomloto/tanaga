@@ -12,15 +12,15 @@
             id="combo" 
             url="/labels" 
             page-size="10" 
-            placeholder="Search or select label..." 
+            placeholder="Cari atau pilih label..." 
             item-label-path="sl_label" 
             item-value-path="sl_label" 
             on-beforeload="__onComboBeforeload" 
             no-label-float 
             hide-clear>
             
-            <paper-button slot="toolbar" on-tap="__onAddLabelTap"><iron-icon icon="add"></iron-icon>&nbsp;Add Label</paper-button>
-            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+            <paper-button slot="toolbar" on-tap="__onAddLabelTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Tutup</paper-button>
             <!-- <paper-icon-button icon="close" slot="toolbar" on-tap="__onComboCloseTap"></paper-icon-button> -->
 
             <template>
@@ -72,7 +72,7 @@
 
                     <paper-input label="Label" value="{{ record.sl_label }}" on-change="__onInputLabelChange"></paper-input>
                     <div class="m-t-sm">
-                        <label>Select label color</label>
+                        <label>Pilih warna label</label>
                         <div>
                             <iron-selector attr-for-selected="name" selected="{{ record.sl_color }}">
                                 <template is="dom-repeat" items="[[ colors ]]">
@@ -83,8 +83,8 @@
                     </div>
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap">Add Label</paper-button>
-                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                    <paper-button on-tap="__onEditorSaveTap">Tambah</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>

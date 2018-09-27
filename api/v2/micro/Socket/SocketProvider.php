@@ -14,6 +14,10 @@ class SocketProvider {
 
         $this->_config = $app->config->socket;
 
+        if ( ! $this->_config->offsetExists('enabled')) {
+            $this->_config->offsetSet('enabled', TRUE);
+        }
+        
         if ( ! $this->_config->offsetExists('secure')) {
             $scheme = $app->url->getScheme();
             $this->_config->offsetSet('secure', $scheme == 'https' ? TRUE : FALSE);
@@ -94,6 +98,10 @@ class SocketProvider {
     }
 
     public function send($event, $data) {
+        if ( ! $this->_config->enabled) {
+            return;
+        }
+
         $socket = $this->createSocket();
 
         $app = \Micro\App::getDefault();

@@ -11,14 +11,14 @@
             url="/projects/projects-users" 
             page-size="10" 
             item-label-path="su_fullname" 
-            placeholder="Select or search user..." 
+            placeholder="Cari atau pilih user..." 
             item-value-path="su_id" 
             hide-clear 
             no-label-float>
             
-            <paper-button slot="toolbar" on-tap="__onAddMemberTap"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
-            <paper-button slot="toolbar" on-tap="__onInviteTap"><iron-icon icon="mail"></iron-icon>&nbsp;Invite</paper-button>
-            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Close</paper-button>
+            <paper-button slot="toolbar" on-tap="__onAddMemberTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            <!-- <paper-button slot="toolbar" on-tap="__onInviteTap"><iron-icon icon="mail"></iron-icon>&nbsp;Invite</paper-button> -->
+            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Tutup</paper-button>
             <!-- <paper-icon-button icon="close" slot="toolbar" on-tap="__onComboCloseTap"></paper-icon-button> -->
 
             <template>
@@ -56,7 +56,7 @@
             </template>
         </kct-combobox>    
 
-        <kct-dialog id="editor" title="Add Member" width="400" height="100%">
+        <kct-dialog id="editor" title="Tambah Pengolah" width="400" height="100%">
             <template preserve-content>
                 <style include="theme-helper">
                     :host {
@@ -82,8 +82,8 @@
                 <div slot="dialog-body">
                     
                     <p>
-                        Add your project members by selecting users already registered within the app. 
-                        Adding members will automatically assign them into selected task.
+                        Tambahkan pengolah dari user yang terdaftar dalam aplikasi. 
+                        Menambahkan user akan otomatis menambahkan pekerjaan terhadap user tersebut.
                     </p>
 
                     <div class="message" hidden$="[[ __hideMessage(__message) ]]">[[ __message ]]</div>
@@ -92,12 +92,12 @@
                         id="combo-user" 
                         url="/users" 
                         value="{{ record.su_id }}" 
-                        placeholder="Select or search user..." 
+                        placeholder="Cari atau pilih user..." 
                         page-size="10" 
                         item-label-path="su_fullname" 
                         item-value-path="su_id" 
                         required 
-                        error-message="User is required" 
+                        error-message="User wajib diisi" 
                         hide-clear 
                         no-label-float>
                         <template>
@@ -137,8 +137,8 @@
                     
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ __invalidAdd ]]">Add</paper-button>
-                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ __invalidAdd ]]">Tambah</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>

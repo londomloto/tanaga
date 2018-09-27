@@ -78,19 +78,19 @@
         </div> -->
 
         <kct-vbox>
-            <setting-header-block icon="view-carousel" text="Settings" desc="Worksheet Editor" on-back-tap="__onBackTap">
-                <div class="separator"></div>
+            <setting-header-block icon="view-carousel" text="Pengaturan" desc="Template Bisnis Proses" on-back-tap="__onBackTap">
                 <paper-icon-button on-tap="__onRefreshTap" icon="refresh"></paper-icon-button>
-                <paper-button  style="margin-left: 5px;"  on-tap="__onAddPanelTap" data-perm="bpm@settings" data-perm-mode="lock"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
-                <paper-button on-tap="__onSaveTap" data-perm="bpm@settings" data-perm-mode="lock"><iron-icon icon="done"></iron-icon>&nbsp;Save</paper-button>
+                <paper-button  style="margin-left: 5px;"  on-tap="__onAddPanelTap" data-perm="manage@bpmn"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Panel</paper-button>
+                <paper-button on-tap="__onSaveTap" data-perm="manage@bpmn"><iron-icon icon="done"></iron-icon>&nbsp;Simpan Panel</paper-button>
 
             </setting-header-block>
             <div class="flex">
                 <kct-hbox fit>
                     <div class="west">
                         <div class="p-a">
-                            <paper-input value="{{ record.ks_name }}" label="Kanban Name" required auto-validate error-message="Name is required"></paper-input>
-                            <paper-input value="{{ record.ks_description }}" label="Description"></paper-input>
+                            <paper-input value="{{ record.ks_name }}" label="Nama Template*" required auto-validate error-message="Nama wajib diisi"></paper-input>
+                            <paper-input value="{{ record.ks_api }}" label="API Template*"></paper-input>
+                            <paper-input value="{{ record.ks_description }}" label="Deskripsi"></paper-input>
                         </div>
                     </div>
                     <div class="flex center">
@@ -98,17 +98,17 @@
                             <template is="dom-repeat" items="[[ record.ks_panels ]]" as="panel" on-dom-change="__onPanelChange">
                                 <kct-kanban-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-secondary hide-condensed>
                                     <paper-input slot="panel-title" no-label-float value="{{ panel.kp_title }}"></paper-input>
-                                    <kct-dropdown slot="primary-toolbar" halign="right" data-perm="bpm@settings">
-                                        <paper-item on-tap="__onColorPanelTap">Header color</paper-item>
-                                        <paper-item on-tap="__onShiftLeftPanelTap">Shift left</paper-item>
-                                        <paper-item on-tap="__onShiftRightPanelTap">Shift right</paper-item>
-                                        <paper-item on-tap="__onDeletePanelTap">Delete panel</paper-item>
+                                    <kct-dropdown slot="primary-toolbar" halign="right" data-perm="manage@bpmn">
+                                        <paper-item on-tap="__onColorPanelTap">Aksen Panel</paper-item>
+                                        <paper-item on-tap="__onShiftLeftPanelTap">Geser Kiri</paper-item>
+                                        <paper-item on-tap="__onShiftRightPanelTap">Geser Kanan</paper-item>
+                                        <paper-item on-tap="__onDeletePanelTap">Hapus Panel</paper-item>
                                     </kct-dropdown>
                                     <div class="panel-content">
                                         <template is="dom-repeat" items="[[ panel.kp_statuses ]]" as="status">
                                             <div class="box">
                                                 <div class="box-tool">
-                                                    <paper-icon-button on-tap="__onDeleteStatusTap" icon="clear"  data-perm="bpm@settings"></paper-icon-button>
+                                                    <paper-icon-button on-tap="__onDeleteStatusTap" icon="clear"  data-perm="manage@bpmn"></paper-icon-button>
                                                 </div>
                                                 <div class="box-body">
                                                     <div class="f-500 m-b-xs">[[ status.kst_label ]]</div>
@@ -117,7 +117,7 @@
                                             </div>
                                         </template>
                                         <div class="panel-action">
-                                            <paper-fab style$="background-color: [[ panel.kp_accent ]]" on-tap="__onAddStatusTap" mini icon="add"  data-perm="bpm@settings"></paper-fab>
+                                            <paper-fab style$="background-color: [[ panel.kp_accent ]]" on-tap="__onAddStatusTap" mini icon="add"  data-perm="manage@bpmn"></paper-fab>
                                         </div>
                                     </div>
                                 </kct-kanban-panel>
@@ -130,7 +130,7 @@
 
         <!-- dialog: palette -->
 
-        <kct-dialog id="palette-dialog" title="Header Color" context-as="xyz">
+        <kct-dialog id="palette-dialog" title="Aksen Panel" context-as="xyz">
             <template preserve-content>
                 <style>
                     .palette > a {
@@ -155,7 +155,7 @@
                     }
                 </style>
                 <div slot="dialog-body">
-                    <p class="m-t-0">Select appropriate accent for this panel</p>
+                    <p class="m-t-0">Pilih aksen warna untuk panel</p>
                     <div class="palette">
                         <template is="dom-repeat" items="[[ __computePaletteItems() ]]">
                             <a on-click="__onPaletteItemClick" href="javascript:;" style$="background: [[ item.style ]] ">
@@ -165,14 +165,14 @@
                     </div>
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onPaletteSubmit">OK</paper-button>
-                    <paper-button on-tap="__onPaletteCancel">Cancel</paper-button>
+                    <paper-button on-tap="__onPaletteSubmit">Submit</paper-button>
+                    <paper-button on-tap="__onPaletteCancel">Batal</paper-button>
                 </div>
             </template>
         </kct-dialog>
 
         <!-- dialog: flow -->
-        <kct-dialog id="status-dialog" title="Statuses" width="400" height="100%" scrollable>
+        <kct-dialog id="status-dialog" title="Status" width="400" height="100%" scrollable>
             <template preserve-content>
                 <style include="theme-helper">
                     vaadin-combo-box {
@@ -225,7 +225,7 @@
                                 <vaadin-combo-box 
                                     id="comboworker" 
                                     no-label-float 
-                                    label="Select available workflow..."
+                                    label="Pilih desain..."
                                     items="[[ workers ]]" 
                                     item-value-path="name" 
                                     item-label-path="text"
@@ -428,7 +428,7 @@
 
                 function done(res) {
                     if (res.success) {
-                        this.toast('Success', 'Kanban settings has been saved');
+                        this.toast('INFO', 'Template bisnis proses berhasil disimpan');
                         this.__loadRecord(res.data.ks_id);
                     }
                 }
@@ -469,7 +469,7 @@
                     index = e.model.index;
 
                 if (panel.kp_id) {
-                    this.confirm('Deletion', 'Are you sure want to delete this panel?').then((y)=>{
+                    this.confirm('Konfirmasi', 'Anda yakin akan menghapus panel ini').then((y)=>{
                         if (y) {
                             this.$.ajax1.DELETE('/kanban/kanban-panels/' + panel.kp_id).then(() => {
                                 this.__loadRecord(this.record.ks_id);

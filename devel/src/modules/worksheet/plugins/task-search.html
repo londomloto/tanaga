@@ -238,7 +238,7 @@
                                         items="[[ features ]]" 
                                         item-label-path="label" 
                                         item-value-path="label" 
-                                        placeholder="Search or filter result..." 
+                                        placeholder="Filter atau cari data..." 
                                         overlay-vertical-offset="2" 
                                         on-change="__onCommandChange" 
                                         on-keydown="__onCommandKeydown" 
@@ -420,14 +420,14 @@
             <div class="column-sorter">
                 <paper-menu-button horizontal-align="right" vertical-offset="34" no-animations>
                     <paper-button slot="dropdown-trigger">
-                        <span>Sort [[ selectedSorter.label ]]</span>
+                        <span>Urut [[ selectedSorter.label ]]</span>
                     </paper-button>
                     <paper-listbox selectable="paper-item" slot="dropdown-content">
                         <template is="dom-repeat" items="[[ sorters ]]">
                             <paper-item on-tap="__onSortCheckChange">
                                 <iron-icon hidden$="[[ item.checked ]]"></iron-icon>
                                 <iron-icon icon="done" hidden$="[[ !item.checked ]]"></iron-icon>
-                                <paper-item-body>&nbsp;Sort [[ item.label ]]</paper-item-body>
+                                <paper-item-body>&nbsp;Urut [[ item.label ]]</paper-item-body>
                             </paper-item>
                         </template>
                     </paper-listbox>
@@ -454,12 +454,12 @@
                     features: {
                         type: Array,
                         value: () => ([
-                            { field: 'search', label: 'Search', icon: 'search', hint: 'Press enter or click search' },
-                            { field: 'assignee', label: 'Assignee', icon: 'social:sentiment-very-satisfied', hint: 'Filter by assignee: <b>@assignee</b>' },
-                            { field: 'status', label: 'Status', icon: 'bookmark-border', hint: 'Filter by status: <b>#status</b>' },
-                            { field: 'author', label: 'Creator', icon: 'social:person-outline', hint: 'Filter by creator: <b>&creator</b>' },
-                            { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter by label: <b>~label</b>' },
-                            { field: 'deadline', label: 'Deadline', icon: 'today', hint: 'Filter by deadline: <b>!deadline</b>' }
+                            { field: 'search', label: 'Pencarian', icon: 'search', hint: 'Tekan enter atau klik untuk mencari' },
+                            { field: 'assignee', label: 'Pengolah', icon: 'social:sentiment-very-satisfied', hint: 'Filter pengolah: <b>@pengolah</b>' },
+                            { field: 'status', label: 'Status', icon: 'bookmark-border', hint: 'Filter status: <b>#status</b>' },
+                            { field: 'author', label: 'Pembuat', icon: 'social:person-outline', hint: 'Filter pembuat: <b>&pembuat</b>' },
+                            { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter label: <b>~label</b>' },
+                            { field: 'deadline', label: 'Deadline', icon: 'today', hint: 'Filter deadline: <b>!deadline</b>' }
                         ])
                     },
 
@@ -468,13 +468,13 @@
                     sorters: {
                         type: Array,
                         value: () => ([
-                            { field: 'title', sort: 'ASC', label: 'Subject' },
+                            { field: 'title', sort: 'ASC', label: 'Judul' },
                             { field: 'status', sort: 'ASC', label: 'Status' },
-                            { field: 'created', sort: 'DESC', label: 'Newer' },
-                            { field: 'created', sort: 'ASC', label: 'Older' },
-                            { field: 'due', sort: 'ASC', label: 'Sooner' },
-                            { field: 'due', sort: 'DESC', label: 'Later' },
-                            { field: 'creator', sort: 'ASC', label: 'Creator' }
+                            { field: 'created', sort: 'DESC', label: 'Terbaru' },
+                            { field: 'created', sort: 'ASC', label: 'Terlama' },
+                            { field: 'due', sort: 'ASC', label: 'Segera' },
+                            { field: 'due', sort: 'DESC', label: 'Biasa' },
+                            { field: 'creator', sort: 'ASC', label: 'Pembuat' }
                         ])
                     },
 

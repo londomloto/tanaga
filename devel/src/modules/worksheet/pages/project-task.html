@@ -8,6 +8,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
 <link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
 
 <link rel="import" href="../blocks/header-block.html">
 <link rel="import" href="../blocks/activity-block.html">
@@ -68,10 +69,11 @@
         </style>
         
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket id="socket" manager="global-socket" session="{{ socketSession }}"></kct-socket>
         <kct-event-publisher id="publisher"></kct-event-publisher>
         
         <kct-vbox>
-            <header-block id="header" on-back-tap="__onBackTap" text="Active Project">
+            <header-block id="header" on-back-tap="__onBackTap" text="Proyek Aktif">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
                 <!-- <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="action-button info" slot="right-toolbar" style="margin-left: 8px;">
@@ -79,11 +81,11 @@
                 </paper-button>
                 
                 <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSendTap" class="action-button success" slot="right-toolbar" hidden$="[[ __hideSaveAndSend(recordAction) ]]">
-                    <iron-icon icon="send"></iron-icon>&nbsp;Save &amp; Send
+                    <iron-icon icon="send"></iron-icon>&nbsp;Simpan &amp; Posting
                 </paper-button>
 
                 <paper-button on-tap="__onCancelTap" class="action-button danger" slot="right-toolbar">
-                    <iron-icon icon="close"></iron-icon>&nbsp;Cancel
+                    <iron-icon icon="close"></iron-icon>&nbsp;Batal
                 </paper-button> -->
 
             </header-block>
@@ -100,6 +102,7 @@
                             form="[[ formRecord ]]" 
                             user="[[ user ]]" 
                             invalid="{{ formInvalid }}" 
+                            socket-session="[[ socketSession ]]" 
                             on-beforesave="__onFormBeforeSave"
                             on-aftersave="__onFormAfterSave" 
                             on-cancel="__onFormCancel" 
@@ -170,7 +173,7 @@
 
                 let returnAction = '/worksheet/' + project + '/view/kanban';
 
-                this.set('taskRecord', null);
+                this.set('taskRecord', {});
 
                 // has back data?
                 if (this.route.data) {
@@ -212,7 +215,7 @@
             }
 
             __computeSaveLabel() {
-                return this.recordAction == 'create' ? 'Create' : 'Save';
+                return this.recordAction == 'create' ? 'Tambah' : 'Simpan';
             }
 
             __hideActivity() {
@@ -290,7 +293,8 @@
                     this.set('taskRecord', {
                         task: {},
                         labels: [],
-                        users: []
+                        users: [],
+                        document: {}
                     });
 
                     if (form) {
@@ -310,7 +314,7 @@
             __handleUpdate() {
                 if ( ! this.recordId) return;
 
-                if (this.taskRecord) {
+                if (this.taskRecord && this.taskRecord.task) {
                     handle.bind(this)(this.taskRecord);
                 } else {
                     let payload = {
@@ -319,7 +323,9 @@
                         }
                     };
 
-                    this.$.ajax.GET('/kanban', payload).then(res => {
+                    let workspace = this.workspaces[0];
+
+                    this.$.ajax.GET(workspace.kanban.ks_api, payload).then(res => {
                         let record = res.data.length ? res.data[0] : null;
                         handle.bind(this)(record);
                     });
@@ -415,7 +421,7 @@
                     send: send
                 };
 
-                this.mask('Saving...');
+                this.mask('Menyimpan...');
 
                 if (this.recordAction == 'create') {
                     this.$.ajax.POST('/kanban', payload).then(done.bind(this));
@@ -433,7 +439,7 @@
 
                     if (res.success) {
                         if ( ! back) {
-                            this.toast('Success', 'Data has been saved', 'info');
+                            this.toast('Info', 'Data berhasil disimpan', 'info');
                             this.$.activity.initialize();
                         }
                         
@@ -460,7 +466,7 @@
                     if (e.detail.back) {
                         this.set('route.path', this.returnAction);    
                     } else {
-                        this.toast('Success', 'Data has been saved', 'info');
+                        this.toast('Info', 'Data berhasil disimpan', 'info');
                         this.$.activity.initialize();
                     }
 

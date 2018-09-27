@@ -332,20 +332,20 @@
                                     </paper-item>
                                 </paper-listbox>
                                 <paper-listbox slot="dropdown-content">
-                                    <paper-item data-perm="bpm@settings" data-perm-mode="lock" on-tap="__onAddClick">
+                                    <paper-item data-perm="manage@bpmn"  on-tap="__onAddClick">
                                         <iron-icon icon="add"></iron-icon>
                                         <paper-item-body>
                                             <div>Create Diagram</div>
                                         </paper-item-body>
                                     </paper-item>
                                     <template is="dom-if" if="[[ diagram ]]">
-                                        <paper-item data-perm="bpm@settings" data-perm-mode="lock" on-tap="__onEditClick">
+                                        <paper-item data-perm="manage@bpmn"  on-tap="__onEditClick">
                                             <iron-icon icon="image:edit"></iron-icon>
                                             <paper-item-body>
                                                 <div>Edit</div>
                                             </paper-item-body>
                                         </paper-item>
-                                        <paper-item data-perm="bpm@settings" data-perm-mode="lock" on-tap="__onSaveClick">
+                                        <paper-item data-perm="manage@bpmn"  on-tap="__onSaveClick">
                                             <iron-icon icon="done-all"></iron-icon>
                                             <paper-item-body>
                                                 <div>Save</div>
@@ -354,7 +354,7 @@
                                     </template>
                                 </paper-listbox>
                                 <paper-listbox slot="dropdown-content">
-                                    <paper-item hidden$="[[ !diagram.props.removable ]]" data-perm-mode="lock" on-tap="__onDeleteClick">
+                                    <paper-item hidden$="[[ !diagram.props.removable ]]"  on-tap="__onDeleteClick">
                                         <iron-icon icon="close"></iron-icon>
                                         <paper-item-body>
                                             <div>Delete</div>
@@ -375,10 +375,10 @@
                         </div>
                         <div class="tools-splitter hidden-sm"></div>
                         <div class="tools hidden-sm">
-                            <paper-icon-button icon="bpmn:page" on-tap="__onAddClick" data-perm="bpm@settings" data-perm-mode="lock"></paper-icon-button>
+                            <paper-icon-button icon="add" on-tap="__onAddClick" data-perm="manage@bpmn" ></paper-icon-button>
                             <template is="dom-if" if="[[ diagram ]]" on-dom-change="__onToolDomChange">
-                                <paper-icon-button icon="image:edit" on-tap="__onEditClick" data-perm="bpm@settings" data-perm-mode="lock"></paper-icon-button>
-                                <paper-icon-button icon="done" on-tap="__onSaveClick" data-perm="bpm@settings" data-perm-mode="lock"></paper-icon-button>
+                                <paper-icon-button icon="image:edit" on-tap="__onEditClick" data-perm="manage@bpmn" ></paper-icon-button>
+                                <paper-icon-button icon="done" on-tap="__onSaveClick" data-perm="manage@bpmn" ></paper-icon-button>
                             </template>
                             <div class="clearfix"></div>
                         </div>
@@ -390,7 +390,7 @@
                                 </template>
                             </iron-selector>
                             <paper-icon-button icon="print" on-tap="__onExportClick"></paper-icon-button>
-                            <paper-icon-button icon="bpmn:trash" hidden$="[[ !diagram.props.removable ]]" title="Delete selected shape(s)" on-tap="__onDeleteClick" data-perm="bpm@settings" data-perm-mode="lock"></paper-icon-button>
+                            <paper-icon-button icon="bpmn:trash" hidden$="[[ !diagram.props.removable ]]" title="Delete selected shape(s)" on-tap="__onDeleteClick" data-perm="manage@bpmn" ></paper-icon-button>
                             <div class="clearfix"></div>
                         </div>
                         
@@ -412,7 +412,7 @@
         <!-- /PANEL -->
 
         <!-- DIALOG -->
-        <kct-dialog id="diagram-browser" title="Diagram Browser" width="100%" height="100%" scrollable>
+        <kct-dialog id="diagram-browser" title="Desain" width="100%" height="100%" scrollable>
             <template preserve-content>
                 <style>
                     :host {
@@ -441,10 +441,11 @@
                     }
                     .card-actions paper-button {
                         padding: 4px;
+                        text-transform: none;
                     }
                 </style>
                 <div slot="dialog-body">
-                    <kct-column columns="5">
+                    <kct-column columns="4">
                         <template is="dom-repeat" items="[[ diagrams ]]">
                             <paper-card image$="[[ item.cover_thumb ]]&w=200&h=200">
                                 <div class="card-content">
@@ -457,9 +458,9 @@
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                    <paper-button on-tap="__onOpenDiagramTap">Open</paper-button>
+                                    <paper-button on-tap="__onOpenDiagramTap">Buka</paper-button>
                                     <paper-button on-tap="__onExportDiagramTap">Export</paper-button>
-                                    <paper-button hidden$="[[ !item.removable ]]" on-tap="__onDeleteDiagramTap">Delete</paper-button>
+                                    <paper-button on-tap="__onDeleteDiagramTap">Hapus</paper-button>
                                 </div>
                             </paper-card>
                         </template>
@@ -467,7 +468,7 @@
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onDiagramBrowserImportTap">Import</paper-button>
-                    <paper-button on-tap="__onDiagramBrowserCloseTap">Close</paper-button>
+                    <paper-button on-tap="__onDiagramBrowserCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>
@@ -479,8 +480,8 @@
                     <paper-input value="{{ diagram.props.description }}" label="Description"></paper-input>    
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
-                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>
@@ -502,7 +503,7 @@
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onExporterExportTap">Export</paper-button>
-                    <paper-button on-tap="__onExporterCloseTap">Close</paper-button>
+                    <paper-button on-tap="__onExporterCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>
@@ -522,7 +523,7 @@
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onImporterImportTap">Import</paper-button>
-                    <paper-button on-tap="__onImporterCloseTap">Close</paper-button>
+                    <paper-button on-tap="__onImporterCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>
@@ -532,7 +533,7 @@
         <!-- /DIALOG -->
 
         <kct-confirm id="delete-diagram-confirm">
-            <p>Are you sure want to delete this diagram?</p>
+            <p>Anda yakin akan menghapus desain ini?</p>
         </kct-confirm>
     </template>
     <script>

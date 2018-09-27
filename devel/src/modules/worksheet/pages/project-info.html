@@ -38,6 +38,9 @@
             .setting-block[hidden] {
                 display: none;
             }
+            .setting-block paper-button {
+                text-transform: none;
+            }
             .member-item,
             .role-item {
                 float: left;
@@ -115,28 +118,28 @@
         <kct-event-publisher id="event-publisher"></kct-event-publisher>
 
         <kct-vbox>
-            <header-block text="Project Setting" icon="settings" on-back-tap="__onBackTap">
+            <header-block text="Pengaturan Proyek" icon="settings" on-back-tap="__onBackTap">
                 <h3 slot="header-value">[[ __computeProjectTitle(projectRecord.sp_title) ]]</h3>
             </header-block>
             <div class="flex main padding scroll-y">
 
                 <div class="setting-block">
-                    <h3 class="title">General project settings</h3>
+                    <h3 class="title">Informasi Proyek</h3>
                     <div class="m-t">
                         <div class="form-control">
-                            <paper-input label="Project Name" value="{{ projectRecord.sp_title }}"></paper-input>
+                            <paper-input label="Nama Proyek" value="{{ projectRecord.sp_title }}"></paper-input>
                         </div>
                         <div class="form-control">
-                            <paper-input label="Description" value="{{ projectRecord.sp_desc }}"></paper-input>
+                            <paper-input label="Deskripsi" value="{{ projectRecord.sp_desc }}"></paper-input>
                         </div>
                         <div class="m-t">
-                            <paper-button on-tap="__onSaveTap" class="btn-cyan">Save Changes</paper-button>
+                            <paper-button on-tap="__onSaveTap" class="btn-cyan">Simpan Perubahan</paper-button>
                         </div>
                     </div>
                 </div>
 
                 <div class="setting-block">
-                    <h3 class="title">Project members</h3>
+                    <h3 class="title">Pengolah Proyek (User)</h3>
                     <div class="p-t">
                         <template is="dom-repeat" items="[[ members ]]">
                             <div class="member-item">
@@ -147,8 +150,8 @@
                                     <div class="name">[[ item.su_fullname ]]</div>
                                     <div class="meta">[[ item.sr_name ]]</div>
                                     <div class="tool">
-                                        <a on-tap="__onReinviteTap" href="javascript:;" hidden$="[[ !item.su_need_reinvite ]]">Re-Invite</a>
-                                        <a on-tap="__onRemoveMemberTap" href="javascript:;">Remove</a>
+                                        <a on-tap="__onReinviteTap" href="javascript:;" hidden$="[[ !item.su_need_reinvite ]]">Undang</a>
+                                        <a on-tap="__onRemoveMemberTap" href="javascript:;">Hapus</a>
                                     </div>
                                 </div>
                                 <div class="clearfix"></div>
@@ -164,14 +167,14 @@
                                     url="/users" 
                                     page-size="10" 
                                     width="160" 
-                                    placeholder="Select or search user..." 
+                                    placeholder="Pilih atau cari user..." 
                                     item-label-path="su_fullname" 
                                     item-value-path="su_id" 
                                     on-change="__onComboUserChange" 
                                     hide-clear 
                                     no-label-float>
 
-                                    <paper-button on-tap="__onInviteUserTap" slot="toolbar"><iron-icon icon="mail"></iron-icon>&nbsp;Invite Member</paper-button>
+                                    <!-- <paper-button on-tap="__onInviteUserTap" slot="toolbar"><iron-icon icon="mail"></iron-icon>&nbsp;Invite Member</paper-button> -->
                                     <paper-icon-button on-tap="__onComboUserCloseTap" icon="close" slot="toolbar"></paper-icon-button>
 
                                     <template>
@@ -236,10 +239,10 @@
                 </div>
 
                 <div class="setting-block">
-                    <h3 class="title">Remove project</h3>
-                    <p>Removing the project will delete its repository and all related resources including issues, merge requests etc.</p>
+                    <h3 class="title">Hapus Proyek</h3>
+                    <p>Menghapus proyek akan menghapus semua dokumen yang berkaitan.</p>
                     <div class="m-t">
-                        <paper-button on-tap="__onRemoveProjectTap" class="btn-red">Remove Project</paper-button>
+                        <paper-button on-tap="__onRemoveProjectTap" class="btn-red">Hapus Proyek</paper-button>
                     </div>
                 </div>
 
@@ -412,7 +415,7 @@
                 let data = this.projectRecord;
                 if (data.sp_id) {
                     this.$.ajax.PUT('/projects/' + data.sp_id, data).then((res) => {
-                        this.toast('Success', 'Project has been saved', 'warn');
+                        this.toast('Info', 'Data proyek berhasil disimpan');
 
                         if (res.success) {
                             // name has been changed? update URL
@@ -432,7 +435,7 @@
                 let data = this.projectRecord;
                 if ( ! data) return;
 
-                this.confirm('Confirm', 'Are you sure want to remove this project?').then(y => {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus proyek ini?').then(y => {
                     if (y) {
                         this.$.ajax.DELETE('/projects/' + data.sp_id).then(() => {
                             this.$['event-publisher'].publish('project-removed');
@@ -457,7 +460,7 @@
 
                 if (index !== -1) {
                     if (member.spu_id) {
-                        this.confirm('Confirm', 'Are you sure want to remove this user from project?').then(y => {
+                        this.confirm('Konfirmasi', 'Anda yakin akan menghapus user dari proyek?').then(y => {
                             if (y) {
                                 this.splice('members', index, 1);
                                 this.$.ajax.DELETE('/projects/projects-users/' + member.spu_id);
@@ -474,7 +477,7 @@
                 };
 
                 this.$.ajax.POST('/users/reinvite', payload).then(res => {
-                    this.toast('Success', 'User has been reinvited', 'info');
+                    this.toast('Info', 'User berhasil diundang', 'info');
                 });
             }
 

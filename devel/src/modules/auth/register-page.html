@@ -163,7 +163,37 @@
                     <h3>Belum punya akun?</h3>
                     <p>Masukan informasi Anda dengan benar ke dalam form berikut untuk melakukan registrasi user.</p>
                     <div class="m-t">
-                        <paper-input label="Alamat Email*" value="{{ record.su_email }}" type="email" required auto-validate error-message="Email tidak valid"></paper-input>
+                        
+                        
+
+                        <kct-column columns="2">
+                            <div>
+                                <paper-input label="Nama Lengkap*" value="{{ record.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                            </div>
+                            <div>
+                                <paper-input label="Jenis Kelamin" value="{{ record.su_sex }}"></paper-input>
+                            </div>
+                        </kct-column>
+
+                        <vaadin-combo-box 
+                            label="Tipe Lembaga" 
+                            value="{{ record.su_org_type }}" 
+                            items="[[ organizations ]]" 
+                            item-label-path="label" 
+                            item-value-path="value"></vaadin-combo-box>  
+                        <paper-input label="Nama Lembaga" value="{{ record.su_org_name }}"></paper-input>
+                        
+
+                        <kct-column columns="2">
+                            <div>
+                                <paper-input id="input-email" label="Alamat Email*" value="{{ record.su_email }}" type="email" required auto-validate error-message="Email tidak valid"></paper-input>
+                            </div>
+                            <div>
+                                <paper-input label="Telepon" value="{{ record.su_phone }}"></paper-input>
+                            </div>
+                        </kct-column>
+                        
+
                         <kct-column columns="2">
                             <div>
                                 <paper-input id="p1" label="Password*" value="{{ password1 }}" type="password" error-message="Password tidak sama"></paper-input>
@@ -172,16 +202,6 @@
                                 <paper-input id="p2" label="Konfirmasi Password*" value="{{ password2 }}" type="password" error-message="Password tidak sama"></paper-input>
                             </div>
                         </kct-column>
-
-                        <paper-input label="Nama Lengkap*" value="{{ record.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
-                        <vaadin-combo-box 
-                            label="Tipe Lembaga" 
-                            value="{{ record.su_org_type }}" 
-                            items="[[ organizations ]]" 
-                            item-label-path="label" 
-                            item-value-path="value"></vaadin-combo-box>  
-                        <paper-input label="Nama Lembaga" value="{{ record.su_org_name }}"></paper-input>
-                        <paper-input label="Telepon" value="{{ record.su_phone }}"></paper-input>
                         
                     </div>
                     <div class="m-t">
@@ -241,14 +261,9 @@
 
             static get observers() {
                 return [
-                    '__validationChanged(record.*)',
+                    '__validationChanged(record.*, password1, password2)',
                     '__passwordChanged(password1, password2)'
                 ];
-            }
-
-            ready() {
-                super.ready();
-                console.log(this._siteurl('/recover'));
             }
 
             handleRouteParams() {
@@ -260,8 +275,8 @@
                 let valid = true;
 
                 valid = valid && !!record.su_fullname;
-                valid = valid && !!record.su_email;
-                valid = valid && this.password1;
+                valid = valid && !this.$['input-email'].invalid;
+                valid = valid && !!this.password1;
                 valid = valid && (this.password1 == this.password2);
 
                 this.set('invalid', !valid);

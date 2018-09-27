@@ -2,12 +2,7 @@
     <template>
         <style include="theme-helper">
             .section {
-                padding: 20px 20px 40px 20px;
-                border: 1px solid var(--paper-grey-200);
-                border-radius: 0;
-            }
-            .section + .section {
-                margin-top: 15px;
+                
             }
             .section-title {
                 display: block;
@@ -18,6 +13,21 @@
             .section.section-primary {
                 border-width: 2px;
                 border-color: var(--paper-green-500);
+            }
+            paper-button {
+                margin: 0;
+                text-transform: none;
+                border: 1px solid #dfdfdf;
+            }
+            paper-button.primary {
+                background-color: var(--google-green-300);
+                color: #fff;
+                border: none;
+            }
+            paper-button[disabled] {
+                border: none;
+                background-color: var(--paper-grey-100);
+                color: var(--paper-grey-500);
             }
         </style>
     </template>

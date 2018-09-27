@@ -117,6 +117,15 @@
                 this.loadSlides();
             }
 
+            disconnectedCallback() {
+                if (this.swiper) {
+                    this.swiper.destroy(true);
+                    this.swiper = null;
+                }
+
+                super.disconnectedCallback();
+            }
+
             loadSlides() {
                 this.$.ajax.GET('/home/backgrounds').then(res => {
                     if (res.success) {

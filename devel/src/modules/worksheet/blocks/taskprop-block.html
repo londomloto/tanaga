@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/mixins/location.html">
 <link rel="import" href="../plugins/task-combo-user.html">
 <link rel="import" href="../plugins/task-combo-label.html">
 <link rel="import" href="../plugins/task-combo-status.html">
@@ -158,7 +159,7 @@
                             on-change="__onComboStatusChange"></task-combo-status>
                     </div>
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.task.tt_flag) ]]">No status</div>
+                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.task.tt_flag) ]]">(kosong)</div>
                         <div class="value" hidden$="[[ !__hideEmptyStatus(record.task.tt_flag) ]]">
                             <iron-icon icon="bookmark-border" class="value-icon"></iron-icon>    
                             <span class="value-text">[[ record.task.tt_flag ]]</span>
@@ -172,7 +173,7 @@
                     <save-indicator id="user-indicator"></save-indicator>
                     <paper-button on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
-                <div class="label">Assignee</div>
+                <div class="label">Pengolah</div>
                 <div class="field">
                     <div class="editor" hidden$="[[ !__states.editing.user ]]">
                         <task-combo-user 
@@ -183,7 +184,7 @@
                             on-member-add="__onComboUserAdd"></task-combo-user>
                     </div>
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyUser(record.users.splices) ]]">No assignee - <a href="javascript:;" on-tap="__onAssignSelfTap">assign your self</a></div>
+                        <div class="empty" hidden$="[[ __hideEmptyUser(record.users.splices) ]]">(kosong) - <a href="javascript:;" on-tap="__onAssignSelfTap">tambahkan saya</a></div>
                         <template is="dom-repeat" items="[[ record.users ]]">
                             <div class="user-item">
                                 <div class="tool">
@@ -217,10 +218,10 @@
                             on-value-changed="__onDuePickerChange"></task-date-picker>
                     </div>
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyDue(record.task.tt_due_date) ]]">No due date</div>
+                        <div class="empty" hidden$="[[ __hideEmptyDue(record.task.tt_due_date) ]]">(kosong)</div>
                         <div class="value" hidden$="[[ !__hideEmptyDue(record.task.tt_due_date) ]]">
                             <iron-icon icon="today" class="value-icon"></iron-icon>    
-                            <span class="value-text">[[ record.task.tt_due_date_formatted ]]</span> - <a on-tap="__onDueRemoveTap" href="javascript:;">Remove</a>
+                            <span class="value-text">[[ record.task.tt_due_date_formatted ]]</span> - <a on-tap="__onDueRemoveTap" href="javascript:;">Hapus</a>
                         </div>
                     </div>
                 </div>
@@ -231,7 +232,7 @@
                     <save-indicator id="label-indicator"></save-indicator>
                     <paper-button on-tap="__onLabelEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
-                <div class="label">Labels</div>
+                <div class="label">Label</div>
                 <div class="field">
                     <div class="editor" hidden$="[[ !__states.editing.label ]]">
                         <task-combo-label 
@@ -242,7 +243,7 @@
                             on-label-add="__onComboLabelAdd"></task-combo-label> 
                     </div>
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyLabel(record.labels.splices) ]]">No labels</div>
+                        <div class="empty" hidden$="[[ __hideEmptyLabel(record.labels.splices) ]]">(kosong)</div>
                         <template is="dom-repeat" items="[[ record.labels ]]">
                             <div class="label-item" style$="background-color: [[ item.sl_color ]]">
                                 <span>[[ item.sl_label ]]</span>
@@ -258,7 +259,7 @@
 
     </template>
     <script>
-        class TaskpropBlock extends Polymer.Element {
+        class TaskpropBlock extends Mixins(Polymer.Element).use(Mixins.Location) {
             static get is() {
                 return 'taskprop-block';
             }
@@ -388,7 +389,8 @@
                     let payload = {
                         worker: this.workspace.worker,
                         record: this.record,
-                        send: send
+                        send: send,
+                        link: this._siteurl('/login')
                     };
 
                     let options = {
@@ -402,7 +404,7 @@
 
                     this.__trigger('beforesave');
 
-                    this.$.ajax.PUT('/kanban/' + this.record.task.tt_id, payload, options).then(res => {
+                    this.$.ajax.PUT(this.workspace.kanban.ks_api + '/' + this.record.task.tt_id, payload, options).then(res => {
 
                         this.__trigger('aftersave', {
                             response: res,
@@ -423,7 +425,7 @@
                                 this.set('route.addr', '/worksheet/' + this.project.sp_name + '/task/update/' + this.record.status.tts_id);
                             }
                         } else {
-                            this.toast('Failed', res.message);
+                            this.toast('Error', res.message, 'danger');
                         }
 
                         resolve(res);

@@ -5,6 +5,13 @@ use App\Config\Models\Config;
 use App\Users\Models\User;
 use App\Roles\Models\Role;
 
+use App\Tasks\Models\Task;
+use App\Tasks\Models\TaskStatus;
+use App\Tasks\Models\TaskUser;
+use App\Tasks\Models\TaskLabel;
+use App\Tasks\Models\TaskComment;
+use App\Projects\Models\Project;
+
 class AuthController extends \Micro\Controller {
 
     public function testAction() {
@@ -199,6 +206,7 @@ class AuthController extends \Micro\Controller {
             $post['su_active'] = 0;
             $post['su_created_date'] = date('Y-m-d H:i:s');
             $post['su_created_by'] = 'user';
+            $post['su_avatar'] = NULL;
             
             if ($role) {
                 $post['su_sr_id'] = $role->sr_id;
@@ -206,7 +214,58 @@ class AuthController extends \Micro\Controller {
 
             if ($user->save($post)) {
                 $success = TRUE;
+
+                // create task
+                $worker = $this->bpmn->worker('validasi-user');
+                $project = Project::findFirst(array('sp_name = :project:', 'bind' => array('project' => 'validasi-user')));
+
+                if ($worker && $project) {
+                    $task = new Task();
+                    $task->tt_sp_id = $project->sp_id;
+                    $task->tt_title = 'Registrasi '.$user->su_fullname;
+                    $task->tt_created_dt = date('Y-m-d H:i:s');
+                    $task->tt_creator_id = $user->su_id;
+                    $task->tt_document = $user->su_id;
+
+                    $today = new \DateTime();
+                    $today->modify('+1 day');
+                    $task->tt_due_date = $today->format('Y-m-d');
+
+                    $statuses = $worker->statuses();
+                    $status = NULL;
+                    
+                    if (isset($statuses['data']) && count($statuses['data']) > 0) {
+                        $status = $statuses['data'][0];
+                        $task->tt_flag = $status['text'];
+                    }
+
+                    $arrayTask = $task->toArray();
+                    $status = $worker->start($arrayTask);
+
+                    if ($task->save()) {
+
+                        if ($status['data']) {
+                            $taskStatus = new TaskStatus();
+                            $taskStatus->tts_tt_id = $task->tt_id;
+                            $taskStatus->tts_status = $status['data']['id'];
+                            $taskStatus->tts_target = $status['data']['target'];
+                            $taskStatus->tts_worker = $worker->name();
+                            $taskStatus->tts_deleted = 0;
+                            $taskStatus->tts_created = date('Y-m-d H:i:s');
+
+                            $taskStatus->save();
+                        }
+
+                        $this->socket->broadcast('notify', array(
+                            'type' => 'task-create',
+                            'data' => $task->toArray()
+                        ));
+
+                    }
+                }
+
             }
+            
         }
 
         return array(

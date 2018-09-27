@@ -221,6 +221,8 @@ class App extends \Phalcon\Mvc\Micro {
         if(isset($this->config->mailer)) {
             $this->getDI()->set('mailer', new Mailer($this->config->mailer), TRUE);
         }
+
+        \Moment\Moment::setLocale('id_ID');
     }
 
     private function _initModule() {

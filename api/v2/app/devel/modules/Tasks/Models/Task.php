@@ -139,7 +139,8 @@ class Task extends \Micro\Model {
         if ($this->__loggable) {
             TaskActivity::log('create', array(
                 'tta_tt_id' => $this->tt_id,
-                'tta_data' => $this->tt_title
+                'tta_data' => $this->tt_title,
+                'tta_sender' => $this->tt_creator_id
             ));
         }
     }
@@ -355,9 +356,9 @@ class Task extends \Micro\Model {
         $diff = $date->fromNow();
 
         if ($diff->getDirection() == 'past') {
-            return 'about '.$diff->getRelative();
+            return $diff->getRelative();
         } else {
-            return 'at '.$date->format($format);
+            return $date->format($format);
         }
     }
 }

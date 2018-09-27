@@ -96,9 +96,15 @@
                 text-transform: none;
             }
 
+            .msgbox-footer paper-button.btn-comment {
+                border: solid 1px #dfdfdf;
+            }
+
             #msgbox {
-                border: 1px solid #2A9AF2;
+                border: 1px solid var(--google-green-300);
                 height: 150px;
+                --wysiwyg-toolbar-background: var(--google-green-300);
+                /*--wysiwyg-toolbar-color: var(--paper-grey-500);*/
             }
 
             .history-wrapper,
@@ -228,7 +234,7 @@
         <kct-file id="file" filename="{{ filename }}" on-change="__onFileChange"></kct-file>
         <kct-confirm id="confirm"></kct-confirm>
 
-        <h3 class="timeline-title">Activities</h3>
+        <h3 class="timeline-title">HISTORI PEKERJAAN</h3>
 
         <div class="timeline">
             
@@ -250,8 +256,8 @@
                                     </paper-button>
                                 </div>
                                 <div class="flex text-right">
-                                    <paper-button class="btn-cyan" on-tap="__onSubmitTap">
-                                        Submit Comment
+                                    <paper-button class="btn-comment" on-tap="__onSubmitTap">
+                                        Submit Komentar
                                     </paper-button>
                                 </div>
                             </kct-hbox>
@@ -290,12 +296,12 @@
                                 <div class="comment-footer" hidden$="[[ item.tta_editing ]]">
                                     <!-- <paper-button checked><iron-icon icon="thumb-up"></iron-icon>&nbsp;5 Likes</paper-button>  -->
                                     <paper-button on-tap="__onEditCommentTap" hidden$="[[ !item.tta_is_editable ]]"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button> 
-                                    <label hidden$="[[ !item.tta_is_editable ]]">&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onRemoveCommentTap">delete comment</a></label>
+                                    <label hidden$="[[ !item.tta_is_editable ]]">&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onRemoveCommentTap">hapus komentar</a></label>
                                     <div class="clearfix"></div>
                                 </div>
                                 <div class="comment-footer" hidden$="[[ !item.tta_editing ]]">
-                                    <paper-button on-tap="__onSaveCommentTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
-                                    <label>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0)" on-tap="__onCancelEditCommentTap">cancel editing</a></label>
+                                    <paper-button on-tap="__onSaveCommentTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan Perubahan</paper-button>
+                                    <label>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0)" on-tap="__onCancelEditCommentTap">batal</a></label>
                                     <div class="clearfix"></div>
                                 </div>
                             </div>
@@ -307,7 +313,7 @@
         </div>
 
         <div class="paginator" hidden$="[[ __hidePaginator ]]">
-            <paper-button on-tap="__onPaginatorTap">Load more activities...</paper-button>
+            <paper-button on-tap="__onPaginatorTap">Load data berikutnya...</paper-button>
         </div>
 
     </template>

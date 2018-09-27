@@ -96,9 +96,9 @@ class TaskActivity extends \Micro\Model {
         $diff = $date->fromNow();
 
         if ($diff->getDirection() == 'past') {
-            return 'about '.$diff->getRelative();
+            return $diff->getRelative();
         } else {
-            return 'at '.$date->format('M dS, Y h:m a');
+            return $date->format('M dS, Y h:m a');
         }
     }
 
@@ -116,18 +116,18 @@ class TaskActivity extends \Micro\Model {
 
         switch($type) {
             case 'create':
-                $verb = sprintf('**%s** created task %s', $sender_name, $time);
+                $verb = sprintf('**%s** membuat pekerjaan ini %s', $sender_name, $time);
                 break;
             case 'update_title':
-                $verb = sprintf('**%s** changed title %s', $sender_name, $time);
+                $verb = sprintf('**%s** merubah title %s', $sender_name, $time);
                 break;
             case 'update':
             case 'update_detail':
-                $verb = sprintf('**%s** changed detail %s', $sender_name, $time);
+                $verb = sprintf('**%s** merubah detail %s', $sender_name, $time);
                 break;
             case 'update_flag':
                 $verb = sprintf(
-                    '**%s** changed status to **%s** %s',
+                    '**%s** merubah status menjadi **%s** %s',
                     $sender_name,
                     $this->tta_data,
                     $time
@@ -135,14 +135,14 @@ class TaskActivity extends \Micro\Model {
                 break;
             case 'update_due':
                 $verb = sprintf(
-                    '**%s** changed due date to **%s** %s',
+                    '**%s** merubah due date menjadi **%s** %s',
                     $sender_name,
                     self::_formatDate($this->tta_data, 'M dS, Y'),
                     $time
                 );
                 break;
             case 'comment':
-                $verb = sprintf('**%s** commented %s', $sender_name, $time);
+                $verb = sprintf('**%s** berkomentar %s', $sender_name, $time);
                 break;
             case 'add_user':
             case 'remove_user':
@@ -163,7 +163,7 @@ class TaskActivity extends \Micro\Model {
                     $assignee = implode(', ', $assignee);
                 }
 
-                $action = $type == 'add_user' ? 'assigned' : 'removed';
+                $action = $type == 'add_user' ? 'menugaskan' : 'menghapus';
 
                 $verb = sprintf(
                     '**%s** %s %s %s',
@@ -189,11 +189,11 @@ class TaskActivity extends \Micro\Model {
                         $labels[] = '<span style="padding: 3px 10px; color: #fff; border-radius: 12px; background-color:'.$e->sl_color.'">'.$e->sl_label.'</span>';
                     }
 
-                    $plural = count($labels) > 1 ? 'labels' : 'label';
+                    $plural = count($labels) > 1 ? 'label' : 'label';
                     $labels = implode('&nbsp;', $labels);
                 }
 
-                $action = $type == 'add_label' ? 'add' : 'remove';
+                $action = $type == 'add_label' ? 'menambahkan' : 'menghapus';
 
                 $verb = sprintf(
                     '**%s** %s %s %s %s',
@@ -243,11 +243,13 @@ class TaskActivity extends \Micro\Model {
     }
 
     public static function log($type, $data) {
-        $auth = \Micro\App::getDefault()->auth->user();
+        if ( ! isset($data['tta_sender'])) {
+            $auth = \Micro\App::getDefault()->auth->user();
+            $data['tta_sender'] = $auth['su_id'];
+        }
 
         $data['tta_type'] = $type;
         $data['tta_created'] = date('Y-m-d H:i:s');
-        $data['tta_sender'] = $auth['su_id'];
 
         $activity = new TaskActivity();
 
