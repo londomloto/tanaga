@@ -1,4 +1,4 @@
-<dom-module id="task-proposal">
+<dom-module id="task-proposal-ponpes">
     <template>
         <style include="form-style"></style>
 
@@ -10,30 +10,7 @@
                 <div class="section">
                     <h3 class="section-title">Proposal Pesantren</h3>
                     <div>
-                        <paper-input value="{{ record.document.su_fullname }}" label="Nama Lengkap*" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
-                        <paper-input value="{{ record.document.su_sex }}" label="Jenis Kelamin"></paper-input>
-                        <vaadin-combo-box 
-                            label="Tipe Lembaga" 
-                            value="{{ record.document.su_org_type }}"
-                            items="[[ organizationTypes ]]" 
-                            item-label-path="label" 
-                            item-value-path="value"></vaadin-combo-box>
-                        <paper-input value="{{ record.document.su_org_name }}" label="Nama Lembaga"></paper-input>
-                        <paper-input value="{{ record.document.su_phone }}" label="Telepon"></paper-input>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <h3 class="section-title">Akun User</h3>
-                    <div>
-                        <paper-input id="input-email" value="{{ record.document.su_email }}" label="Alamat Email*" type="email" required auto-validate error-message="Alamat email tidak valid"></paper-input>
-                        <kct-combobox 
-                            url="/roles" 
-                            label="Akses Role*" 
-                            value="{{ record.document.su_sr_id }}" 
-                            item-label-path="sr_name" 
-                            item-value-path="sr_id" 
-                            page-size="10"></kct-combobox>
+                        
                     </div>
                 </div>
             </kct-column>
@@ -54,9 +31,9 @@
         </kct-confirm>
     </template>
     <script>
-        class TaskProposal extends FormBase {
+        class TaskProposalPonpes extends FormBase {
             static get is() {
-                return 'task-proposal';
+                return 'task-proposal-ponpes';
             }
             static get observers() {
                 return [
@@ -133,6 +110,6 @@
                 });
             }
         }
-        customElements.define(TaskProposal.is, TaskProposal);
+        customElements.define(TaskProposalPonpes.is, TaskProposalPonpes);
     </script>
 </dom-module>
