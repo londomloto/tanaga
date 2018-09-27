@@ -6,6 +6,7 @@
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../blocks/module-header-block.html">
 <link rel="import" href="style/ponpes-style.html">
 <link rel="import" href="style/ponpes-table-style.html">
@@ -24,9 +25,10 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-pages id="pages" attr-for-selected="id" selected="[[ page ]]" on-itemactivate="__onPageActivate" lazy-load>
-            <ponpes-list id="list" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-list.html"></ponpes-list>
+            <ponpes-list id="list" screen="[[ screen ]]" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-list.html"></ponpes-list>
             <ponpes-home id="home" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-home.html"></ponpes-home>
             <ponpes-create id="create" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-create.html"></ponpes-create>
             <ponpes-update id="update" state="[[ state ]]" route="{{ route }}" record="{{ record }}" import="pages/ponpes-update.html"></ponpes-update>
@@ -46,6 +48,7 @@
             <ponpes-kitab id="kitab" state="[[ state ]]" route="{{ route }}" record="[[ record ]]" import="pages/ponpes-kitab.html"></ponpes-kitab>
             <ponpes-error id="error" state="[[ state ]]" route="{{ route }}" import="pages/ponpes-error.html"></ponpes-error>
         </kct-pages>
+
     </template>
     <script>
         class PonpesPage extends KctView {

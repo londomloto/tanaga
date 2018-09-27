@@ -138,14 +138,18 @@
             .col-toolbar ::slotted(task-search) {
                 margin-top: 10px;
             }
+            .container.sm .hidden-sm { display: none;  }
+            .container.md .hidden-md { display: none;  }
+            .container.lg .hidden-lg { display: none;  }
+            .container.xl .hidden-xl { display: none;  }
         </style>
 
-        <div class="container">
+        <div class$="container [[ screen ]]">
             <kct-hbox class="columns-container">
                 <div class="col-navigation" hidden$="[[ hideNav ]]">
                     <paper-icon-button class="button-back" icon="arrow-back" title="Back" on-tap="__onBackTap"></paper-icon-button> 
                 </div>
-                <div class="col-header" hidden$="[[ hideHeader ]]">
+                <div class="col-header hidden-sm" hidden$="[[ hideHeader ]]">
                     <kct-hbox fit>
                         <div class="col-header-icon">
                             <div class="header-icon">

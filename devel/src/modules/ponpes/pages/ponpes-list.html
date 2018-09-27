@@ -56,11 +56,11 @@
 
         <kct-ajax id="ajax"></kct-ajax>
 
-        <kct-vbox>
-            <module-header-block text="Pesantren" desc="Database Pesantren" hide-nav>
+        <kct-vbox class$="layout [[ screen ]]">
+            <module-header-block screen="[[ screen ]]" text="Pesantren" desc="Database Pesantren" hide-nav>
                 <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
                 <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Record</paper-button>
-                <div slot="right-toolbar">
+                <div class="hidden-sm" slot="right-toolbar">
                     <div class="form-search">
                         <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
                             <div slot="prefix">
