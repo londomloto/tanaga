@@ -3,8 +3,8 @@
   "short_name": "tanaga",
   "start_url": "/devel/",
   "display": "standalone",
-  "theme_color": "#3f51b5",
-  "background_color": "#3f51b5",
+  "theme_color": "#E67C73",
+  "background_color": "#E67C73",
   "icons": [
     {
       "src": "images/manifest/icon-192x192.png",
