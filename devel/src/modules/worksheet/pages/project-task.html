@@ -323,7 +323,7 @@
                         }
                     };
 
-                    this.$.ajax.GET(this.project.sp_api, payload).then(res => {
+                    this.$.ajax.GET(this.projectRecord.sp_api, payload).then(res => {
                         let record = res.data.length ? res.data[0] : null;
                         handle.bind(this)(record);
                     });
@@ -394,6 +394,8 @@
                         } else {
                             // this.toast('Warning', `This document doesn't have form`, 'warn');
                             this.set('loading', false);
+                            this.toast('Oops!', 'Anda tidak berhak untuk melihat dokumen tersebut', 'danger');
+                            this.set('route.path', this.returnAction);
                         }
                     } else {
                         this.set('loading', false);
@@ -454,7 +456,7 @@
             }
 
             __onFormBeforeSave() {
-                this.mask('Saving...');
+                this.mask('Menyimpan...');
             }
 
             __onFormAfterSave(e) {

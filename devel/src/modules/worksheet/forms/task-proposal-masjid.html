@@ -8,15 +8,23 @@
             
             <kct-column columns="2" gutter="30px">
                 <div class="section">
-                    <h3 class="section-title">Proposal Rumah Ibadah</h3>
+                    <h3 class="section-title">Identitas Rumah Ibadah</h3>
                     <div>
-                        
+                        <paper-input value="{{ record.document.no_statistik }}" label="No. Statistik Dasar" maxlength="50"></paper-input>
+                        <paper-input value="{{ record.document.nama_rumah_ibadah }}" label="Nama Rumah Ibadah *)" required auto-validate error-message="Nama ponpes wajib diisi"></paper-input>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3 class="section-title">Alamat &amp; Kontak</h3>
+                    <div>
+                        <paper-input value="{{ record.document.alamat }}" label="Alamat"></paper-input>
+                        <paper-input  value="{{ record.document.kelurahan }}" label="Desa / Kelurahan"></paper-input>
                     </div>
                 </div>
             </kct-column>
 
             <div class="m-t" hidden$="[[ !phantom ]]">
-                <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Tambah kedalam pekerjaan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
+                <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Simpan data baru</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
             </div>
 
             <div class="m-t" hidden$="[[ phantom ]]">
@@ -46,7 +54,7 @@
                 }
 
                 this.record.task.tt_sp_id = this.project.sp_id;
-                this.record.task.tt_title = 'Registrasi ' + this.record.document.su_fullname;
+                this.record.task.tt_title = 'Proposal ' + this.record.document.nama_rumah_ibadah;
 
                 let payload = {
                     worker: this.workspace.worker,
