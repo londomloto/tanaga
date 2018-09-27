@@ -135,6 +135,14 @@
                         <div class="form-control">
                             <paper-input label="API Proyek" value="{{ projectRecord.sp_api }}"></paper-input>
                         </div>
+                        <div class="form-control">
+                            <vaadin-combo-box 
+                                label="Tipe Proyek" 
+                                value="{{ projectRecord.sp_type }}"
+                                items="[[ projectTypes ]]" 
+                                item-label-path="label" 
+                                item-value-path="value"></vaadin-combo-box>
+                        </div>
                         <div class="m-t">
                             <paper-button on-tap="__onSaveTap" class="btn-cyan">Simpan Perubahan</paper-button>
                         </div>
@@ -335,7 +343,14 @@
                     members: { type: Array },
                     panels: { type: Array },
                     roles: { type: Array },
-                    projectRecord: { type: Object }
+                    projectRecord: { type: Object },
+                    projectTypes: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Private', value: 'private' },
+                            { label: 'Public', value: 'public' },
+                        ])
+                    }
                 };
             }
 

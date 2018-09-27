@@ -15,29 +15,14 @@ class ProjectsController extends \Micro\Controller {
 			case 'granted':
 				$user = $this->auth->user();
 
-				// find public projects
-				$public = $this->db->fetchAll(
-					'SELECT sp_id FROM sys_projects WHERE NOT EXISTS (SELECT 1 FROM sys_projects_users WHERE sp_id = spu_sp_id)',
-					\Phalcon\Db::FETCH_ASSOC
-				);
-
-				$public = array_map(function($e){ return $e['sp_id']; }, $public);
-				$public = implode(',', $public);
-
 				$query = Project::get()
 					->alias('a')
 					->columns(array('a.sp_id',  'MIN(b.spu_id) AS spu_id')) 
 					->join('App\Projects\Models\ProjectUser', 'a.sp_id = b.spu_sp_id', 'b')
-					->filterable();
-
-				if ( ! empty($public)) {
-					$query->andWhere('(b.spu_su_id = :user: OR a.sp_creator_id = :user: OR a.sp_id IN ('.$public.'))', array('user' => $user['su_id']));
-				} else {
-					$query->andWhere('(b.spu_su_id = :user: OR a.sp_creator_id = :user:)', array('user' => $user['su_id']));
-				}
-					
-					// ->orWhere('a.sp_creator_id = :user:', array('user' => $user['su_id']))
-				$query->groupBy('a.sp_id')->sortable();
+					->filterable()
+					->andWhere("(b.spu_su_id = :user: OR a.sp_creator_id = :user: OR a.sp_type = 'public')", array('user' => $user['su_id']))
+					->groupBy('a.sp_id')
+					->sortable();
 
 				$result = $query->paginate()->map(function($rec){
 					$project = Project::get($rec->sp_id)->data;

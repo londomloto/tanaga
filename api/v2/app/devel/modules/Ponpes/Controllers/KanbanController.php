@@ -53,6 +53,9 @@ class KanbanController extends \Micro\Controller {
             $query->inWhere('task_status.tts_status', $statuses);
         }
 
+        $auth = $this->auth->user();
+        $query->inWhere('task_user.ttu_su_id', array($auth['su_id']));
+
         $query->andWhere('task_status.tts_deleted = 0');
 
         $this->applySearch($query, $payload);

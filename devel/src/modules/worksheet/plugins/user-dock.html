@@ -14,9 +14,9 @@
                 float: left;
                 position: relative;
                 overflow: hidden;
-                width: 30px;
-                height: 30px;
-                border-radius: 3px;
+                width: 24px;
+                height: 24px;
+                border-radius: 2px;
                 margin-left: 2px;
             }
             .over {
@@ -67,7 +67,7 @@
                 </div> -->
                 <template is="dom-repeat" items="[[ __limitItems ]]">
                     <div class="item" title="[[ item.su_fullname ]]">
-                        <img src$="[[ item.su_avatar_thumb ]]&w=30&h=30" alt=".">
+                        <img src$="[[ item.su_avatar_thumb ]]&w=24&h=24" alt=".">
                     </div>
                 </template>
                 <div class="over" hidden$="[[ !__extra ]]">[[ __delta ]]<sup>+</sup></div>
@@ -78,7 +78,7 @@
                     <div class="item-row">
                         <template is="dom-repeat" items="[[ chunked ]]">
                             <div class="item"  title="[[ item.su_fullname ]]">
-                                <img src$="[[ item.su_avatar_thumb ]]&w=30&h=30" alt=".">
+                                <img src$="[[ item.su_avatar_thumb ]]&w=24&h=24" alt=".">
                             </div>
                         </template>
                         <div class="clear"></div>

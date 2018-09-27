@@ -120,6 +120,7 @@
                             id="taskprop" 
                             project="[[ projectRecord ]]" 
                             record="{{ taskRecord }}" 
+                            action="[[ recordAction ]]" 
                             workspace="[[ workspaceRecord ]]" 
                             user="[[ user ]]" 
                             route="{{ route }}" 
@@ -301,6 +302,7 @@
                         this.$.form.render().then(() => {
                             this.set('loading', false);
                             this.$.activity.initialize();
+                            this.$.taskprop.initialize();
                         });
                     } else {
                         // this.toast('Warning', `This document doesn't have form`, 'warn');
@@ -390,6 +392,7 @@
                             this.$.form.render().then(() => {
                                 this.set('loading', false);
                                 this.$.activity.initialize();
+                                this.$.taskprop.initialize();
                             });
                         } else {
                             // this.toast('Warning', `This document doesn't have form`, 'warn');

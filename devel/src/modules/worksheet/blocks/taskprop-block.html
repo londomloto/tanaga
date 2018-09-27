@@ -1,4 +1,5 @@
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-role/kct-role.html">
 <link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
@@ -138,6 +139,7 @@
         </style>
         
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-role id="role"></kct-role>
         <kct-socket manager="global-socket" session="{{ socketSession }}"></kct-socket>
 
         <div class="scroller">
@@ -145,7 +147,7 @@
             <div class="form-group">
                 <div class="tools">
                     <save-indicator id="status-indicator"></save-indicator>
-                    <paper-button on-tap="__onStatusEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button data-perm="manage_project@worksheet" on-tap="__onStatusEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
                 <div class="label">Status</div>
                 <div class="field">
@@ -171,7 +173,7 @@
             <div class="form-group">
                 <div class="tools">
                     <save-indicator id="user-indicator"></save-indicator>
-                    <paper-button on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button data-perm="manage_project@worksheet" on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
                 <div class="label">Pengolah</div>
                 <div class="field">
@@ -184,8 +186,8 @@
                             on-member-add="__onComboUserAdd"></task-combo-user>
                     </div>
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyUser(record.users.splices) ]]">(kosong) - <a href="javascript:;" on-tap="__onAssignSelfTap">tambahkan saya</a></div>
-                        <template is="dom-repeat" items="[[ record.users ]]">
+                        <div class="empty" hidden$="[[ __hideEmptyUser(record.users.splices) ]]">(kosong)<!-- <a href="javascript:;" on-tap="__onAssignSelfTap">tambahkan saya</a> --></div>
+                        <template is="dom-repeat" items="[[ record.users ]]" on-dom-change="__onUsersRender">
                             <div class="user-item">
                                 <div class="tool">
                                     <!-- <paper-icon-button on-tap="__onUserRemoveTap" icon="close"></paper-icon-button> -->
@@ -196,7 +198,7 @@
                                 <div class="text">
                                     <div>[[ item.su_fullname ]]</div>
                                     <div class="meta">[[ item.su_email ]]</div>
-                                    <div><a on-tap="__onUserRemoveTap" href="javascript:void(0)">Remove</a></div>
+                                    <div data-perm="manage_project@worksheet"><a on-tap="__onUserRemoveTap" href="javascript:void(0)">Hapus</a></div>
                                 </div>
                                 <div class="clearfix"></div>
                             </div>
@@ -221,7 +223,7 @@
                         <div class="empty" hidden$="[[ __hideEmptyDue(record.task.tt_due_date) ]]">(kosong)</div>
                         <div class="value" hidden$="[[ !__hideEmptyDue(record.task.tt_due_date) ]]">
                             <iron-icon icon="today" class="value-icon"></iron-icon>    
-                            <span class="value-text">[[ record.task.tt_due_date_formatted ]]</span> - <a on-tap="__onDueRemoveTap" href="javascript:;">Hapus</a>
+                            <span class="value-text">[[ record.task.tt_due_date_formatted ]]</span><!--  - <a on-tap="__onDueRemoveTap" href="javascript:;">Hapus</a> -->
                         </div>
                     </div>
                 </div>
@@ -268,7 +270,8 @@
                 return {
                     project: { type: Object },
                     workspace: { type: Object },
-                    record: { type: Object, notify: true },
+                    record: { type: Object, notify: true }, 
+                    action: { type: String },
                     loading: { type: Boolean, value: false, reflectToAttribute: true } 
                 };
             }
@@ -285,6 +288,15 @@
                     }
                 };
 
+            }
+
+            initialize() {
+                this.$.role.validate();
+
+                if (this.action == 'create') {
+                    this.__assignSelf();
+                    this.__assignMembers();
+                }
             }
 
             stopEditing() {
@@ -344,6 +356,32 @@
 
                 document.body.appendChild(toast);
                 toast.open();
+            }
+
+            __assignSelf() {
+                let user = this.user;
+                
+                if (user) {
+                    this.push('record.users', Object.assign({}, user));
+                    this.save('user');
+                }
+            }
+
+            __assignMembers() {
+                this.$.ajax.GET('/projects/projects-users', {
+                    project: this.project.sp_id
+                }).then(res => {
+                    if (res.success) {
+                        let members = res.data;
+                        let exists = this.record.users.map(e => e.su_id);
+                        
+                        members.forEach(m => {
+                            if (exists.indexOf(m.su_id) === -1) {
+                                this.push('record.users', Object.assign({}, m));
+                            }
+                        });
+                    }
+                });
             }
 
             __trigger(name, data = {}) {
@@ -438,6 +476,10 @@
                 return promise;
             }
 
+            __onUsersRender() {
+                this.$.role.validate();
+            }
+
             __onUserEditTap() {
                 if ( ! this.__states.editing.user) {
                     this.startEditingUser();
@@ -456,13 +498,7 @@
 
             __onAssignSelfTap(e) {
                 e.preventDefault();
-                let user = this.user;
-                
-                if (user) {
-                    this.push('record.users', Object.assign({}, user));
-                    this.save('user');
-                }
-                
+                this.__assignSelf();
             }
 
             __onLabelEditTap() {

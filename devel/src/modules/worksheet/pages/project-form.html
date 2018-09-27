@@ -223,6 +223,15 @@
                             <paper-input value="{{ projectRecord.sp_api }}" label="API Proyek" always-float-label></paper-input>
                         </div>
 
+                        <div class="form-control">
+                            <vaadin-combo-box 
+                                label="Tipe Proyek" 
+                                value="{{ projectRecord.sp_type }}"
+                                items="[[ projectTypes ]]" 
+                                item-label-path="label" 
+                                item-value-path="value"></vaadin-combo-box>
+                        </div>
+
                         <div class="form-control m-t">
                             <label>User Pengolah</label>
                             <div class="m-t">
@@ -382,7 +391,14 @@
                     worksheets: { type: Array },
                     formInvalid: { type: Boolean, value: true },
                     entryAnimation: { type: String, value: 'slide-from-right-animation' },
-                    exitAnimation: { type: String, value: 'slide-left-animation' }
+                    exitAnimation: { type: String, value: 'slide-left-animation' },
+                    projectTypes: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Private', value: 'private' },
+                            { label: 'Public', value: 'public' },
+                        ])
+                    }
                 };
             }
 
