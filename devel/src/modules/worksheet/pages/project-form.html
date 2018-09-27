@@ -187,7 +187,7 @@
         <kct-event-publisher id="event-publisher"></kct-event-publisher>
 
         <kct-vbox>
-            <header-block text="Pembuatan Proyek" on-back-tap="__onBackTap">
+            <header-block text="Pembuatan Aktivitas" on-back-tap="__onBackTap">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
             </header-block>
 
@@ -202,16 +202,16 @@
                     on-neon-animation-finish="__onSlideEnd">
 
                     <neon-animatable name="step-1">
-                        <h4>Proyek Baru</h4>
+                        <h4>Aktivitas Baru</h4>
                         
                         <div id="project-title-container" class="form-control">
                             <paper-input 
                                 id="project-title-field" 
                                 value="{{ projectRecord.sp_title }}" 
-                                label="Nama Proyek" 
+                                label="Nama Aktivitas" 
                                 required 
                                 auto-validate 
-                                error-message="Nama proyek wajib diisi" 
+                                error-message="Nama aktivitas wajib diisi" 
                                 always-float-label></paper-input>
                         </div>
 
@@ -220,12 +220,12 @@
                         </div>
 
                         <div class="form-control">
-                            <paper-input value="{{ projectRecord.sp_api }}" label="API Proyek" always-float-label></paper-input>
+                            <paper-input value="{{ projectRecord.sp_api }}" label="API Aktivitas" always-float-label></paper-input>
                         </div>
 
                         <div class="form-control">
                             <vaadin-combo-box 
-                                label="Tipe Proyek" 
+                                label="Tipe Aktivitas" 
                                 value="{{ projectRecord.sp_type }}"
                                 items="[[ projectTypes ]]" 
                                 item-label-path="label" 
@@ -362,7 +362,7 @@
                                     <paper-button class="btn-outline" data-step="step-1" on-tap="__onStepTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Kembali</paper-button>
                                 </div>
                                 <div class="flex text-right">
-                                    <paper-button id="button-save-project" data-step="step-3" on-tap="__onStepTap" disabled$="[[ formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Buat Proyek</paper-button>
+                                    <paper-button id="button-save-project" data-step="step-3" on-tap="__onStepTap" disabled$="[[ formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Buat Aktivitas</paper-button>
                                 </div>
                             </kct-hbox>
                         </div>
@@ -412,7 +412,7 @@
 
             constructor() {
                 super();
-                this.__projectTitle = 'Nama Proyek';
+                this.__projectTitle = 'Nama Aktivitas';
                 this.__hideComboUser = true;
             }
 
@@ -450,7 +450,7 @@
             }
 
             __projectTitleChanged(value) {
-                this.set('__projectTitle', value || 'Nama Proyek');
+                this.set('__projectTitle', value || 'Nama Aktivitas');
             }
 
             __validationChanged(title) {

@@ -118,26 +118,26 @@
         <kct-event-publisher id="event-publisher"></kct-event-publisher>
 
         <kct-vbox>
-            <header-block text="Pengaturan Proyek" icon="settings" on-back-tap="__onBackTap">
+            <header-block text="Pengaturan Aktivitas" icon="settings" on-back-tap="__onBackTap">
                 <h3 slot="header-value">[[ __computeProjectTitle(projectRecord.sp_title) ]]</h3>
             </header-block>
             <div class="flex main padding scroll-y">
 
                 <div class="setting-block">
-                    <h3 class="title">Informasi Proyek</h3>
+                    <h3 class="title">Informasi Aktivitas</h3>
                     <div class="m-t">
                         <div class="form-control">
-                            <paper-input label="Nama Proyek" value="{{ projectRecord.sp_title }}"></paper-input>
+                            <paper-input label="Nama Aktivitas" value="{{ projectRecord.sp_title }}"></paper-input>
                         </div>
                         <div class="form-control">
                             <paper-input label="Deskripsi" value="{{ projectRecord.sp_desc }}"></paper-input>
                         </div>
                         <div class="form-control">
-                            <paper-input label="API Proyek" value="{{ projectRecord.sp_api }}"></paper-input>
+                            <paper-input label="API Aktivitas" value="{{ projectRecord.sp_api }}"></paper-input>
                         </div>
                         <div class="form-control">
                             <vaadin-combo-box 
-                                label="Tipe Proyek" 
+                                label="Tipe Aktivitas" 
                                 value="{{ projectRecord.sp_type }}"
                                 items="[[ projectTypes ]]" 
                                 item-label-path="label" 
@@ -150,7 +150,7 @@
                 </div>
 
                 <div class="setting-block">
-                    <h3 class="title">Pengolah Proyek (User)</h3>
+                    <h3 class="title">Pengolah Aktivitas (User)</h3>
                     <div class="p-t">
                         <template is="dom-repeat" items="[[ members ]]">
                             <div class="member-item">
@@ -250,10 +250,10 @@
                 </div>
 
                 <div class="setting-block">
-                    <h3 class="title">Hapus Proyek</h3>
-                    <p>Menghapus proyek akan menghapus semua dokumen yang berkaitan.</p>
+                    <h3 class="title">Hapus Aktivitas</h3>
+                    <p>Menghapus aktivitas akan menghapus semua dokumen yang berkaitan.</p>
                     <div class="m-t">
-                        <paper-button on-tap="__onRemoveProjectTap" class="btn-red">Hapus Proyek</paper-button>
+                        <paper-button on-tap="__onRemoveProjectTap" class="btn-red">Hapus</paper-button>
                     </div>
                 </div>
 
@@ -433,7 +433,7 @@
                 let data = this.projectRecord;
                 if (data.sp_id) {
                     this.$.ajax.PUT('/projects/' + data.sp_id, data).then((res) => {
-                        this.toast('Info', 'Data proyek berhasil disimpan');
+                        this.toast('Info', 'Data aktivitas berhasil disimpan');
 
                         if (res.success) {
                             // name has been changed? update URL
@@ -453,7 +453,7 @@
                 let data = this.projectRecord;
                 if ( ! data) return;
 
-                this.confirm('Konfirmasi', 'Anda yakin akan menghapus proyek ini?').then(y => {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus aktivitas ini?').then(y => {
                     if (y) {
                         this.$.ajax.DELETE('/projects/' + data.sp_id).then(() => {
                             this.$['event-publisher'].publish('project-removed');
@@ -478,7 +478,7 @@
 
                 if (index !== -1) {
                     if (member.spu_id) {
-                        this.confirm('Konfirmasi', 'Anda yakin akan menghapus user dari proyek?').then(y => {
+                        this.confirm('Konfirmasi', 'Anda yakin akan menghapus user dari aktivitas?').then(y => {
                             if (y) {
                                 this.splice('members', index, 1);
                                 this.$.ajax.DELETE('/projects/projects-users/' + member.spu_id);

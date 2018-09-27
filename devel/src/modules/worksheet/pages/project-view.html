@@ -67,12 +67,12 @@
         <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-vbox class$="container [[ screen ]]">
-            <header-block text="Proyek Aktif" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
+            <header-block text="Aktivitas" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
                 <kct-combobox 
                     id="combo-project" 
                     slot="header-value" 
                     url="/projects?display=granted" 
-                    label="Pilih atau cari proyek..." 
+                    label="Pilih atau cari aktivitas..." 
                     value="[[ project ]]" 
                     page-size="10" 
                     item-label-path="sp_title" 
