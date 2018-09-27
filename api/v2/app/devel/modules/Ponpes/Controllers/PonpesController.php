@@ -10,7 +10,8 @@ class PonpesController extends \Micro\Controller {
         $query = Ponpes::get()
             ->alias('a')
             ->columns('a.*')
-            ->filterable();
+            ->filterable()
+            ->andWhere('a.aktif = 1');
         
         if ( ! $this->role->can('manage_app@application')) {
             $auth = $this->auth->user();
@@ -50,7 +51,10 @@ class PonpesController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
+        $post['aktif'] = 1;
+
         $data = new Ponpes();
+
         if ($data->save($post)) {
             $user = $this->auth->user();
 
