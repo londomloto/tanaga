@@ -9,6 +9,7 @@ use App\Tasks\Models\Task,
     App\Projects\Models\Project,
     App\System\Models\Autonumber,
     App\Masjid\Models\Masjid,
+    App\Masjid\Models\Author,
     App\Config\Models\Config,
     Micro\Helpers\Theme;
 
@@ -346,6 +347,13 @@ class KanbanController extends \Micro\Controller {
                         if ($document->save($form['document'])) {
                             $task->tt_document = $document->id_rumah_ibadah;
                             $task->save();
+
+                            // add author
+                            $author = new Author();
+                            $author->id_rumah_ibadah = $document->id_rumah_ibadah;
+                            $author->su_id = $auth['su_id'];
+                            $author->posisi = 'Operator';
+                            $author->save();
                         }
                     }
 

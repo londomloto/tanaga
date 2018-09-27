@@ -9,6 +9,7 @@ use App\Tasks\Models\Task,
     App\Projects\Models\Project,
     App\System\Models\Autonumber,
     App\Ponpes\Models\Ponpes,
+    App\Ponpes\Models\Author,
     App\Config\Models\Config,
     Micro\Helpers\Theme;
 
@@ -346,6 +347,13 @@ class KanbanController extends \Micro\Controller {
                         if ($document->save($form['document'])) {
                             $task->tt_document = $document->id_ponpes;
                             $task->save();
+
+                            // add author
+                            $author = new Author();
+                            $author->id_ponpes = $document->id_ponpes;
+                            $author->su_id = $auth['su_id'];
+                            $author->posisi = 'Operator';
+                            $author->save();
                         }
                     }
 
