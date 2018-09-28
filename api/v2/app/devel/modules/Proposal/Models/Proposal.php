@@ -1,6 +1,9 @@
 <?php
 namespace App\Proposal\Models;
 
+use App\Ponpes\Models\Ponpes;
+use App\Masjid\Models\Masjid;
+
 class Proposal extends \Micro\Model {
 
     public function initialize() {

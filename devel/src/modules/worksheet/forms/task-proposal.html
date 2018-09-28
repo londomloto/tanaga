@@ -68,7 +68,7 @@
                         <div>
                             <kct-combobox 
                                 id="combo-lembaga"
-                                url="/proposal/lembaga" 
+                                
                                 label="Nama Lembaga"  
                                 value="{{ record.document.id_lembaga }}" 
                                 item-value-path="value" 
@@ -175,6 +175,26 @@
             initialize() {
                 this.set('files', []);
                 this.set('record.files', []);
+
+                if (this.action == 'update') {
+                    let tipe = this.record.document.lembaga;
+                    let kode = this.record.document.id_lembaga;
+                    let combo = this.$['combo-lembaga'];
+
+                    if (tipe) {
+                        combo.url = '/proposal/lembaga?lembaga=' + tipe;
+                        if (kode) {
+                            let params = {};
+                            if (tipe == 'Pendidikan') {
+                                params.id_ponpes = kode;
+                            } else {
+                                params.id_rumah_ibadah = kode;
+                            }
+                            combo.load({ params: params });
+                        }
+                    }
+                }
+
                 return this.__loadFiles();
             }
             saveRecord(send = false, back = false) {
@@ -185,6 +205,15 @@
                 this.record.task.tt_sp_id = this.project.sp_id;
                 this.record.task.tt_title = this.record.document.judul;
                 this.record.files = this.files;
+                this.record.document.nama_lembaga = '';
+
+                if (this.record.document.id_lembaga) {
+                    let lembaga = this.$['combo-lembaga'].getModelForValue(this.record.document.id_lembaga);
+
+                    if (lembaga) {
+                        this.record.document.nama_lembaga = lembaga.label;
+                    }
+                }
 
                 let payload = {
                     worker: this.workspace.worker,

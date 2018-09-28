@@ -8,7 +8,7 @@ use App\Masjid\Models\Masjid;
 class ProposalController extends \Micro\Controller {
 
     public function findAction() {
-        $result = Proposal::get()->filterable()->sortable()->paginate();
+        return Proposal::get()->filterable()->sortable()->paginate();
 
         $result->data = $result->data->filter(function($row){
             $arr = $row->toArray();
