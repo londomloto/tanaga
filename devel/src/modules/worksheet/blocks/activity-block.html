@@ -245,7 +245,7 @@
                 <div class="timeline-body">
                     <div class="msgbox-wrapper">
                         <div class="msgbox-body">
-                            <kct-html-editor id="msgbox"></kct-html-editor>
+                            <kct-html-editor id="msgbox" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>
                         </div>
 
                         <div class="msgbox-footer">
@@ -290,7 +290,7 @@
                                         <kct-html html="[[ item.tta_text ]]"></kct-html>    
                                     </div>
                                     <div class="comment-edit" hidden$="[[ !item.tta_editing ]]">
-                                        <kct-html-editor value="{{ item.tta_data }}"></kct-html-editor>
+                                        <kct-html-editor value="{{ item.tta_data }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>
                                     </div>
                                 </div>
                                 <div class="comment-footer" hidden$="[[ item.tta_editing ]]">

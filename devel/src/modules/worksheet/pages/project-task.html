@@ -27,9 +27,12 @@
                 border: 1px solid #e0e0e0;
                 position: relative;
             }
-            .action-button.info iron-icon { color: var(--paper-blue-500);  }
-            .action-button.success iron-icon { color: var(--paper-green-500);  }
-            .action-button.danger iron-icon { color: var(--paper-red-500);  }
+            .action-button.primary {
+                
+            }
+            .action-button.danger {
+                
+            }
             .action-button iron-icon {
                 position: relative;
                 top: -1px;
@@ -76,15 +79,27 @@
             <header-block id="header" on-back-tap="__onBackTap" text="Aktivitas">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
-                <!-- <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="action-button info" slot="right-toolbar" style="margin-left: 8px;">
-                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(recordAction) ]]
-                </paper-button>
-                
-                <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSendTap" class="action-button success" slot="right-toolbar" hidden$="[[ __hideSaveAndSend(recordAction) ]]">
-                    <iron-icon icon="send"></iron-icon>&nbsp;Simpan &amp; Posting
+                <paper-button hidden$="[[ __hideActionButton('create', loading, recordAction) ]]" disabled$="[[ formInvalid ]]" on-tap="__onCreateTap" class="action-button" slot="right-toolbar">
+                    <iron-icon icon="done"></iron-icon>&nbsp;Simpan
                 </paper-button>
 
-                <paper-button on-tap="__onCancelTap" class="action-button danger" slot="right-toolbar">
+                <paper-button hidden$="[[ __hideActionButton('update', loading, recordAction) ]]" disabled$="[[ formInvalid ]]" on-tap="__onUpdateTap" class="action-button" slot="right-toolbar">
+                    <iron-icon icon="done"></iron-icon>&nbsp;Update
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideActionButton('remove', loading, recordAction) ]]" disabled$="[[ formInvalid ]]" on-tap="__onRemoveTap" class="action-button" slot="right-toolbar">
+                    <iron-icon icon="close"></iron-icon>&nbsp;Hapus
+                </paper-button>
+
+                <!-- <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="action-button primary" slot="right-toolbar" style="margin-left: 8px;">
+                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(recordAction) ]]
+                </paper-button> -->
+                
+                <!-- <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSendTap" class="action-button" slot="right-toolbar" hidden$="[[ __hideSendAction(loading, recordAction) ]]">
+                    <iron-icon icon="send"></iron-icon>&nbsp;Simpan &amp; Posting
+                </paper-button> -->
+
+                <!-- <paper-button on-tap="__onCancelTap" class="action-button" slot="right-toolbar">
                     <iron-icon icon="close"></iron-icon>&nbsp;Batal
                 </paper-button> -->
 
@@ -103,8 +118,6 @@
                             user="[[ user ]]" 
                             invalid="{{ formInvalid }}" 
                             socket-session="[[ socketSession ]]" 
-                            on-beforesave="__onFormBeforeSave"
-                            on-aftersave="__onFormAfterSave" 
                             on-cancel="__onFormCancel" 
                             on-remove="__onFormRemove" 
                             loading="[[ loading ]]"></taskform-block>
@@ -150,7 +163,7 @@
                     workspaceRecord: { type: Object },
                     formRecord: { type: Object },
                     taskRecord: { type: Object },
-                    loading: { type: Boolean, value: false }
+                    loading: { type: Boolean, value: true }
                 };
             }
 
@@ -223,7 +236,16 @@
                 return this.recordAction == 'create' ? true : false;
             }
 
-            __hideSaveAndSend() {
+            __hideActionButton(button, loading, action) {
+                if (loading) return true;
+                if (action == 'create') {
+                    return ['update', 'remove'].indexOf(button) !== -1;
+                } else {
+                    return ['create'].indexOf(button) !== -1;
+                }
+            }
+
+            __hideSendAction() {
                 return this.recordAction == 'create' ? true : false;
             }
 
@@ -291,16 +313,18 @@
 
                     this.set('formRecord', form);
                     
-                    this.set('taskRecord', {
-                        task: {},
-                        labels: [],
-                        users: [],
-                        document: {}
-                    });
-
                     if (form) {
                         this.$.form.render().then(() => {
                             this.set('loading', false);
+
+                            this.set('formInvalid', false);
+                            this.set('taskRecord', {
+                                task: {},
+                                labels: [],
+                                users: [],
+                                document: {}
+                            });
+
                             this.$.form.initialize();
                             this.$.activity.initialize();
                             this.$.taskprop.initialize();
@@ -334,9 +358,7 @@
 
                 function handle(record) {
                     if ( ! record) {
-                        
                         this.set('taskRecord', {});
-
                         this.toast('Warning', 'Record not found', 'warn');
                         this.set('route.path', this.returnAction);
                         return;
@@ -351,8 +373,6 @@
                         return;
                     }
                     
-                    this.set('taskRecord', record);
-
                     let workspace = (this.workspaces || []).find(item => {
                         return item.worker == record.status.tts_worker;
                     });
@@ -392,6 +412,10 @@
                         if (form) {
                             this.$.form.render().then(() => {
                                 this.set('loading', false);
+
+                                this.set('formInvalid', false);
+                                this.set('taskRecord', record);
+
                                 this.$.form.initialize();
                                 this.$.activity.initialize();
                                 this.$.taskprop.initialize();
@@ -454,6 +478,67 @@
                         });
                     }
                 }
+            }
+
+            __onCreateTap() {
+                this.mask('Menyimpan...');
+
+                this.$.form.saveRecord(true, true).then(res => {
+                    this.unmask();
+
+                    if (res.success) {
+                        this.toast('Info', 'Data berhasil disimpan');
+
+                        this.set('route.path', this.returnAction);
+                        
+                        this.$.publisher.publish('task-save', {
+                            recordAction: this.recordAction,
+                            affected: res.data.affected,
+                            send: true,
+                            back: true
+                        });
+
+                    } else {
+                        this.toast('Error', res.message, 'danger');
+                    }
+                });
+            }
+
+            __onUpdateTap() {
+                this.mask('Menyimpan...');
+                this.$.form.saveRecord().then(res => {
+                    this.unmask();
+                    if (res.success) {
+                        this.toast('Info', 'Data berhasil disimpan');
+                        this.$.activity.initialize();
+
+                        this.$.publisher.publish('task-save', {
+                            recordAction: this.recordAction,
+                            affected: res.data.affected,
+                            send: true,
+                            back: true
+                        });
+                    } else {
+                        this.toast('Error', res.message, 'danger');
+                    }
+                });
+            }
+
+            __onRemoveTap() {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus aktivitas ini?').then(y => {
+                    if (y) {
+                        this.mask('Menghapus...');
+                        this.$.form.deleteRecord().then(res => {
+                            this.unmask();
+                            if (res.success) {
+                                this.set('route.path', this.returnAction);
+                                this.$.publisher.publish('task-remove');
+                            } else {
+                                this.toast('Error', res.message, 'danger');
+                            }
+                        });
+                    }
+                });
             }
 
             __onSaveTap() {

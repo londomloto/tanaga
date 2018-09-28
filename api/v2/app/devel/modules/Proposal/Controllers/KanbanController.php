@@ -570,7 +570,7 @@ class KanbanController extends \Micro\Controller {
                     $document->delete();
                     $remove = TRUE;
                 } else {
-                    $message = 'Aktivitas tidak dapat dihapus karena sudah diproses';
+                    $message = 'Tidak dapat menghapus dokumen aktif';
                 }
             } else {
                 $remove = TRUE;

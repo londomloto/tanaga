@@ -10,7 +10,7 @@
 <dom-module id="ponpes-asset-potensi">
     <template>
         <style include="swiper-style">
-            #slider {
+            #slider-modal {
                 position: absolute;
                 left: 30px;
                 top: 30px;
@@ -19,8 +19,11 @@
                 background-color: #000;
                 box-shadow: 0 0 15px rgba(0,0,0,.5);
             }
-            #slider[hidden] {
+            #slider-modal[hidden] {
                 display: none;
+            }
+            #slider {
+                height: 100%;
             }
             .swiper-slide {
                 background-repeat: no-repeat;
@@ -42,22 +45,23 @@
             #slider-next {
                 right: 15px;
             }
-            #slider-exit {
+            #slider-tool {
                 position: absolute;
-                width: 100px;
-                left: 50%;
-                margin-left: -50px;
-                text-align: center;
-                background-color: rgba(0,0,0,.3);
-                z-index: 100;
                 top: 0;
-                color: #fff;
-                cursor: pointer;
-                border-radius: 0 0 12px 12px;
-                padding: 5px;
+                right: 0;
+                z-index: 2;
+                background-color: rgba(0,0,0,.2);
+                padding: 3px 15px; 
+                border-radius: 0 0 0 6px;
             }
-            #slider-exit:hover {
-                background-color: rgba(0,0,0,.5);
+            .slider-tool-item {
+                width: 40px;
+                height: 40px;
+                color: #f4f4f4;
+                float: left;
+            }
+            .slider-tool-item + .slider-tool-item {
+                margin-left: 3px;
             }
         </style>
         <style include="ponpes-table-style">
@@ -260,20 +264,36 @@
             </template>
         </kct-dialog>
 
-        <div id="slider" class="swiper-container" hidden$="[[ hideSlider ]]">
-            <div class="swiper-wrapper">
-                <template is="dom-repeat" items="[[ slidesItems ]]">
-                    <div class="swiper-slide" style$="background-image: url([[ item.gambar_url ]])"></div>
-                </template>
+        <div id="slider-modal" hidden$="[[ hideSlider ]]">
+            <div id="slider" class="swiper-container">
+                <div class="swiper-wrapper">
+                    <template is="dom-repeat" items="[[ slidesItems ]]">
+                        <div data-image$="[[ item.gambar ]]" class="swiper-slide" style$="background-image: url([[ item.gambar_url ]])"></div>
+                    </template>
+                </div>
+                
+                <div id="slider-page" class="swiper-pagination"></div>
+                
+                <paper-icon-button icon="chevron-right" id="slider-next"></paper-icon-button>
+                <paper-icon-button icon="chevron-left" id="slider-prev"></paper-icon-button>
+
+                <!-- <div id="slider-exit" on-click="__onCloseSliderTap">
+                    <span style="pointer-events: none;">Tutup Slider</span>
+                </div> -->
+                
             </div>
-            <div id="slider-page" class="swiper-pagination"></div>
-            <paper-icon-button icon="chevron-right" id="slider-next"></paper-icon-button>
-            <paper-icon-button icon="chevron-left" id="slider-prev"></paper-icon-button>
-            <div id="slider-exit" on-click="__onCloseSliderTap">
-                <span style="pointer-events: none;">Tutup Slider</span>
+
+            <div id="slider-tool" class="slider-tool">
+                <div class="slider-tool-item">
+                    <paper-icon-button title="Simpan" icon="move-to-inbox" on-tap="__onSaveSliderTap"></paper-icon-button>        
+                </div>
+                <div class="slider-tool-item">
+                    <paper-icon-button title="Tutup" icon="close" on-tap="__onCloseSliderTap"></paper-icon-button>        
+                </div>
             </div>
-            
         </div>
+
+        
 
     </template>
     <script>
@@ -338,6 +358,13 @@
             ready() {
                 super.ready();
                 this.resetParams();
+            }
+            disconnectedCallback() {
+                if (this.swiper) {
+                    this.swiper.destroy(true);
+                    this.swiper = null;
+                }
+                super.disconnectedCallback();
             }
             resetParams() {
                 this.set('params', {
@@ -553,6 +580,17 @@
             }
             __onCloseSliderTap() {
                 this.set('hideSlider', true);
+            }
+            __onSaveSliderTap() {
+                if ( ! this.swiper) return;
+                let elem = this.swiper.slides[this.swiper.activeIndex];
+                if (elem) {
+                    let image = elem.dataset.image;
+
+                    this.$.ajax.DOWNLOAD('/ponpes/asset-gambar/download', {
+                        image: image
+                    });
+                }
             }
         }
         customElements.define(PonpesAssetPotensi.is, PonpesAssetPotensi);

@@ -30,7 +30,21 @@
                 ];
             }
 
-            save() {}
+            initialize() {}
+
+            saveRecord(send = false, back = false) {
+                return Promise.resolve({
+                    success: false,
+                    message: 'Tidak ada data yang disimpan'
+                });
+            }
+
+            deleteRecord() {
+                return Promise.resolve({
+                    success: false,
+                    message: 'Tidak ada data yang dihapus'
+                });
+            }
 
             trigger(name, data) {
                 let event = new CustomEvent(name, {
@@ -40,10 +54,6 @@
                 });
 
                 this.dispatchEvent(event);
-            }
-
-            initialize() {
-                return Promise.resolve();
             }
 
             toast(title, message, type = 'info') {

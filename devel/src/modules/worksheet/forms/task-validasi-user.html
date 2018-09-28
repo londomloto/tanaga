@@ -1,13 +1,17 @@
 <dom-module id="task-validasi-user">
     <template>
         <style include="form-style">
-            
+            .actions {
+                text-align: right;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
 
         <div class="container">
             
+            
+
             <kct-column columns="2" gutter="30px">
                 <div class="section">
                     <h3 class="section-title">Informasi User</h3>
@@ -40,20 +44,9 @@
                 </div>
             </kct-column>
 
-            <div class="m-t" hidden$="[[ !phantom ]]">
-                <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Simpan data baru</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
-            </div>
-
-            <div class="m-t" hidden$="[[ phantom ]]">
-                <paper-button class="primary" on-tap="__onUpdateTap" disabled$="[[ invalid ]]">Simpan perubahan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onRemoveTap">hapus</a>
-            </div>
-
             <div class="m-t">&nbsp;</div>
-        </div>
 
-        <kct-confirm id="remove-confirm" title="Konfirmasi">
-            <p>Anda yakin akan menghapus pekerjaan ini?</p>
-        </kct-confirm>
+        </div>
 
     </template>
     <script>
@@ -77,7 +70,7 @@
                     '__validationChanged(record.document.*)'
                 ];
             }
-            save(send = false, back = false) {
+            saveRecord(send = false, back = false) {
                 if ( ! this.project && ! this.workspace.worker) {
                     return;
                 }
@@ -90,7 +83,7 @@
                     record: this.record,
                     send: send,
                     back: back,
-                    link: this.siteurl('/login')
+                    link: this._siteurl('/login')
                 };
 
                 let options = {
@@ -102,28 +95,34 @@
                 this.trigger('beforesave');
 
                 if (this.action == 'create') {
-                    this.$.ajax.POST(this.project.sp_api, payload, options).then(done.bind(this));
+                    return this.$.ajax.POST(this.project.sp_api, payload, options).then(done.bind(this));
                 } else {
-                    this.$.ajax.PUT(this.project.sp_api + '/' + this.record.task.tt_id, payload, options).then(done.bind(this));
+                    return this.$.ajax.PUT(this.project.sp_api + '/' + this.record.task.tt_id, payload, options).then(done.bind(this));
                 }
                 
                 function done(res) {
-                    
                     this.trigger('aftersave', {
                         send: send,
                         back: back,
                         response: res
                     });
 
-                    if ( ! res.success) {
-                        this.toast('Gagal', res.message, 'danger');
-                    }
-
+                    return res;
                 }
+            }
+            deleteRecord() {
+                let options = {
+                    headers: {
+                        'X-Socket-Session': this.socketSession
+                    }
+                };
+
+                return this.$.ajax.DELETE(this.project.sp_api + '/' + this.record.task.tt_id, null, options);
             }
             __validationChanged(changed) {
                 let doc = this.record.document || {};
                 let valid = true;
+                
                 valid = valid && !!doc.su_fullname;
                 valid = valid && !!doc.su_sr_id;
                 valid = valid && !this.$['input-email'].invalid;
@@ -134,27 +133,13 @@
                 this.trigger('cancel', { back: true });
             }
             __onCreateTap() {
-                this.save(true, true);
+                this.saveRecord(true, true);
             }
             __onUpdateTap() {
-                this.save(false, false);
+                this.saveRecord(false, false);
             }
             __onRemoveTap() {
-                this.$['remove-confirm'].open().then(btn => {
-                    if (btn == 'yes') {
-                        let options = {
-                            headers: {
-                                'X-Socket-Session': this.socketSession
-                            }
-                        };
-
-                        this.$.ajax.DELETE(this.project.sp_api + '/' + this.record.task.tt_id, null, options).then(res => {
-                            if (res.success) {
-                                this.trigger('remove', { back: true });
-                            }
-                        });
-                    }
-                });
+                this.deleteRecord();
             }
         }
         customElements.define(TaskValidasiUser.is, TaskValidasiUser);

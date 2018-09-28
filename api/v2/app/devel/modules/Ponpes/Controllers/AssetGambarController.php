@@ -39,4 +39,15 @@ class AssetGambarController extends \Micro\Controller {
         return $result;
     }
 
+    public function downloadAction() {
+        $post = $this->request->getJson();
+        $file = APPPATH.'public/resources/asset/'.$post['image'];
+
+        if (file_exists($file) && ! is_dir($file)) {
+            $this->file->download($file);
+        } else {
+            throw new \Exception("Gambar tidak ditemukan", 404);
+        }
+    }
+
 }

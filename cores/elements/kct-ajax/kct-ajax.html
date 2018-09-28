@@ -263,7 +263,7 @@
                     let mask = document.createElement('spinner-mask');
                     document.body.appendChild(mask);
 
-                    mask.text = 'Downloading...';
+                    mask.text = 'Mengunduh...';
                     mask.open();
 
                     options = Object.assign({
@@ -613,37 +613,38 @@
                 res = res || {};
 
                 if (res.success === undefined) {
+                    // for developer only
                     this.__showError(
                         'Invalid response format', 
                         'Valid format required for ajax response: { "success": Boolean, "data": Object }',
                         "Yes, I'm understand!"
                     );
                 } else {
-                    // if ( ! res.success && res.status !== undefined) {
-                    //     let message = res.message || "It's look like your access token has been expired";
-                    //     switch(res.status) {
-                    //         case 401:
-                    //             this.__showError(
-                    //                 "User doesn't authenticated",
-                    //                 message,
-                    //                 "Yes, I want to re-login!"
-                    //             ).then(() => {
-                    //                 location.href = this.loginUrl;
-                    //             });
-                    //             break;
-                    //         case 404:
-                    //             this.__showError(
-                    //                 "Not Found",
-                    //                 message
-                    //             );
-                    //             break;
-                    //     }
-                    // }
+                    if ( ! res.success && res.status !== undefined) {
+                        let message = res.message || "Sesi login Anda sudah habis";
+                        switch(res.status) {
+                            // case 401:
+                            //     this.__showError(
+                            //         "User doesn't authenticated",
+                            //         message,
+                            //         "Yes, I want to re-login!"
+                            //     ).then(() => {
+                            //         location.href = this.loginUrl;
+                            //     });
+                            //     break;
+                            case 404:
+                                this.__showError(
+                                    "404 - Not Found",
+                                    message
+                                );
+                                break;
+                        }
+                    }
                 }
                 
             }
 
-            __showError(title, message, button, type = 'warn') {
+            __showError(title, message, button, type = 'danger') {
                 let d = this._defer();
                 let toast = document.createElement('kct-toast');
                 

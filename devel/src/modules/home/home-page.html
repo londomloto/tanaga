@@ -24,7 +24,6 @@
                 display: none;
             }
             .swiper-slide {
-                width: 100%;
                 height: 100%;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -36,6 +35,7 @@
                 background-image: url(../../../images/backgrounds/background-10.png);
                 background-repeat: no-repeat;
                 background-size: cover;
+                background-attachment: scroll;
                 height: 100%;
             }
             .welcome {
@@ -173,6 +173,7 @@
             }
 
             __startSlides() {
+
                 if (this.swiper) {
                     this.swiper.destroy(true);
                 }

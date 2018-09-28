@@ -47,7 +47,8 @@ Router::group(array(
     'handler' => 'App\Ponpes\Controllers\AssetGambarController',
     'middleware' => 'auth'
 ))
-->post('/upload', 'upload');
+->post('/upload', 'upload')
+->post('/download', 'download');
 
 Router::group(array(
     'prefix' => '/masjid',

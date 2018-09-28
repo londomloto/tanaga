@@ -560,6 +560,7 @@ class KanbanController extends \Micro\Controller {
     public function deleteAction($id) {
         $task = Task::get($id)->data;
         $done = FALSE;
+        $message = NULL;
 
         if ($task) {
 
@@ -570,6 +571,8 @@ class KanbanController extends \Micro\Controller {
                 if ($task->tt_flag != 'DISETUJUI') {
                     $document->delete();
                     $remove = TRUE;
+                } else {
+                    $message = 'Tidak dapat menghapus dokumen aktif';
                 }
             } else {
                 $remove = TRUE;
@@ -589,7 +592,8 @@ class KanbanController extends \Micro\Controller {
         }
 
         return array(
-            'success' => $done
+            'success' => $done,
+            'message' => $message
         );
     }
 

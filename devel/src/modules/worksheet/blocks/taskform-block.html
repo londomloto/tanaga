@@ -123,14 +123,6 @@
                     return promise;
                 }
 
-                initialize() {
-                    if (this.$.form) {
-                        return this.$.form.initialize();
-                    } else {
-                        return Promise.resolve();
-                    }
-                }
-
                 cleanup() {
                     if (this.__node) {
                         this._removeBoundDom(this.__node);
@@ -139,7 +131,27 @@
                     }
                 }
 
+                initialize() {
+                    this.$.form && this.$.form.initialize();
+                }
 
+                saveRecord(send = false, back = false) {
+                    return this.$.form 
+                        ? this.$.form.saveRecord(send, back) 
+                        : Promise.resolve({
+                            success: false,
+                            message: 'Tidak ada data yang disimpan'
+                        });
+                }
+
+                deleteRecord() {
+                    return this.$.form 
+                        ? this.$.form.deleteRecord() 
+                        : Promise.resolve({
+                            success: false,
+                            message: 'Tidak ada data yang dihapus'
+                        });
+                }
 
                 __createTemplate(name) {
                     let template = cachedTemplates[name];

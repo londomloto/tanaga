@@ -35,17 +35,8 @@
         <kct-ajax id="ajax"></kct-ajax>
         <kct-file id="file" on-change="__onFileBrowserChange"></kct-file>
 
-        <div class="container">
-            
-            <div class="actions">
-                <div class="m-t" hidden$="[[ !phantom ]]">
-                    <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Simpan data baru</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
-                </div>
 
-                <div class="m-t" hidden$="[[ phantom ]]">
-                    <paper-button class="primary" on-tap="__onUpdateTap" disabled$="[[ invalid ]]">Simpan perubahan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onRemoveTap">hapus</a>
-                </div>
-            </div>
+        <div class="container">
 
             <div class="section">
                 <div>
@@ -94,37 +85,37 @@
                     
                     <div class="html-editor-wrapper">
                         <div class="label">Latar Belakang</div>
-                        <kct-html-editor value="{{ record.document.latar_belakang }}"></kct-html-editor>    
+                        <kct-html-editor value="{{ record.document.latar_belakang }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>    
                     </div>
 
                     <div class="html-editor-wrapper">
                         <div class="label">Maksud &amp; Tujuan</div>
-                        <kct-html-editor value="{{ record.document.maksud_tujuan }}"></kct-html-editor>    
+                        <kct-html-editor value="{{ record.document.maksud_tujuan }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>    
                     </div>
 
                     <div class="html-editor-wrapper">
                         <div class="label">Susunan Kepengurusan</div>
-                        <kct-html-editor value="{{ record.document.susunan_pengurus }}"></kct-html-editor>    
+                        <kct-html-editor value="{{ record.document.susunan_pengurus }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>    
                     </div>
 
                     <div class="html-editor-wrapper">
                         <div class="label">Domisili Sekretariat</div>
-                        <kct-html-editor value="{{ record.document.domisili_sekretariat }}"></kct-html-editor>    
+                        <kct-html-editor value="{{ record.document.domisili_sekretariat }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>    
                     </div>
 
                     <div class="html-editor-wrapper">
                         <div class="label">Bentuk Kegiatan</div>
-                        <kct-html-editor value="{{ record.document.bentuk_kegiatan }}"></kct-html-editor>    
+                        <kct-html-editor value="{{ record.document.bentuk_kegiatan }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>    
                     </div>
 
                     <div class="html-editor-wrapper">
                         <div class="label">Jadwal Kegiatan</div>
-                        <kct-html-editor value="{{ record.document.jadwal_kegiatan }}"></kct-html-editor>    
+                        <kct-html-editor value="{{ record.document.jadwal_kegiatan }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>    
                     </div>
 
                     <div class="html-editor-wrapper">
                         <div class="label">Rincian RAB</div>
-                        <kct-html-editor value="{{ record.document.rincian_rab }}"></kct-html-editor>    
+                        <kct-html-editor value="{{ record.document.rincian_rab }}" tools="bold,italic,underline,clear,ordered,unordered,justify,heading"></kct-html-editor>    
                     </div>
 
                 </div>
@@ -148,20 +139,16 @@
                 </div>
             </div>
 
-            <div class="m-t" hidden$="[[ !phantom ]]">
+            <!-- <div class="m-t" hidden$="[[ !phantom ]]">
                 <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Simpan data baru</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
             </div>
 
             <div class="m-t" hidden$="[[ phantom ]]">
                 <paper-button class="primary" on-tap="__onUpdateTap" disabled$="[[ invalid ]]">Simpan perubahan</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onRemoveTap">hapus</a>
-            </div>
+            </div> -->
 
             <div class="m-t">&nbsp;</div>
         </div>
-
-        <kct-confirm id="remove-confirm" title="Konfirmasi">
-            <p>Anda yakin akan menghapus pekerjaan ini?</p>
-        </kct-confirm>
     </template>
     <script>
         class TaskProposal extends FormBase {
@@ -190,9 +177,9 @@
                 this.set('record.files', []);
                 return this.__loadFiles();
             }
-            save(send = false, back = false) {
+            saveRecord(send = false, back = false) {
                 if ( ! this.project && ! this.workspace.worker) {
-                    return;
+                    return Promise.resolve();
                 }
 
                 this.record.task.tt_sp_id = this.project.sp_id;
@@ -215,24 +202,28 @@
                 this.trigger('beforesave');
 
                 if (this.action == 'create') {
-                    this.$.ajax.POST(this.project.sp_api, payload, options).then(done.bind(this));
+                    return this.$.ajax.POST(this.project.sp_api, payload, options).then(done.bind(this));
                 } else {
-                    this.$.ajax.PUT(this.project.sp_api + '/' + this.record.task.tt_id, payload, options).then(done.bind(this));
+                    return this.$.ajax.PUT(this.project.sp_api + '/' + this.record.task.tt_id, payload, options).then(done.bind(this));
                 }
                 
                 function done(res) {
-                    
                     this.trigger('aftersave', {
                         send: send,
                         back: back,
                         response: res
                     });
 
-                    if ( ! res.success) {
-                        this.toast('Error', res.message, 'danger');
-                    }
-
+                    return res;
                 }
+            }
+            deleteRecord() {
+                let options = {
+                    headers: {
+                        'X-Socket-Session': this.socketSession
+                    }
+                };
+                return this.$.ajax.DELETE(this.project.sp_api + '/' + this.record.task.tt_id, null, options);
             }
             __loadFiles() {
                 if (this.action == 'update') {
@@ -256,29 +247,13 @@
                 this.trigger('cancel', { back: true });
             }
             __onCreateTap() {
-                this.save(true, true);
+                this.saveRecord(true, true);
             }
             __onUpdateTap() {
-                this.save(false, false);
+                this.saveRecord(false, false);
             }
             __onRemoveTap() {
-                this.$['remove-confirm'].open().then(btn => {
-                    if (btn == 'yes') {
-                        let options = {
-                            headers: {
-                                'X-Socket-Session': this.socketSession
-                            }
-                        };
-
-                        this.$.ajax.DELETE(this.project.sp_api + '/' + this.record.task.tt_id, null, options).then(res => {
-                            if (res.success) {
-                                this.trigger('remove', { back: true });
-                            } else {
-                                this.toast('Error', res.message, 'danger');
-                            }
-                        });
-                    }
-                });
+                this.deleteRecord();
             }
 
             __onComboTipeLembagaChange(e) {
