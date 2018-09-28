@@ -1,0 +1,62 @@
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../blocks/module-header-block.html">
+
+<dom-module id="proposal-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+        <kct-vbox>
+            <module-header-block text="Monitoring" desc="Pengajuan Proposal">
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+            </module-header-block>
+            <div class="flex">
+                <kct-grid 
+                    id="grid" 
+                    url="/proposal" 
+                    columns="[[ columns ]]" 
+                    selection-model="row" 
+                    hide-header></kct-grid>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class ProposalPage extends KctView {
+            static get is() {
+                return 'proposal-page';
+            }
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Nomor', dataIndex: 'nomor' },
+                            { text: 'Tahun', dataIndex: 'tahun', width: 60, align: 'center' },
+                            { text: 'Tanggal', dataIndex: 'tanggal', width: 100, align: 'center' },
+                            { text: 'Judul', dataIndex: 'judul' },
+                            { text: 'Tipe Lembaga', dataIndex: 'lembaga', width: 120 },
+                            { text: 'Lembaga', dataIndex: 'nama_lembaga' },
+                            { text: 'Status', dataIndex: 'status' }
+                        ])
+                    }
+                };
+            }
+            handleRouteParams() {
+                this.$.grid.load();
+            }
+            handleResizing() {
+                this.$.grid.resize();
+            }
+            __onReloadTap() {
+                this.$.grid.load();
+            }
+        }
+        customElements.define(ProposalPage.is, ProposalPage);
+    </script>
+</dom-module>
