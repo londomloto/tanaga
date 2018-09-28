@@ -13,6 +13,33 @@
             :host {
                 height: 100%;
             }
+            .grid-search {
+                border: 1px solid #dfdfdf;
+                padding: 4px 8px;
+                border-radius: 15px;
+                position: relative;
+                top: 11px;
+                min-width: 300px;
+            }
+
+            .grid-search paper-input {
+                --paper-input-container: {
+                    padding: 0;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+            .grid-search paper-input iron-icon {
+                color: #999;
+                --iron-icon-width: 17px;
+                --iron-icon-height: 17px;
+                position: relative;
+                margin-right: 5px;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -21,6 +48,15 @@
             <module-header-block text="Monitoring" desc="Pengajuan Proposal" hide-nav>
                 <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
                 <paper-button on-tap="__onDetailTap">Lihat Uraian Proposal</paper-button>
+                <div slot="right-toolbar">
+                    <div class="grid-search">
+                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                            <div slot="prefix">
+                                <iron-icon icon="search"></iron-icon>
+                            </div>
+                        </paper-input>
+                    </div>
+                </div>
             </module-header-block>
             <div class="flex">
                 <kct-grid 
@@ -174,6 +210,16 @@
             }
             __onViewerCloseTap() {
                 this.$.viewer.close();
+            }
+            __onSearchEnter(e) {
+                if (e.key == 'Enter') {
+                    this.$.grid.silent = true;
+                    this.$.grid.params = {
+                        query: this.search,
+                        fields: JSON.stringify(['judul', 'nomor'])
+                    };
+                    this.$.grid.load();    
+                }
             }
         }
         customElements.define(ProposalPage.is, ProposalPage);
