@@ -120,6 +120,8 @@ class KanbanController extends \Micro\Controller {
             $where = array();
             $bind = array();
 
+            $pf['tt_title'] = TRUE;
+
             if (isset($pf['author'])) {
                 unset($pf['author']);
                 $where[] = 'UPPER(creator.su_fullname) LIKE :author:';
