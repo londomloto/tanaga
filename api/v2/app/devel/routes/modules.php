@@ -62,3 +62,10 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->get('/backgrounds', 'backgrounds');
+
+Router::group(array(
+    'prefix' => '/proposal',
+    'handler' => 'App\Proposal\Controllers\ProposalController',
+    'middleware' => 'auth'
+))
+->post('/upload', 'upload');

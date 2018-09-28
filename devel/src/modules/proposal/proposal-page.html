@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../blocks/module-header-block.html">
@@ -13,6 +14,9 @@
                 height: 100%;
             }
         </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
         <kct-vbox>
             <module-header-block text="Monitoring" desc="Pengajuan Proposal">
                 <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
@@ -97,6 +101,13 @@
                         <div class="label">Rincian RAB:</div>
                         <div class="value" inner-h-t-m-l="[[ detailRecord.rincian_rab ]]"></div>
                     </div>
+                    <div class="m-t">
+                        <template is="dom-repeat" items="[[ files ]]">
+                            <div class="file-item">
+                                <img src$="[[ item.url_file ]]" alt="." style="width: 100%;">
+                            </div>
+                        </template>
+                    </div>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onViewerCloseTap">Tutup</paper-button>
@@ -125,7 +136,8 @@
                             { text: 'Status', dataIndex: 'status' }
                         ])
                     },
-                    detailRecord: { type: Object }
+                    detailRecord: { type: Object },
+                    files: { type: Array, value: () => ([]) }
                 };
             }
             handleRouteParams() {
@@ -133,6 +145,17 @@
             }
             handleResizing() {
                 this.$.grid.resize();
+            }
+            __loadFiles() {
+                this.$.ajax.GET('/proposal/attachment', {
+                    params: {
+                        id_proposal: this.detailRecord.id_proposal
+                    }
+                }).then(res => {
+                    if (res.success) {
+                        this.set("files", res.data);
+                    }
+                });
             }
             __onReloadTap() {
                 this.$.grid.selected = null;
@@ -146,6 +169,7 @@
 
                 this.set('detailRecord', Object.assign({}, this.$.grid.selected));
                 this.$.viewer.open();
+                this.__loadFiles();
             }
             __onViewerCloseTap() {
                 this.$.viewer.close();

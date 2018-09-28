@@ -301,6 +301,7 @@
                     if (form) {
                         this.$.form.render().then(() => {
                             this.set('loading', false);
+                            this.$.form.initialize();
                             this.$.activity.initialize();
                             this.$.taskprop.initialize();
                         });
@@ -391,6 +392,7 @@
                         if (form) {
                             this.$.form.render().then(() => {
                                 this.set('loading', false);
+                                this.$.form.initialize();
                                 this.$.activity.initialize();
                                 this.$.taskprop.initialize();
                             });

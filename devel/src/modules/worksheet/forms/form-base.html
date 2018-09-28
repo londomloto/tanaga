@@ -42,6 +42,10 @@
                 this.dispatchEvent(event);
             }
 
+            initialize() {
+                return Promise.resolve();
+            }
+
             toast(title, message, type = 'info') {
                 let toast = document.createElement('kct-toast');
                 

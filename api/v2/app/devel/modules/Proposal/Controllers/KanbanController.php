@@ -74,6 +74,7 @@ class KanbanController extends \Micro\Controller {
                 $item['labels'] = array();
                 $item['users'] = array();
                 $item['document'] = array();
+                $item['files'] = array();
                 
                 if ($task) {
                     $item['task'] = $task->toArray();
@@ -347,6 +348,10 @@ class KanbanController extends \Micro\Controller {
                         if ($document->save($form['document'])) {
                             $task->tt_document = $document->id_proposal;
                             $task->save();
+
+                            if (isset($form['files'])) {
+                                $document->saveAttachments($form['files']);
+                            }
                         }
                     }
 
@@ -429,6 +434,10 @@ class KanbanController extends \Micro\Controller {
                         $form['document']['status'] = $form['task']['tt_flag'];
                         $document->save($form['document']);
                         $document->save();
+
+                        if (isset($form['files'])) {
+                            $document->saveAttachments($form['files']);
+                        }
                     }
                 }
 

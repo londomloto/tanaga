@@ -1,5 +1,6 @@
 <link rel="import" href="../../../../../cores/elements/kct-date/kct-date-picker.html">
 <link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
 
 <dom-module id="task-proposal">
     <template>
@@ -24,9 +25,15 @@
             .actions {
                 text-align: right;
             }
+            .file-item {
+                float: left;
+                margin: 0 10px 10px 0;
+                text-align: center;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-file id="file" on-change="__onFileBrowserChange"></kct-file>
 
         <div class="container">
             
@@ -123,6 +130,24 @@
                 </div>
             </div>
 
+            <div class="section m-t">
+                <div>
+                    <div class="m-t">
+                        <paper-button style="border: 1px solid #dfdfdf; padding: 5px 8px; text-transform: none;" on-tap="__onUploadTap">Upload Gambar</paper-button>    
+                    </div>
+                    
+                    <div class="list-file m-t">
+                        <template is="dom-repeat" items="[[ files ]]">
+                            <div class="file-item">
+                                <img src$="[[ item.thumbnail ]]&w=150&h=100" alt="."><br>
+                                <a on-tap="__onRemoveFileTap" href="javascript:;">hapus</a>
+                            </div>
+                        </template>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="m-t" hidden$="[[ !phantom ]]">
                 <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Simpan data baru</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
             </div>
@@ -151,13 +176,19 @@
                             { label: 'Lembaga Pendidikan', value: 'Pendidikan' },
                             { label: 'Sarana Ibadah', value: 'Sarana Ibadah' }
                         ])
-                    }
+                    },
+                    files: { type: Array, value: () => ([]) }
                 };
             }
             static get observers() {
                 return [
                     '__tanggalChanged(tanggal)'
                 ];
+            }
+            initialize() {
+                this.set('files', []);
+                this.set('record.files', []);
+                return this.__loadFiles();
             }
             save(send = false, back = false) {
                 if ( ! this.project && ! this.workspace.worker) {
@@ -166,6 +197,7 @@
 
                 this.record.task.tt_sp_id = this.project.sp_id;
                 this.record.task.tt_title = this.record.document.judul;
+                this.record.files = this.files;
 
                 let payload = {
                     worker: this.workspace.worker,
@@ -200,6 +232,21 @@
                         this.toast('Error', res.message, 'danger');
                     }
 
+                }
+            }
+            __loadFiles() {
+                if (this.action == 'update') {
+                    return this.$.ajax.GET('/proposal/attachment', {
+                        params: {
+                            id_proposal: this.record.task.tt_document
+                        }
+                    }).then(res => {
+                        if (res.success) {
+                            this.set('files', res.data);
+                        }
+                    });
+                } else {
+                    return Promise.resolve();
                 }
             }
             __tanggalChanged(tanggal) {
@@ -244,6 +291,31 @@
                 } else {
                     this.$['combo-lembaga'].value = '';
                 }
+            }
+            __onUploadTap() {
+                this.$.file.browse();
+            }
+            __onFileBrowserChange(e) {
+                let input = e.target.file();
+                let files = input.files;
+
+                if (files[0]) {
+                    this.$.ajax.UPLOAD('/proposal/upload', {
+                        files: [
+                            { name: 'userfile', file: files[0] }
+                        ]
+                    }).then(res => {
+                        if (res.success) {
+                            this.push('files', {
+                                nama_file: res.data.nama_file,
+                                thumbnail: res.data.thumbnail
+                            });
+                        }
+                    });
+                }
+            }
+            __onRemoveFileTap(e) {
+                this.splice('files', e.model.index, 1);
             }
         }
         customElements.define(TaskProposal.is, TaskProposal);

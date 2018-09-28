@@ -123,6 +123,14 @@
                     return promise;
                 }
 
+                initialize() {
+                    if (this.$.form) {
+                        return this.$.form.initialize();
+                    } else {
+                        return Promise.resolve();
+                    }
+                }
+
                 cleanup() {
                     if (this.__node) {
                         this._removeBoundDom(this.__node);
@@ -130,6 +138,8 @@
                         this.$.form = undefined;
                     }
                 }
+
+
 
                 __createTemplate(name) {
                     let template = cachedTemplates[name];

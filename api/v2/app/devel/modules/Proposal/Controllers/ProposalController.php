@@ -29,4 +29,35 @@ class ProposalController extends \Micro\Controller {
         return $result;
     }
 
+    public function uploadAction() {
+        $done = FALSE;
+        $data = NULL;
+        $message = NULL;
+
+        if ($this->request->hasFiles()) {
+            $this->uploader->initialize(array(
+                'path' => APPPATH.'public/resources/proposal/',
+                'types' => array('jpg', 'jpeg', 'png'),
+                'encrypt' => TRUE
+            ));
+
+            if ($this->uploader->upload()) {
+                $info = $this->uploader->getResult();
+                $done = TRUE;
+                $data = array(
+                    'nama_file' => $info->filename,
+                    'thumbnail' => $this->url->getSiteUrl('assets/thumb').'?s=public/resources/proposal/'.$info->filename
+                );
+            } else {
+                $message = $this->uploader->getMessage();
+            }
+        }
+
+        return array(
+            'success' => $done,
+            'data' => $data,
+            'message' => $message
+        );
+    }
+
 }
