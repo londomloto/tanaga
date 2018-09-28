@@ -1,4 +1,4 @@
-<dom-module id="task-proposal-ponpes">
+<dom-module id="task-proposal">
     <template>
         <style include="form-style"></style>
 
@@ -6,22 +6,54 @@
 
         <div class="container">
             
-            <kct-column columns="2" gutter="30px">
-                <div class="section">
-                    <h3 class="section-title">Identitas Pesantren</h3>
-                    <div>
-                        <paper-input value="{{ record.document.no_statistik }}" label="No. Statistik Dasar" maxlength="50"></paper-input>
-                        <paper-input value="{{ record.document.nama_ponpes }}" label="Nama Pondok Pesantren *)" required auto-validate error-message="Nama ponpes wajib diisi"></paper-input>
-                    </div>
+            <div class="section">
+                <h3 class="section-title">Dokumen Proposal</h3>
+                <div>
+                    
+                    <paper-input value="{{ record.document.judul }}" label="Judul Proposal"></paper-input>
+
+                    <kct-column columns="3">
+                        <div>
+                            <kct-date-picker label="Tanggal" value="{{ record.document.tanggal }}"></kct-date-picker>
+                        </div>
+                        <div>
+                            <paper-input value="{{ record.document.nomor }}" label="Nomor Proposal" maxlength="50"></paper-input>
+                        </div>
+                        <div>
+                            <paper-input value="{{ record.document.tahun }}" label="Tahun" maxlength="10"></paper-input>
+                        </div>
+                    </kct-column>
+
+                    <kct-column columns="2">
+                        <div>
+                            <vaadin-combo-box 
+                                label="Tipe Lembaga" 
+                                value="{{ record.document.pemohon }}" 
+                                items="[[ pemohon ]]" 
+                                item-label-path="label" 
+                                item-value-path="value"></vaadin-combo-box>
+                        </div>
+                        <div>
+                            <kct-combobox 
+                                url="/proposal/pemohon" 
+                                label="Nama Lembaga"  
+                                value="{{ record.document.id_lembaga }}" 
+                                item-value-path="value" 
+                                item-label-path="label" 
+                                page-size="10"></kct-combobox>
+                        </div>
+                    </kct-column>
+
                 </div>
-                <div class="section">
-                    <h3 class="section-title">Alamat &amp; Kontak</h3>
-                    <div>
-                        <paper-input value="{{ record.document.alamat }}" label="Alamat"></paper-input>
-                        <paper-input  value="{{ record.document.kelurahan }}" label="Desa / Kelurahan"></paper-input>
-                    </div>
+            </div>
+
+            <div class="section m-t">
+                <h3 class="section-title">Uraian Proposal</h3>
+                <div>
+                    <paper-input value="{{ record.document.no_statistik }}" label="No. Statistik Dasar" maxlength="50"></paper-input>
+                    <paper-input value="{{ record.document.nama_ponpes }}" label="Nama Pondok Pesantren *)" required auto-validate error-message="Nama ponpes wajib diisi"></paper-input>
                 </div>
-            </kct-column>
+            </div>
 
             <div class="m-t" hidden$="[[ !phantom ]]">
                 <paper-button class="primary" on-tap="__onCreateTap" disabled$="[[ invalid ]]">Simpan data baru</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-click="__onCancelCreateTap">batal</a>
@@ -39,9 +71,20 @@
         </kct-confirm>
     </template>
     <script>
-        class TaskProposalPonpes extends FormBase {
+        class TaskProposal extends FormBase {
             static get is() {
-                return 'task-proposal-ponpes';
+                return 'task-proposal';
+            }
+            static get properties() {
+                return {
+                    pemohon: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Lembaga Pendidikan', value: 'Pendidikan' },
+                            { label: 'Sarana Ibadah', value: 'Sarana Ibadah' }
+                        ])
+                    }
+                };
             }
             static get observers() {
                 return [
@@ -86,7 +129,7 @@
                     });
 
                     if ( ! res.success) {
-                        this.toast('Gagal', res.message, 'danger');
+                        this.toast('Error', res.message, 'danger');
                     }
 
                 }
@@ -112,12 +155,14 @@
                         this.$.ajax.DELETE(this.project.sp_api + '/' + this.record.task.tt_id, null, options).then(res => {
                             if (res.success) {
                                 this.trigger('remove', { back: true });
+                            } else {
+                                this.toast('Error', res.message, 'danger');
                             }
                         });
                     }
                 });
             }
         }
-        customElements.define(TaskProposalPonpes.is, TaskProposalPonpes);
+        customElements.define(TaskProposal.is, TaskProposal);
     </script>
 </dom-module>
