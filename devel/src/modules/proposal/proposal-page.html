@@ -1,7 +1,9 @@
 <link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../blocks/module-header-block.html">
 
 <dom-module id="proposal-page">
@@ -14,6 +16,7 @@
         <kct-vbox>
             <module-header-block text="Monitoring" desc="Pengajuan Proposal">
                 <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-button on-tap="__onDetailTap">Lihat Uraian</paper-button>
             </module-header-block>
             <div class="flex">
                 <kct-grid 
@@ -24,6 +27,79 @@
                     hide-header></kct-grid>
             </div>
         </kct-vbox>
+
+        <kct-dialog id="viewer" title="Proposal" width="500" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    .label {
+                        color: #777;
+                        margin-bottom: 5px;
+                        font-size: 12px;
+                    }
+                    .form-group + .form-group {
+                        margin-top: 10px;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <div class="form-group">
+                        <div class="label">Status:</div>
+                        <div class="value">[[ detailRecord.status ]]</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Judul:</div>
+                        <div class="value">[[ detailRecord.judul ]]</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Tanggal:</div>
+                        <div class="value">[[ detailRecord.tanggal ]]</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Nomor:</div>
+                        <div class="value">[[ detailRecord.nomor ]]</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Tahun:</div>
+                        <div class="value">[[ detailRecord.tahun ]]</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Lembaga:</div>
+                        <div class="value">[[ detailRecord.lembaga ]]</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Nama Lembaga:</div>
+                        <div class="value">[[ detailRecord.nama_lembaga ]]</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Latar Belakang:</div>
+                        <div class="value" inner-h-t-m-l="[[ detailRecord.latar_belakang ]]"></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Susunan Kepengurusan:</div>
+                        <div class="value" inner-h-t-m-l="[[ detailRecord.susunan_pengurus ]]"></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Domilisi Sekretariat:</div>
+                        <div class="value" inner-h-t-m-l="[[ detailRecord.domisili_sekretariat ]]"></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Bentuk Kegiatan:</div>
+                        <div class="value" inner-h-t-m-l="[[ detailRecord.bentuk_kegiatan ]]"></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Jadwal Kegiatan:</div>
+                        <div class="value" inner-h-t-m-l="[[ detailRecord.jadwal_kegiatan ]]"></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label">Rincian RAB:</div>
+                        <div class="value" inner-h-t-m-l="[[ detailRecord.rincian_rab ]]"></div>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onViewerCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
     </template>
     <script>
         class ProposalPage extends KctView {
@@ -44,7 +120,8 @@
                             { text: 'Lembaga', dataIndex: 'nama_lembaga' },
                             { text: 'Status', dataIndex: 'status' }
                         ])
-                    }
+                    },
+                    detailRecord: { type: Object }
                 };
             }
             handleRouteParams() {
@@ -54,7 +131,20 @@
                 this.$.grid.resize();
             }
             __onReloadTap() {
+                this.$.grid.selected = null;
                 this.$.grid.load();
+            }
+            __onDetailTap() {
+                if ( ! this.$.grid.selected) {
+                    this.toast('Oops!', 'Tidak ada record yang terpilih', 'warn');
+                    return;
+                }
+
+                this.set('detailRecord', Object.assign({}, this.$.grid.selected));
+                this.$.viewer.open();
+            }
+            __onViewerCloseTap() {
+                this.$.viewer.close();
             }
         }
         customElements.define(ProposalPage.is, ProposalPage);
