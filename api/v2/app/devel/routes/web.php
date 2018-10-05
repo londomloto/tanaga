@@ -18,6 +18,17 @@ Router::get('/test/excel', function(){
     );
 });
 
+Router::get('/test/hijri', function(){
+    foreach(App\Ponpes\Models\Ponpes::find() as $item) {
+        if (empty($item->thn_berdiri_hijr) && ! empty($item->thn_berdiri_masehi)) {
+            $h = Micro\Helpers\Date::greg2hijri($item->thn_berdiri_masehi.'-01-01');
+            $h = explode('-', $h);
+            $item->thn_berdiri_hijr = $h[0];
+            $item->save();
+        }
+    }
+});
+
 Router::get('/test/ldap', function(){
     return array(
         'success' => TRUE
