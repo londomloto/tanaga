@@ -30,16 +30,24 @@
             .button-browse iron-icon {
                 --iron-icon-width: 16px;
                 --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
             }
-            .button-clear {
+            .button-clear,
+            .button-download {
                 width: 28px;
                 height: 28px;
                 padding: 4px;
                 position: absolute;
                 top: 50%;
                 margin-top: -14px;
-                right: 0;
                 color: #777;
+            }
+            .button-clear {
+                right: 25px;
+            }
+            .button-download {
+                right: 0;
             }
             #browser {
                 display: none;
@@ -76,14 +84,15 @@
 
         <div class="container">
             <div>
-                <paper-button class="button-browse" on-tap="__onBrowseTap"><iron-icon icon="file-upload"></iron-icon>&nbsp;[[ label ]]</paper-button>
+                <paper-button class="button-browse" on-tap="__onBrowseTap"><iron-icon icon="arrow-upward"></iron-icon>&nbsp;[[ label ]]</paper-button>
             </div>
             <div class="flex">
                 <paper-input class="button-value" value="[[ value ]]" readonly no-label-float></paper-input>
                 <paper-progress value="[[ progress ]]" hidden$="[[ !uploading ]]" class="button-progress"></paper-progress>
             </div>
             <div class="add-ons">
-                <paper-icon-button on-tap="__onClearTap" hidden$="[[ __hideClear(value, uploading) ]]" class="button-clear" icon="clear"></paper-icon-button>
+                <paper-icon-button title="Hapus" on-tap="__onClearTap" hidden$="[[ __hideClear(value, uploading) ]]" class="button-clear" icon="clear"></paper-icon-button>
+                <paper-icon-button title="Download" on-tap="__onDownloadTap" hidden$="[[ __hideClear(value, uploading) ]]" class="button-download" icon="arrow-downward"></paper-icon-button>
                 
             </div>
         </div>
@@ -99,6 +108,7 @@
                     label: { type: String, value: 'Browse' },
                     value: { type: String, value: '', notify: true },
                     file: { type: Object, notify: true },
+                    link: { type: String },
                     progress: { type: Number, value: 0 },
                     uploading: { type: Boolean, value: false }
                 }
@@ -201,6 +211,11 @@
             }
             __onClearTap() {
                 this.clear();
+            }
+            __onDownloadTap() {
+                if (this.link) {
+                    window.open(this.link);
+                }
             }
         }
         customElements.define(KctFileButton.is, KctFileButton);
