@@ -51,6 +51,11 @@
                 border: 1px solid var(--paper-grey-300);
                 color: var(--paper-blue-grey-700);
             }
+            .pagination-info {
+                text-align: center;
+                position: relative;
+                top: 18px;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -67,6 +72,9 @@
                             </div>
                         </paper-input>
                     </div>
+                </div>
+                <div class="pagination-info" slot="center-toolbar">
+                    <span>[[ __computePagingInfo(paging.count) ]]</span>    
                 </div>
             </module-header-block>
             <div class="flex scroll-y padding">
@@ -112,7 +120,9 @@
                             visible: false,
                             pages: 0,
                             start: 0,
-                            limit: 25
+                            limit: 25,
+                            count: 0,
+                            total: 0
                         })
                     }
                 }
@@ -147,6 +157,8 @@
                         let pages = this.paging.start + this.paging.limit; 
 
                         this.set('paging.pages', pages);
+                        this.set('paging.total', total);
+                        this.set('paging.count', count);
 
                         if (count < total) {
                             this.set('paging.visible', true);
@@ -183,6 +195,10 @@
                     this.set('paging.limit', limit);
                     this.set('paging.pages', pages);
                 });
+            }
+            __computePagingInfo() {
+                let from = this.paging.total > 0 ? 1 : 0;
+                return 'Tampil ' + from + ' - ' + this.paging.count + ' dari ' + this.paging.total; 
             }
             __onAddTap() {
                 this.set('route.path', '/masjid/create');

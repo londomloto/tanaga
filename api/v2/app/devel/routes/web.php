@@ -91,3 +91,23 @@ Router::get('/test/build', function(){
     }
 
 });
+
+Router::get('/test/addr', function(){
+
+    $items = \App\Ponpes\Models\Ponpes::find();
+    foreach($items as $item) {
+        if (empty($item->kelurahan) && ! empty($item->alamat)) {
+            preg_match('#(.*)\s+(desa\.?)\s?(.*)#i', $item->alamat, $match);
+            print_r($match);
+            if ( ! empty($match)) {
+                $match = array_pad($match, 5, NULL);
+                $alamat = trim($match[1].(!empty($match[4]) ? ' '.$match[4] : ''));
+                $kelurahan = trim($match[2].' '.$match[3]);
+                $item->alamat = $alamat;
+                $item->kelurahan = $kelurahan;
+                $item->save();    
+            }
+        }
+    }
+
+});
