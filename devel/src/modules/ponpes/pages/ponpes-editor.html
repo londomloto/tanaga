@@ -11,6 +11,7 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-publisher id="pub"></kct-event-publisher>
 
         <kct-vbox>
             <module-header-block text="[[ __computeHeaderText(record.nama_ponpes) ]]" desc="[[ headerDesc ]]" on-back-tap="__onBackTap">
@@ -200,9 +201,12 @@
                 function done(res) {
                     if (res.success) {
                         
-                        this.set('route.data.reload_ponpes', true);
-
                         let id = res.data.id_ponpes;
+
+                        if (phantom) {
+                            this.set('record.id_ponpes', id);
+                        }
+
                         if (this.cover) {
                             this.$.ajax.UPLOAD('/ponpes/' + id + '/upload', {
                                 files: [
@@ -210,12 +214,19 @@
                                 ]
                             }).then(res => {
                                 this.$.cover.file = null;
+                                
                                 if (res.success) {
                                     this.set('record.img_gedung', res.data.img_gedung);
-                                    this.toast('INFO', 'Data pesantren berhasil disimpan', 'info');        
+                                    this.set('record.img_gedung_thumb', res.data.img_gedung_thumb);
+
+                                    this.toast('INFO', 'Data pesantren berhasil disimpan', 'info');
+
                                     if (phantom) {
+                                        this.$.pub.publish('ponpes-create', this.record);
                                         this.set('route.path', '/ponpes/' + id + '/home');
-                                    }    
+                                    } else {
+                                        this.$.pub.publish('ponpes-update', this.record);
+                                    }
                                 } else {
                                     this.set('record.img_gedung', '');
                                     this.toast('ERROR', res.message, 'danger');
@@ -223,8 +234,12 @@
                             });
                         } else {
                             this.toast('INFO', 'Data pesantren berhasil disimpan', 'info');        
+                            
                             if (phantom) {
+                                this.$.pub.publish('ponpes-create', this.record);
                                 this.set('route.path', '/ponpes/' + id + '/home');
+                            } else {
+                                this.$.pub.publish('ponpes-update', this.record);
                             }
                         }
                     } else {

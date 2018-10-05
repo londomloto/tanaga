@@ -59,29 +59,32 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-subscriber 
+            on-masjid-create="__subscribeCreate" 
+            on-masjid-update="__subscribeUpdate" 
+            on-masjid-delete="__subscribeDelete"></kct-event-subscriber>
 
         <kct-vbox class$="layout [[ screen ]]">
             <module-header-block screen="[[ screen ]]" text="Rumah Ibadah" desc="Database Rumah Ibadah" hide-nav>
-                <paper-icon-button style="margin-right: 3px;" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
                 <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Record</paper-button>
-                <div class="hidden-sm" slot="right-toolbar">
-                    <div class="form-search">
-                        <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
-                            <div slot="prefix">
-                                <iron-icon icon="search"></iron-icon>
-                            </div>
-                        </paper-input>
-                    </div>
+                <div class="form-search hidden-sm" slot="right-toolbar">
+                    <paper-input on-keypress="__onSearchEnter" value="{{ search }}" placeholder="Pencarian..." no-label-float>
+                        <div slot="prefix">
+                            <iron-icon icon="search"></iron-icon>
+                        </div>
+                    </paper-input>
                 </div>
+                <paper-icon-button icon="[[ __computeSortIcon(sorter.direction) ]]" slot="right-toolbar" title="Sortir" on-tap="__onToggleSorterTap"></paper-icon-button>
                 <div class="pagination-info" slot="center-toolbar">
-                    <span>[[ __computePagingInfo(paging.count) ]]</span>    
+                    <span>[[ __computePagingInfo(paging.count, paging.total) ]]</span>    
                 </div>
             </module-header-block>
             <div class="flex scroll-y padding">
                 <kct-column columns="5">
                     <template is="dom-repeat" items="[[ records ]]">
                         <div class="item">
-                            <paper-card image="[[ item.img_gedung_thumb ]]&w=210&h=100">
+                            <paper-card image$="[[ item.img_gedung_thumb ]]&w=210&h=100">
                                 <div class="card-content">
                                     <div class="card-header">
                                         <h3><a href="javascript:;" on-click="__onDetailTap">[[ item.nama_rumah_ibadah ]]</a></h3>
@@ -124,6 +127,13 @@
                             count: 0,
                             total: 0
                         })
+                    },
+                    sorter: { 
+                        type: Object,
+                        value: () => ({
+                            property: 'nama_rumah_ibadah',
+                            direction: 'asc'
+                        }) 
                     }
                 }
             }
@@ -133,18 +143,14 @@
                 if ( ! this.paging.enabled) {
                     this.set('paging.enabled', true);
                     this.loadStart();
-                } else {
-                    if (this.get('route.data.reload_masjid')) {
-                        this.set('route.data.reload_masjid', undefined);
-                        this.loadEnd();
-                    }
                 }
             }
             loadRecords(payload = {}) {
                 payload.start = this.paging.start;
                 payload.limit = this.paging.limit; 
+                payload.sort = [this.sorter];
 
-                this.$.ajax.GET('/masjid', payload).then(res => {
+                return this.$.ajax.GET('/masjid', payload).then(res => {
                     if (res.success) {
                         let params = res.data;
                         let offset = this.records.length;
@@ -200,6 +206,9 @@
                 let from = this.paging.total > 0 ? 1 : 0;
                 return 'Tampil ' + from + ' - ' + this.paging.count + ' dari ' + this.paging.total; 
             }
+            __computeSortIcon(dir) {
+                return dir == 'asc' ? 'arrow-downward' : 'arrow-upward';
+            }
             __onAddTap() {
                 this.set('route.path', '/masjid/create');
             }
@@ -239,6 +248,11 @@
             __onNextPageTap() {
                 this.loadNext();
             }
+            __onToggleSorterTap() {
+                let dir = this.sorter.direction == 'asc' ? 'desc' : 'asc';
+                this.set('sorter.direction', dir);
+                this.loadStart();
+            }
             __onSearchEnter(e) {
                 if (e.key == 'Enter') {
                     let v = e.target.value;
@@ -250,6 +264,23 @@
                     } else {
                         this.loadRecords();
                     }
+                }
+            }
+            __subscribeCreate(e) {
+                this.loadEnd();
+            }
+            __subscribeUpdate(e) {
+                let index = this.records.findIndex(r => r.id_rumah_ibadah == e.detail.id_rumah_ibadah);
+                if (index !== -1) {
+                    Object.keys(e.detail).forEach(k => {
+                        this.set('records.' + index + '.' + k, e.detail[k]);
+                    });
+                }
+            }
+            __subscribeDelete(e) {
+                let index = this.records.findIndex(r => r.id_rumah_ibadah == e.detail.id_rumah_ibadah);
+                if (index !== -1) {
+                    this.loadEnd();
                 }
             }
         }

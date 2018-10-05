@@ -32,6 +32,7 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-publisher id="pub"></kct-event-publisher>
 
         <kct-vbox>
             <module-header-block text="Rumah Ibadah" desc="[[ record.nama_rumah_ibadah ]]" on-back-tap="__onBackTap"></module-header-block>
@@ -83,7 +84,7 @@
                         if (y) {
                             this.$.ajax.DELETE('/masjid/' + this.identity).then(res => {
                                 if (res.success) {
-                                    this.set('route.data.reload', true);
+                                    this.$.pub.publish('masjid-delete', this.record);
                                     this.set('route.path', '/masjid');
                                 }
                             });

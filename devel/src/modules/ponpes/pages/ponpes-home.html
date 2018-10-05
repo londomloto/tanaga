@@ -32,6 +32,7 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-publisher id="pub"></kct-event-publisher>
 
         <kct-vbox>
             <module-header-block text="Pesantren" desc="Pesantren [[ record.nama_ponpes ]]" on-back-tap="__onBackTap"></module-header-block>
@@ -112,7 +113,7 @@
                         if (y) {
                             this.$.ajax.DELETE('/ponpes/' + this.identity).then(res => {
                                 if (res.success) {
-                                    this.set('route.data.reload_ponpes', true);
+                                    this.$.pub.publish('ponpes-delete', this.record);
                                     this.set('route.path', '/ponpes');
                                 }
                             });

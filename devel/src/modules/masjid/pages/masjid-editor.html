@@ -11,6 +11,7 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-publisher id="pub"></kct-event-publisher>
 
         <kct-vbox>
             <module-header-block text="[[ __computeHeaderText(record.nama_rumah_ibadah) ]]" desc="[[ headerDesc ]]" on-back-tap="__onBackTap">
@@ -204,10 +205,12 @@
                 function done(res) {
                     if (res.success) {
                         
-                        this.set('route.data.reload', true);
-
                         let id = res.data.id_rumah_ibadah;
                         
+                        if (phantom) {
+                            this.set('record.id_rumah_ibadah', id);
+                        }
+
                         if (this.cover) {
                             this.$.ajax.UPLOAD('/masjid/' + id + '/upload', {
                                 files: [
@@ -217,9 +220,13 @@
                                 this.$.cover.file = null;
                                 if (res.success) {
                                     this.set('record.img_gedung', res.data.img_gedung);
+                                    this.set('record.img_gedung_thumb', res.data.img_gedung_thumb);
                                     this.toast('INFO', 'Data rumah ibadah berhasil disimpan', 'info'); 
                                     if (phantom) {
+                                        this.$.pub.publish('masjid-create', this.record);
                                         this.set('route.path', '/masjid/' + id + '/home');
+                                    } else {
+                                        this.$.pub.publish('masjid-update', this.record);
                                     }
                                 } else {
                                     this.set('record.img_gedung', '');
@@ -229,7 +236,10 @@
                         } else {
                             this.toast('INFO', 'Data rumah ibadah berhasil disimpan', 'info');        
                             if (phantom) {
+                                this.$.pub.publish('masjid-create', this.record);
                                 this.set('route.path', '/masjid/' + id + '/home');
+                            } else {
+                                this.$.pub.publish('masjid-update', this.record);
                             }
                         }
                     } else {

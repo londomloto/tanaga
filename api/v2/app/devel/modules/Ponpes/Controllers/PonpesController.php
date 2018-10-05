@@ -11,6 +11,7 @@ class PonpesController extends \Micro\Controller {
             ->alias('a')
             ->columns('a.*')
             ->filterable()
+            ->sortable()
             ->andWhere('a.aktif = 1');
         
         if ( ! $this->role->can('manage_app@application')) {
