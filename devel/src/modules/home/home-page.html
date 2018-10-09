@@ -28,6 +28,25 @@
                 background-repeat: no-repeat;
                 background-size: cover;
             }
+            .swiper-slide-caption {
+                position: absolute;
+                right: 0;
+                bottom: 50px;
+                left: 0;
+                padding: 10px 10px 0 10px;
+                color: #fff;
+                text-align: right;
+                background: -moz-linear-gradient(-45deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 100%);
+                background: -webkit-linear-gradient(-45deg, rgba(0,0,0,0) 0%,rgba(0,0,0,0.3) 100%);
+                background: linear-gradient(135deg, rgba(0,0,0,0) 0%,rgba(0,0,0,0.3) 100%);
+                filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#4d000000',GradientType=1 );
+            }
+            .swiper-slide-caption .title {
+                font-size: 13px;
+            }
+            .swiper-slide-caption .description {
+                font-size: 11px;
+            }
         </style>
         <style include="theme-helper">
             :host {
@@ -84,7 +103,12 @@
                 <div id="slider" class="swiper-container">
                     <div class="swiper-wrapper">
                         <template is="dom-repeat" items="[[ slides ]]" on-dom-change="__onSlideRender">
-                            <div class="swiper-slide" data-src$="[[ item.image ]]"></div>
+                            <div class="swiper-slide" data-src$="[[ item.image ]]">
+                                <div class="swiper-slide-caption">
+                                    <div class="title">[[ item.title ]]</div>
+                                    <div class="description">[[ item.description ]]</div>
+                                </div>
+                            </div>
                         </template>        
                     </div>
                     <div id="slider-page" class="swiper-pagination"></div>

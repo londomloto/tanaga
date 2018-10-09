@@ -22,10 +22,6 @@ class HomeController extends \Micro\Controller {
 
     public function backgroundsAction() {
         $result = Ponpes::get()
-            ->columns(array(
-                'id_ponpes',
-                'img_gedung'
-            ))
             ->where("img_gedung != ''")
             ->limit(5)
             ->offset(0)
@@ -40,17 +36,15 @@ class HomeController extends \Micro\Controller {
                 $file = APPPATH.'public/resources/ponpes/'.$item->img_gedung;
                 if (file_exists($file)) {
                     $images['P'.$item->id_ponpes] = array(
-                        'image' => $base.'public/resources/ponpes/'.$item->img_gedung
+                        'image' => $base.'public/resources/ponpes/'.$item->img_gedung,
+                        'title' => $item->nama_ponpes,
+                        'description' => $item->getComputedAddress()
                     );    
                 }
             }
         }
 
         $result = Masjid::get()
-            ->columns(array(
-                'id_rumah_ibadah',
-                'img_gedung'
-            ))
             ->where("img_gedung != ''")
             ->limit(5)
             ->offset(0)
@@ -62,7 +56,9 @@ class HomeController extends \Micro\Controller {
                 $file = APPPATH.'public/resources/masjid/'.$item->img_gedung;
                 if (file_exists($file)) {
                     $images['M'.$item->id_rumah_ibadah] = array(
-                        'image' => $base.'public/resources/masjid/'.$item->img_gedung
+                        'image' => $base.'public/resources/masjid/'.$item->img_gedung,
+                        'title' => $item->nama_rumah_ibadah,
+                        'description' => $item->getComputedAddress()
                     );    
                 }
             }
