@@ -121,14 +121,12 @@ class Task extends \Micro\Model {
         if (isset(
             $this->tt_id, 
             $this->tt_title,
-            $this->tt_desc,
             $this->tt_due_date,
             $this->tt_flag
         )) {
             $this->__snapshot = array(
                 'tt_id' => $this->tt_id,
                 'tt_title' => $this->tt_title,
-                'tt_desc' => $this->tt_desc,
                 'tt_due_date' => $this->tt_due_date,
                 'tt_flag' => $this->tt_flag
             );    
@@ -153,13 +151,6 @@ class Task extends \Micro\Model {
                     TaskActivity::log('update_title', array(
                         'tta_tt_id' => $this->tt_id,
                         'tta_data' => $this->tt_title
-                    ));
-                }
-
-                if ($snapshot['tt_desc'] != $this->tt_desc) {
-                    TaskActivity::log('update_detail', array(
-                        'tta_tt_id' => $this->tt_id,
-                        'tta_data' => $this->tt_desc
                     ));
                 }
 
