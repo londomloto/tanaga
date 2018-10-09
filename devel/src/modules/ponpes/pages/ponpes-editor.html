@@ -209,6 +209,9 @@
                             this.set('record.id_ponpes', id);
                         }
 
+                        this.set('record.img_gedung', res.data.img_gedung);
+                        this.set('record.img_gedung_thumb', res.data.img_gedung_thumb);
+
                         if (this.cover) {
                             this.$.ajax.UPLOAD('/ponpes/' + id + '/upload', {
                                 files: [
