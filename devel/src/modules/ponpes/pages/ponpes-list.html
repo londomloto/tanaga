@@ -126,6 +126,7 @@
             static get properties() {
                 return {
                     records: { type: Array, value: () => ([]) },
+                    params: { type: Object, value: () => ({}) },
                     paging: {
                         type: Object,
                         value: () => ({
@@ -157,9 +158,14 @@
                 }
             }
             loadRecords(payload = {}) {
+
+                payload = Object.assign({}, this.params, payload);
+
                 payload.start = this.paging.start;
                 payload.limit = this.paging.limit; 
                 payload.sort = [ this.sorter ];
+
+                this.set('params', payload);
 
                 this.set('paging.busy', true);
 
@@ -193,6 +199,7 @@
             loadStart(params = {}) {
                 this.set('paging.start', 0);
                 this.set('records', []);
+                this.set('params', {});
                 this.loadRecords(params);
             }
             loadNext(params = {}) {
