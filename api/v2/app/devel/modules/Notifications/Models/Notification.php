@@ -83,7 +83,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 break;
             case 'update_flag':
                 $verb = sprintf(
-                    '**%s** merubah status menjadi **%s** untuk aktivitas: "%s"',
+                    '**%s** merubah status menjadi **%s** pada aktivitas: "%s"',
                     $sender_name,
                     $this->tta_data,
                     $task->tt_title
@@ -91,7 +91,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 break;
             case 'update_due':
                 $verb = sprintf(
-                    '**%s** merubah due date menjadi **%s** untuk aktivitas: "%s"',
+                    '**%s** merubah due date menjadi **%s** pada aktivitas: "%s"',
                     $sender_name,
                     self::_formatDate($this->tta_data, 'M d, Y'),
                     $task->tt_title
@@ -100,26 +100,42 @@ class Notification extends \App\Tasks\Models\TaskActivity {
             case 'add_user':
             case 'remove_user':
 
-                $assignee = array();
+                $assignee = '';
 
                 if ( ! empty($this->tta_data)) {
+                    $keys = json_decode($this->tta_data);
                     $data = User::get()
                         ->columns('su_id, su_fullname, su_email')
-                        ->inWhere('su_id', json_decode($this->tta_data))
+                        ->inWhere('su_id', $keys)
                         ->execute();
 
+                    $count = 1;
+                    $total = count($data);
+
                     foreach($data as $e) {
-                        $name = empty($e->su_fullname) ? $e->su_email : $e->su_fullname;
-                        $assignee[] = "**$name**";
+                        if ($sender == $e->su_id) {
+                            $name = 'dirinya sendiri';
+                        } else {
+                            $name = empty($e->su_fullname) ? $e->su_email : $e->su_fullname;    
+                        }
+
+                        if ($total > 1 && $total == $count) {
+                            $assignee .= " dan **$name**";
+                        } else {
+                            $assignee .= ", **$name**";    
+                        }
+
+                        $count++;
                     }
 
-                    $assignee = implode(', ', $assignee);
+                    $assignee = substr($assignee, 2);
+
                 }
 
                 $action = $type == 'add_user' ? 'menugaskan' : 'menghapus';
 
                 $verb = sprintf(
-                    '**%s** %s %s untuk aktivitas: "%s"',
+                    '**%s** %s %s kedalam aktivitas: "%s"',
                     $sender_name,
                     $action,
                     $assignee,

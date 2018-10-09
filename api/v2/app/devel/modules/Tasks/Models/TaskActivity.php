@@ -215,17 +215,18 @@ class TaskActivity extends \Micro\Model {
             case 'comment':
                 return 'communication:chat-bubble-outline';
             case 'create':
+                return 'note-add';
             case 'update':
             case 'update_title':
             case 'update_detail':
                 return 'image:edit';
             case 'update_flag':
-                return 'bookmark-border';
+                return 'flag';
             case 'update_due':
                 return 'today';
             case 'add_user':
             case 'remove_user':
-                return 'face';
+                return 'perm-identity';
             case 'add_label':
             case 'remove_label':
                 return 'label-outline';
