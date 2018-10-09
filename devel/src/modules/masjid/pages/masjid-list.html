@@ -272,12 +272,12 @@
                 if (e.key == 'Enter') {
                     let v = e.target.value;
                     if (v) {
-                        this.loadRecords({
+                        this.loadStart({
                             query: v,
                             fields: ['nama_rumah_ibadah']
                         });
                     } else {
-                        this.loadRecords();
+                        this.loadStart();
                     }
                 }
             }
