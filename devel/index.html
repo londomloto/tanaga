@@ -185,14 +185,14 @@
                         window.Polymer.dom = 'shadow';
 
                         let deps = [
-                            //'../cores/bower_components/polymer/polymer-element.html',
-                            //'../cores/themes/theme-default/theme-default.html',
+                            '../cores/bower_components/polymer/polymer-element.html',
+                            '../cores/themes/theme-default/theme-default.html',
 
                             // prod
-                            'dst/kct-app.html'
+                            //'dst/kct-app.html'
 
                             // devel
-                            // 'src/kct-app.html'
+                            'src/kct-app.html'
                         ].map((href) => {
                             let d = defer();
                             let link;
