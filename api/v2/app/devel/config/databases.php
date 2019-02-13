@@ -17,7 +17,7 @@ switch($_SERVER['SERVER_ADMIN']) {
             'db' => array(
                 'host' => 'localhost',
                 'user' => 'root',
-                'pass' => 'pu5d1k4dm123',
+                'pass' => 'tanaga@12345#',
                 'name' => 'tanaga',
             ),
         );
