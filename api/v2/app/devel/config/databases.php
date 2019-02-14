@@ -5,7 +5,7 @@ switch($_SERVER['SERVER_ADMIN']) {
     case 'roso@localhost':
         $databases = array(
             'db' => array(
-                'host' => 'localhost',
+                'host' => '127.0.0.1',
                 'user' => 'root',
                 'pass' => 'secret',
                 'name' => 'tanaga',
@@ -15,7 +15,7 @@ switch($_SERVER['SERVER_ADMIN']) {
     default:
         $databases = array(
             'db' => array(
-                'host' => 'localhost',
+                'host' => '127.0.0.1',
                 'user' => 'root',
                 'pass' => 'tanaga@12345#',
                 'name' => 'tanaga',
