@@ -15,7 +15,7 @@ switch($_SERVER['SERVER_ADMIN']) {
     default:
         $databases = array(
             'db' => array(
-                'host' => '127.0.0.1',
+                'host' => '51.255.208.66',
                 'user' => 'root',
                 'pass' => 'tanaga@12345#',
                 'name' => 'tanaga',
