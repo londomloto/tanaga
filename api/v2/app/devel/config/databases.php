@@ -3,6 +3,7 @@
 switch($_SERVER['SERVER_ADMIN']) {
     case 'roso@go.vm':
     case 'roso@localhost':
+    case 'roso@apache.local':
         $databases = array(
             'db' => array(
                 'host' => '127.0.0.1',

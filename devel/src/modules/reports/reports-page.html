@@ -1,0 +1,148 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../blocks/module-header-block.html">
+
+<dom-module id="reports-page">
+    <template>
+
+        <style>
+            .menus {
+                padding: 20px;
+            }
+            .menus paper-button {
+                text-transform: none;
+                font-weight: normal;
+            }
+            .menus paper-button iron-icon {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <module-header-block text="Monitoring" desc="Download Excel" hide-nav></module-header-block>
+            <div class="flex scroll-y">
+                <div class="menus">
+                    <div>
+                        <paper-button on-tap="__onDownload1Tap">
+                            <iron-icon icon="get-app"></iron-icon>&nbsp;<span>Download Data Pesantren</span>
+                        </paper-button>    
+                    </div>
+                    <div>
+                        <paper-button on-tap="__onDownload2Tap">
+                            <iron-icon icon="get-app"></iron-icon>&nbsp;<span>Download Data Rumah Ibadah</span>
+                        </paper-button>    
+                    </div>
+                </div>
+                
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="download-1" title="Data Pesantren" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        url="/master-ponpes/tipe" 
+                        label="Tipe Pesantren" 
+                        value="{{ params1.id_tipe }}" 
+                        item-label-path="nama_tipe" 
+                        item-value-path="id_tipe"
+                        page-size="10"></kct-combobox>
+                    <kct-combobox 
+                        url='/master-wilayah/kota'
+                        label="Kabupaten/Kota" 
+                        value="{{ params1.id_kota }}" 
+                        item-label-path="text_kota" 
+                        item-value-path="id_kota" 
+                        page-size="10"></kct-combobox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDownload1SubmitTap">Download</paper-button>
+                    <paper-button on-tap="__onDownload1CloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="download-2" title="Data Rumah Ibadah" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        url="/master-masjid/jenis" 
+                        label="Jenis Rumah Ibadah" 
+                        value="{{ params2.id_tipe }}" 
+                        item-label-path="nama_jenis" 
+                        item-value-path="id_jenis"
+                        page-size="10"></kct-combobox>
+                    <kct-combobox 
+                        url='/master-wilayah/kota'
+                        label="Kabupaten/Kota" 
+                        value="{{ params2.id_kota }}" 
+                        item-label-path="text_kota" 
+                        item-value-path="id_kota" 
+                        page-size="10"></kct-combobox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDownload2SubmitTap">Download</paper-button>
+                    <paper-button on-tap="__onDownload2CloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class ReportsPage extends KctView {
+            static get is() {
+                return 'reports-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Download', notify: true },
+                    params1: { 
+                        type: Object, 
+                        value: () => ({
+                            id_tipe: '',
+                            id_kota: ''
+                        }) 
+                    },
+                    params2: { 
+                        type: Object, 
+                        value: () => ({
+                            id_tipe: '',
+                            id_kota: ''
+                        }) 
+                    }
+                }
+            }
+            __onDownload1Tap() {
+                this.$['download-1'].open();
+            }
+            __onDownload1CloseTap() {
+                this.$['download-1'].close();   
+            }
+            __onDownload1SubmitTap() {
+                this.$.ajax.DOWNLOAD('/reports/ponpes/database', {
+                    params: this.params1
+                });
+            }
+            __onDownload2Tap() {
+                this.$['download-2'].open();
+            }
+            __onDownload2CloseTap() {
+                this.$['download-2'].close();   
+            }
+            __onDownload2SubmitTap() {
+                this.$.ajax.DOWNLOAD('/reports/masjid/database', {
+                    params: this.params2
+                });
+            }
+        }
+        customElements.define(ReportsPage.is, ReportsPage);
+    </script>
+</dom-module>

@@ -70,3 +70,19 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/reports/ponpes',
+    'handler' => 'App\Reports\Controllers\PonpesController',
+    'middleware' => 'auth'
+))
+->post('/database', 'database')
+->post('/document', 'document');
+
+Router::group(array(
+    'prefix' => '/reports/masjid',
+    'handler' => 'App\Reports\Controllers\MasjidController',
+    'middleware' => 'auth'
+))
+->post('/database', 'database')
+->post('/document', 'document');
